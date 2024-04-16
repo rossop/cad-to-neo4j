@@ -6,6 +6,7 @@ exploratory and debugging purposes.
 
 Functions:
     - setup_logger: Sets up logger with console and file handlers.
+    - inspect_object : inspect and log an object methods and properties.
 
 Decorators:
     - log_function: Logs the entry and exit of a function call.
@@ -19,7 +20,7 @@ Handlers:
 
 """
 
-__all__ = ['setup_logger', 'log_function', 'Logger', 'console_handler', 'file_handler']
+__all__ = ['setup_logger', 'log_function', 'Logger', 'console_handler', 'file_handler', 'inspect_object']
 
 import os
 import sys
@@ -74,3 +75,25 @@ def log_function(func):
         Logger.info(f"{func.__name__} completed")
         return result
     return wrapper
+
+
+def inspect_object(obj):
+    """Inspects an object and logs its properties and methods.
+
+    Args:
+        obj: The object to inspect.
+    """
+    Logger.debug(f"_______________________________")
+    class_name = obj.__class__.__name__
+    Logger.debug(f"Inspecting {class_name} object:")
+    
+    for attr_name in dir(obj):
+        if not attr_name.startswith('__'):
+            try:
+                attr_value = getattr(obj, attr_name)
+                if callable(attr_value):
+                    Logger.debug(f"  Method: {attr_name}")
+                else:
+                    Logger.debug(f"  Property: {attr_name} = {attr_value}")
+            except:
+                Logger.debug(f"  Unable to access: {attr_name}")
