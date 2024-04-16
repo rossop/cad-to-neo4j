@@ -8,20 +8,22 @@ import adsk.core, adsk.fusion, adsk.cam, traceback
 import logging
 
 from .cad_to_neo4j.utils.logger import Logger, log_function, console_handler, file_handler, inspect_object
-from .cad_to_neo4j.extract.base_extractor import BaseExtractor
+from .cad_to_neo4j.extract import get_extractor
+from typing import Union
 
 
 @log_function
-def do_stuff(element):
+def do_stuff(element: Union[adsk.fusion.Sketch, adsk.fusion.Feature]):
     try:
         Logger.info(f"Processing element: {element.classType()}")
-        Extractor = BaseExtractor(element)
-        info = Extractor.extract_basic_info()
-        Logger.debug(f'{info}')
+        extractor = get_extractor(element)
+        extracted_info = extractor.extract_all_info()
+        Logger.info(f"Extracted data: {extracted_info}")
         # inspect_object(element)
 
     except Exception as e:
         Logger.error(f"Error in do_stuff: {str(e)}")
+        
 
 def run(context):
     ui = None

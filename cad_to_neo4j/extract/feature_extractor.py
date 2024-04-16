@@ -21,6 +21,6 @@ class FeatureExtractor(BaseExtractor):
 
     def extract_all_info(self) -> dict:
         """Extract all information from the Feature element."""
-        info = super().extract_all_info()
+        info = super().extract_basic_info()
         # Add more feature-specific extraction logic here
         return info
