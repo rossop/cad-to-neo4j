@@ -1,22 +1,20 @@
+import sys
+import os
+
+# Add the cad_to_neo4j directory to the Python path
+# sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), 'cad_to_neo4j')))
+print(os.path.dirname(__file__))
+
 import adsk.core, adsk.fusion, adsk.cam, traceback
 import logging
-import sys
 from functools import wraps
 
-def setup_logger(name, level=logging.DEBUG):  # Changed to DEBUG for more detailed logging
-    logger = logging.getLogger(name)
-    logger.setLevel(level)
+from .cad_to_neo4j.utils.logger import setup_logger
+# from cad_to_neo4j.utils.logger import setup_logger
 
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger, console_handler, file_handler = setup_logger('cad_extractor')
 
-    console_handler = logging.StreamHandler(sys.stdout)
-    console_handler.setFormatter(formatter)
-    logger.addHandler(console_handler)
-
-    return logger, console_handler
-
-logger, console_handler = setup_logger('cad_extractor')
-
+# Logger Decorator
 def log_function(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
@@ -26,8 +24,11 @@ def log_function(func):
         return result
     return wrapper
 
+
+# Inspect Object
 def inspect_object(obj):
     """Helper function to inspect and log object properties and methods"""
+    logger.debug(f"_______________________________")
     class_name = obj.__class__.__name__
     logger.debug(f"Inspecting {class_name} object:")
     
@@ -44,9 +45,12 @@ def inspect_object(obj):
 
 @log_function
 def do_stuff(element):
-    logger.info(f"Processing element: {element.classType()}")
-    inspect_object(element)
-    # Add more specific logging as needed
+    try:
+        logger.info(f"Processing element: {element.classType()}")
+        inspect_object(element)
+        # Add more specific logging as needed
+    except Exception as e:
+        logger.error(f"Error in do_stuff: {str(e)}")
 
 def run(context):
     ui = None
@@ -94,10 +98,21 @@ def run(context):
                 text_palette.writeText(handler.stream.getvalue())
 
 
+# def stop(context):
+#     global logger, console_handler
+#     logger.removeHandler(console_handler)
+#     console_handler.close()
+#     logger = None
+#     console_handler = None
+#     print("Script stopped and logger cleaned up.")
+
 def stop(context):
-    global logger, console_handler
+    global logger, console_handler, file_handler
     logger.removeHandler(console_handler)
+    logger.removeHandler(file_handler)
     console_handler.close()
+    file_handler.close()
     logger = None
     console_handler = None
+    file_handler = None
     print("Script stopped and logger cleaned up.")
