@@ -7,37 +7,23 @@ print(os.path.dirname(__file__))
 import adsk.core, adsk.fusion, adsk.cam, traceback
 import logging
 
+from .cad_to_neo4j.utils.logger import Logger, log_function, console_handler, file_handler, inspect_object
+from .cad_to_neo4j.extract import get_extractor
+from typing import Union
 
-from .cad_to_neo4j.utils.logger import Logger, log_function, console_handler, file_handler  # Import logger, decorator, and handlers
-
-
-
-# Inspect Object
-def inspect_object(obj):
-    """Helper function to inspect and log object properties and methods"""
-    Logger.debug(f"_______________________________")
-    class_name = obj.__class__.__name__
-    Logger.debug(f"Inspecting {class_name} object:")
-    
-    for attr_name in dir(obj):
-        if not attr_name.startswith('__'):  # Skip built-in attributes
-            try:
-                attr_value = getattr(obj, attr_name)
-                if callable(attr_value):
-                    Logger.debug(f"  Method: {attr_name}")
-                else:
-                    Logger.debug(f"  Property: {attr_name} = {attr_value}")
-            except:
-                Logger.debug(f"  Unable to access: {attr_name}")
 
 @log_function
-def do_stuff(element):
+def do_stuff(element: Union[adsk.fusion.Sketch, adsk.fusion.Feature]):
     try:
         Logger.info(f"Processing element: {element.classType()}")
-        inspect_object(element)
-        # Add more specific logging as needed
+        extractor = get_extractor(element)
+        extracted_info = extractor.extract_all_info()
+        Logger.info(f"Extracted data: {extracted_info}")
+        # inspect_object(element)
+
     except Exception as e:
         Logger.error(f"Error in do_stuff: {str(e)}")
+        
 
 def run(context):
     ui = None
@@ -84,14 +70,6 @@ def run(context):
             if isinstance(handler, logging.StreamHandler):
                 text_palette.writeText(handler.stream.getvalue())
 
-
-# def stop(context):
-#     global logger, console_handler
-#     logger.removeHandler(console_handler)
-#     console_handler.close()
-#     logger = None
-#     console_handler = None
-#     print("Script stopped and logger cleaned up.")
 
 def stop(context):
     global Logger, console_handler, file_handler
