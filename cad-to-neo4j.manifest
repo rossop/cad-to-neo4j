@@ -1,0 +1,10 @@
+{
+	"autodeskProduct":	"Fusion360",
+	"type":	"script",
+	"author":	"Peter Rosso",
+	"description":	{
+		"":	"Extract, Transform and Load pipeline to move data grom CAD model to graph database."
+	},
+	"supportedOS":	"windows|mac",
+	"editEnabled":	true
+}
