@@ -19,8 +19,8 @@ class SketchExtractor(BaseExtractor):
         """Initialize the extractor with the Sketch element."""
         super().__init__(element)
 
-    def extract_all_info(self) -> dict:
+    def extract_info(self) -> dict:
         """Extract all information from the Sketch element."""
-        info = super().extract_basic_info()
+        info = super().extract_info()
         # Add more sketch-specific extraction logic here
         return info

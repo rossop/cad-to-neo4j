@@ -13,13 +13,16 @@ from adsk.fusion import Sketch, Feature
 from .base_extractor import BaseExtractor
 from .sketch_extractor import SketchExtractor
 from .feature_extractor import FeatureExtractor
+from .brep_extractor import BRepExtractor
 
 __all__ = ['get_extractor']
 
 EXTRACTORS = {
     'adsk::fusion::Sketch': SketchExtractor,
-    'adsk::fusion::Feature': FeatureExtractor,
+    'adsk::fusion::ExtrudeFeature': FeatureExtractor, 
+    'adsk::fusion::BRepBody': BRepExtractor, 
 }
+# TODO generalise for different features
 
 def get_extractor(element: Base) -> BaseExtractor:
     """Get the appropriate extractor for the given CAD element.
