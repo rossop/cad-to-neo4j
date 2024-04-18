@@ -85,22 +85,7 @@ def run(context):
         if not text_palette:
             Logger.error("Couldn't get the Text Commands palette")
             return
-
-        # Log initial Python environment details
-        app.log(" "*20) 
-        app.log("_"*20) 
-        # datetime object containing current date and time
-        now = datetime.now()
-        dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
-        app.log(f'{dt_string}')
-
-        app.log(f'sys version_info: {sys.version_info}')
-        app.log(f'sys executable: {sys.executable}')
-        app.log(f'sys path: {len(sys.path)}')
-        
-        # Log installed packages
-        installed_packages = [d.project_name for d in pkg_resources.working_set]
-        app.log(f'Installed libraries: {installed_packages}')
+    
         
         if Logger:
             Logger.info('Starting CAD extraction process')
@@ -137,10 +122,9 @@ def run(context):
             root_comp = design.rootComponent
 
             if root_comp:
-                app.log('Starting Brep extraction')
+                Logger.info('Starting Brep extraction')
                 for body in root_comp.bRepBodies:
                     extracted_info = extract_data(body)
-                    app.log(f'Extracted Brep:{extracted_info}')
                 if extracted_info:
                     nodes.append(extracted_info)
             
