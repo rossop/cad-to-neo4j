@@ -14,13 +14,13 @@ class BaseExtractor(object):
     """Base class for extracting basic properties from CAD objects."""
 
     def __init__(self, obj: Base):
-        """Initializes the BaseExtractor with a CAD object.
+        """Initialises the BaseExtractor with a CAD object.
 
         Args:
             obj: The CAD object to extract information from.
         """
         self._obj = obj
-        self._type = None  # Initialize the type to None
+        self._type = None  # Initialise the type to None
 
     @property
     def name(self) -> Optional[str]:

@@ -56,23 +56,35 @@ NEO4J_PASSWORD = os.getenv('NEO4J_PASSWORD')
 
 from .cad_to_neo4j.utils.logger import Logger, log_function, console_handler, file_handler
 from .cad_to_neo4j.extract import get_extractor
+from .cad_to_neo4j.load.neo4j_loader import Neo4jLoader
 
 @log_function
-def do_stuff(element: Union[adsk.fusion.Sketch, adsk.fusion.Feature]):
+def extract_data(element: Union[adsk.fusion.Sketch, adsk.fusion.Feature]):
     try:
         Logger.info(f"Processing element: {element.classType()}")
-        extractor = get_extractor(element)
-        extracted_info = extractor.extract_all_info()
-        Logger.info(f"Extracted data: {extracted_info}")
+        Extractor = get_extractor(element)
+        extracted_info = Extractor.extract_all_info()
+        return {
+            "type": element.classType(),
+            "properties": extracted_info
+        }
     except Exception as e:
-        Logger.error(f"Error in do_stuff: {str(e)}")
+        Logger.error(f"Error in extract_data: {str(e)}")
+        return None
 
 def run(context):
     global Logger, console_handler, file_handler, NEO4J_URI, NEO4J_USER, NEO4J_PASSWORD
     ui = None
+    Loader = None
     try:
         app = adsk.core.Application.get()
         ui = app.userInterface
+
+        # Get the command palette
+        text_palette = ui.palettes.itemById('TextCommands')
+        if not text_palette:
+            Logger.error("Couldn't get the Text Commands palette")
+            return
 
         # Log initial Python environment details
         app.log(" "*20) 
@@ -82,16 +94,9 @@ def run(context):
         dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
         app.log(f'{dt_string}')
 
-
         app.log(f'sys version_info: {sys.version_info}')
         app.log(f'sys executable: {sys.executable}')
         app.log(f'sys path: {len(sys.path)}')
-
-
-        app.log(f'neo user: {NEO4J_USER}')
-        # Log the entire sys.path for debugging
-        for path in sys.path:
-            app.log(f'sys path entry: {path}')
         
         # Log installed packages
         installed_packages = [d.project_name for d in pkg_resources.working_set]
@@ -102,18 +107,33 @@ def run(context):
         else:
             app.info('No Logger vailable')
 
+        
         # Get the active document and design
         product = app.activeProduct
         design = adsk.fusion.Design.cast(product)
         if not design:
             Logger.error('No active Fusion design')
             return None
+       
+        # Initialise Neo4J loader
+        nodes = []
+        relationships = []
+        with Neo4jLoader(uri=NEO4J_URI, user=NEO4J_USER, password=NEO4J_PASSWORD, Logger=Logger) as Loader:
+            # Process timeline
+            timeline = design.timeline
+            for i in range(timeline.count):
+                extracted_info = extract_data(timeline.item(i).entity)
+                if extracted_info:
+                    nodes.append(extracted_info)
+                    if i > 0:
+                        relationships.append({
+                            "from_id": nodes[i-1]['properties']['id_token'],
+                            "to_id": nodes[i]['properties']['id_token'],
+                            "rel_type": "NEXT_ON_TIMELINE"
+                        })
 
-        # Process timeline
-        timeline = design.timeline
-        for i in range(timeline.count):
-            app.log(f"{i}")
-            do_stuff(timeline.item(i).entity)
+            # Load all nodes and relationships in batch
+            Loader.load_data(nodes, relationships)
 
         Logger.info('CAD extraction process completed')
 
