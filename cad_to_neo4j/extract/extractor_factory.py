@@ -13,12 +13,14 @@ from adsk.fusion import Sketch, Feature
 from .base_extractor import BaseExtractor
 from .sketch_extractor import SketchExtractor
 from .feature_extractor import FeatureExtractor
+from .brep_extractor import BRepExtractor
 
 __all__ = ['get_extractor']
 
 EXTRACTORS = {
     'adsk::fusion::Sketch': SketchExtractor,
     'adsk::fusion::ExtrudeFeature': FeatureExtractor, 
+    'adsk::fusion::BRepBody': BRepExtractor, 
 }
 # TODO generalise for different features
 

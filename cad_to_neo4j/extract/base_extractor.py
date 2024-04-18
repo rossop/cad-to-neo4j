@@ -57,7 +57,7 @@ class BaseExtractor(object):
         except AttributeError:
             return None
 
-    def extract_basic_info(self) -> Dict[str, Optional[str]]:
+    def extract_info(self) -> Dict[str, Optional[str]]:
         """Extracts basic information (name, type, id token) of the CAD object.
 
         Returns:

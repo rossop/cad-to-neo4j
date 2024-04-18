@@ -63,9 +63,9 @@ def extract_data(element: Union[adsk.fusion.Sketch, adsk.fusion.Feature]):
     try:
         Logger.info(f"Processing element: {element.classType()}")
         Extractor = get_extractor(element)
-        extracted_info = Extractor.extract_all_info()
+        extracted_info = Extractor.extract_info()
         return {
-            "type": element.classType(),
+            "type": element.classType(), #  TODO change type to label?
             "properties": extracted_info
         }
     except Exception as e:
@@ -105,7 +105,7 @@ def run(context):
         if Logger:
             Logger.info('Starting CAD extraction process')
         else:
-            app.info('No Logger vailable')
+            app.log('No Logger vailable')
 
         
         # Get the active document and design
@@ -118,6 +118,7 @@ def run(context):
         # Initialise Neo4J loader
         nodes = []
         relationships = []
+        
         with Neo4jLoader(uri=NEO4J_URI, user=NEO4J_USER, password=NEO4J_PASSWORD, Logger=Logger) as Loader:
             # Process timeline
             timeline = design.timeline
@@ -132,6 +133,18 @@ def run(context):
                             "rel_type": "NEXT_ON_TIMELINE"
                         })
 
+            #Extract BRep data from bodies
+            root_comp = design.rootComponent
+
+            if root_comp:
+                app.log('Starting Brep extraction')
+                for body in root_comp.bRepBodies:
+                    extracted_info = extract_data(body)
+                    app.log(f'Extracted Brep:{extracted_info}')
+                if extracted_info:
+                    nodes.append(extracted_info)
+            
+            
             # Load all nodes and relationships in batch
             Loader.load_data(nodes, relationships)
 

@@ -92,8 +92,8 @@ class Neo4jLoader(object):
             relationships (list): List of relationship dictionaries.
         """
         try:
-            if self.logger:
-                self.logger.debug(f"{relationships}")
+            # if self.logger:
+                # self.logger.debug(f"{relationships}")
             query = """
             UNWIND $relationships AS rel
             MATCH (a {id_token: rel.from_id}), (b {id_token: rel.to_id})
@@ -122,13 +122,15 @@ class Neo4jLoader(object):
             with self.driver.session() as session:
                 if nodes:
                     for i in range(0, len(nodes), self._batch_size):
-                        self.logger.info(f"Loading batch {i // self._batch_size + 1} with {len(nodes[i:i + self._batch_size])} nodes")
+                        if self.logger:
+                            self.logger.info(f"Loading batch {i // self._batch_size + 1} with {len(nodes[i:i + self._batch_size])} nodes")
                         session.write_transaction(self.create_nodes, nodes[i:i + self._batch_size])
 
                 # Create relationships in batches
                 if relationships:
                     for i in range(0, len(relationships), self._batch_size):
-                        self.logger.info(f"Loading batch {i // self._batch_size + 1} with {len(relationships[i:i + self._batch_size])} relationships")
+                        if self.logger:
+                            self.logger.info(f"Loading batch {i // self._batch_size + 1} with {len(relationships[i:i + self._batch_size])} relationships")
                         session.write_transaction(self.create_relationships, relationships[i:i + self._batch_size])
 
         except Exception as e:
