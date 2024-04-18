@@ -42,6 +42,18 @@ def remove_virtualenv_from_path(venv_dir):
 VENV_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'fusion_venv')
 add_virtualenv_to_path(VENV_DIR)
 
+# Import dotenv after adding the virtual environment to the path
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+dotenv_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.env')
+load_dotenv(dotenv_path=dotenv_path)
+
+# Neo4j credentials
+NEO4J_URI = os.getenv('NEO4J_URI')
+NEO4J_USER = os.getenv('NEO4J_USER')
+NEO4J_PASSWORD = os.getenv('NEO4J_PASSWORD')
+
 from .cad_to_neo4j.utils.logger import Logger, log_function, console_handler, file_handler
 from .cad_to_neo4j.extract import get_extractor
 
@@ -56,6 +68,7 @@ def do_stuff(element: Union[adsk.fusion.Sketch, adsk.fusion.Feature]):
         Logger.error(f"Error in do_stuff: {str(e)}")
 
 def run(context):
+    global Logger, console_handler, file_handler, NEO4J_URI, NEO4J_USER, NEO4J_PASSWORD
     ui = None
     try:
         app = adsk.core.Application.get()
@@ -68,10 +81,14 @@ def run(context):
         now = datetime.now()
         dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
         app.log(f'{dt_string}')
+
+
         app.log(f'sys version_info: {sys.version_info}')
         app.log(f'sys executable: {sys.executable}')
         app.log(f'sys path: {len(sys.path)}')
 
+
+        app.log(f'neo user: {NEO4J_USER}')
         # Log the entire sys.path for debugging
         for path in sys.path:
             app.log(f'sys path entry: {path}')
