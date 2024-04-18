@@ -12,20 +12,25 @@ Modules:
       to feature objects in CAD models.
     - sketch_extractor.py: Provides the SketchExtractor class for extracting properties specific 
       to sketch objects in CAD models.
+    - brep_extractor.py: Provides the BRepExtractor class for extracting properties specific 
+      to BRep (Boundary Representation) objects in CAD models.
     - extractor_factory.py: Provides the factory function to get the appropriate extractor based 
-      on the type of CAD object.
+      on the type of CAD object, and functions for extracting data from components.
 
 Classes:
     - BaseExtractor: Base class for all extractors, extracting common properties.
     - SketchExtractor: Extractor for Sketch objects, inheriting from BaseExtractor.
     - FeatureExtractor: Extractor for Feature objects, inheriting from BaseExtractor.
-    - get_extractor: Factory function to get the appropriate extractor based on the CAD object type.
+    - BRepExtractor: Extractor for BRep objects, inheriting from BaseExtractor.
+    - get_extractor: Factory function to get the appropriate extractor for a given CAD object.
+    - extract_data: Function to extract data from a CAD object.
+    - extract_component_data: Function to extract data from components in a CAD design.
 """
-
 
 from .base_extractor import BaseExtractor
 from .sketch_extractor import SketchExtractor
 from .feature_extractor import FeatureExtractor
-from .extractor_factory import get_extractor
+from .brep_extractor import BRepExtractor
+from .extractor_factory import get_extractor, extract_data, extract_component_data
 
-__all__ = ['BaseExtractor', 'SketchExtractor', 'FeatureExtractor', 'get_extractor']
+__all__ = ['BaseExtractor', 'SketchExtractor', 'FeatureExtractor', 'BRepExtractor', 'get_extractor', 'extract_data', 'extract_component_data']

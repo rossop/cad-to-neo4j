@@ -54,23 +54,9 @@ NEO4J_URI = os.getenv('NEO4J_URI')
 NEO4J_USER = os.getenv('NEO4J_USER')
 NEO4J_PASSWORD = os.getenv('NEO4J_PASSWORD')
 
-from .cad_to_neo4j.utils.logger import Logger, log_function, console_handler, file_handler
-from .cad_to_neo4j.extract import get_extractor
-from .cad_to_neo4j.load.neo4j_loader import Neo4jLoader
-
-@log_function
-def extract_data(element: Union[adsk.fusion.Sketch, adsk.fusion.Feature]):
-    try:
-        Logger.info(f"Processing element: {element.classType()}")
-        Extractor = get_extractor(element)
-        extracted_info = Extractor.extract_info()
-        return {
-            "type": element.classType(), #  TODO change type to label?
-            "properties": extracted_info
-        }
-    except Exception as e:
-        Logger.error(f"Error in extract_data: {str(e)}")
-        return None
+from .cad_to_neo4j.utils import Logger, log_function, console_handler, file_handler
+from .cad_to_neo4j.load import Neo4jLoader
+from .cad_to_neo4j.extract import extract_component_data, extract_data
 
 def run(context):
     global Logger, console_handler, file_handler, NEO4J_URI, NEO4J_USER, NEO4J_PASSWORD
@@ -100,34 +86,10 @@ def run(context):
             Logger.error('No active Fusion design')
             return None
        
-        # Initialise Neo4J loader
-        nodes = []
-        relationships = []
-        
+        # Initialise Neo4J Loader 
         with Neo4jLoader(uri=NEO4J_URI, user=NEO4J_USER, password=NEO4J_PASSWORD, Logger=Logger) as Loader:
-            # Process timeline
-            timeline = design.timeline
-            for i in range(timeline.count):
-                extracted_info = extract_data(timeline.item(i).entity)
-                if extracted_info:
-                    nodes.append(extracted_info)
-                    if i > 0:
-                        relationships.append({
-                            "from_id": nodes[i-1]['properties']['id_token'],
-                            "to_id": nodes[i]['properties']['id_token'],
-                            "rel_type": "NEXT_ON_TIMELINE"
-                        })
-
-            #Extract BRep data from bodies
-            root_comp = design.rootComponent
-
-            if root_comp:
-                Logger.info('Starting Brep extraction')
-                for body in root_comp.bRepBodies:
-                    extracted_info = extract_data(body)
-                if extracted_info:
-                    nodes.append(extracted_info)
-            
+            # Extract component data
+            nodes, relationships = extract_component_data(design, Logger=Logger)
             
             # Load all nodes and relationships in batch
             Loader.load_data(nodes, relationships)
@@ -147,6 +109,7 @@ def run(context):
         
 def stop(context):
     global Logger, console_handler, file_handler
+    Logger.info("Stopping Script and cleaning up logger.")
     if Logger:
         Logger.removeHandler(console_handler)
         Logger.removeHandler(file_handler)
@@ -159,6 +122,3 @@ def stop(context):
     if file_handler:
         file_handler.close()
         file_handler = None
-    
-    print("Script stopped and logger cleaned up.")
-
