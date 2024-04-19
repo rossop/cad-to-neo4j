@@ -11,32 +11,10 @@ import logging
 from typing import Union
 import pkg_resources
 from datetime import datetime
+from .cad_to_neo4j.utils.virtualenv_utils import add_virtualenv_to_path, remove_virtualenv_from_path
+
 # Define the global variable for the added site-packages path
 SITE_PACKAGES_PATH = None
-
-def add_virtualenv_to_path(venv_dir):
-    """Adds the virtual environment site-packages to sys.path."""
-    global SITE_PACKAGES_PATH
-    if sys.platform == "win32":
-        venv_site_packages = os.path.join(venv_dir, 'Lib', 'site-packages')
-    elif sys.platform == "darwin":
-        venv_site_packages = os.path.join(venv_dir, 'lib', f'python{sys.version_info.major}.{sys.version_info.minor}', 'site-packages')
-    else:
-        raise EnvironmentError("Unsupported operating system")
-
-    if not os.path.exists(venv_site_packages):
-        raise FileNotFoundError(f"Site-packages path does not exist: {venv_site_packages}")
-
-    if venv_site_packages not in sys.path:
-        sys.path.insert(0, venv_site_packages)  # Ensure it is the first path to be checked
-        SITE_PACKAGES_PATH = venv_site_packages
-
-def remove_virtualenv_from_path(venv_dir):
-    """Removes the virtual environment site-packages from sys.path."""
-    global SITE_PACKAGES_PATH
-    if SITE_PACKAGES_PATH and SITE_PACKAGES_PATH in sys.path:
-        sys.path.remove(SITE_PACKAGES_PATH)
-        SITE_PACKAGES_PATH = None
 
 # Add the virtual environment to the Python path
 VENV_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'fusion_venv')
@@ -59,7 +37,7 @@ from .cad_to_neo4j.load import Neo4jLoader
 from .cad_to_neo4j.extract import extract_component_data, extract_data
 
 def run(context):
-    global Logger, console_handler, file_handler, NEO4J_URI, NEO4J_USER, NEO4J_PASSWORD
+    global app, Logger, console_handler, file_handler, NEO4J_URI, NEO4J_USER, NEO4J_PASSWORD
     ui = None
     Loader = None
     try:
@@ -103,12 +81,14 @@ def run(context):
         Logger.error(f'Exception: {e}')
     finally:
         # Cleanup
-        remove_virtualenv_from_path(VENV_DIR)
-        for handler in Logger.handlers:
-            if isinstance(handler, logging.StreamHandler):
-                text_palette.writeText(handler.stream.getvalue())
+        if Logger:
+            for handler in Logger.handlers:
+                if isinstance(handler, logging.StreamHandler):
+                    text_palette.writeText(handler.stream.getvalue())
+
+
 def stop(context):
-    global Logger, console_handler, file_handler
+    global Logger, console_handler, file_handler, app
     Logger.info("Stopping Script and cleaning up logger.")
     if Logger:
         Logger.removeHandler(console_handler)
@@ -122,3 +102,12 @@ def stop(context):
     if file_handler:
         file_handler.close()
         file_handler = None
+
+    try:
+        remove_virtualenv_from_path()
+    except Exception as e:
+            app.log(f'Exception: {e}')
+
+    if app:
+        app.log("Script stopped and logger cleaned up.")
+        app = None
