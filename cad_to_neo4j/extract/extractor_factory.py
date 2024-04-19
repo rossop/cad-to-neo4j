@@ -22,7 +22,7 @@ import adsk.fusion
 from adsk.fusion import Sketch, Feature, BRepBody, Component # TODO standardise adsk impors
 from .base_extractor import BaseExtractor
 from .sketch_extractor import SketchExtractor
-from .feature_extractor import FeatureExtractor
+from .extrude_feature_extractor import ExtrudeFeatureExtractor
 from .brep_extractor import BRepExtractor
 from ..utils.logger_utils import Logger
 
@@ -30,7 +30,7 @@ __all__ = ['get_extractor', 'extract_data', 'extract_component_data']
 
 EXTRACTORS = {
     'adsk::fusion::Sketch': SketchExtractor,
-    'adsk::fusion::ExtrudeFeature': FeatureExtractor, 
+    'adsk::fusion::ExtrudeFeature': ExtrudeFeatureExtractor, 
     'adsk::fusion::BRepBody': BRepExtractor, 
 }
 # TODO generalise for different features
