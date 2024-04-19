@@ -12,6 +12,7 @@ from neo4j import GraphDatabase
 
 __all__ = ['Neo4jTransactionManager']
 
+
 class Neo4jTransactionManager(object):
     """
     A class to manage Neo4j transactions, providing methods to execute Cypher queries
@@ -51,17 +52,17 @@ class Neo4jTransactionManager(object):
         Returns:
             Neo4jTransactionManager: The instance of Neo4jTransactionManager.
         """
+        self.session = self.driver.session()
         return self
 
-    def __exit__(self, exc_type, exc_value, traceback):
+    def __exit__(self, *args):
         """
         Exits the runtime context related to this object, ensuring the driver connection is closed.
 
         Args:
-            exc_type (type): The exception type.
-            exc_value (Exception): The exception instance.
-            traceback (traceback): The traceback object.
+            *args: The exception type, value, and traceback.
         """
+        self.session.close()
         self.close()
 
     def execute_query(self, query: str, parameters: dict = None):
@@ -75,6 +76,5 @@ class Neo4jTransactionManager(object):
         Returns:
             list: The result values from the query execution.
         """
-        with self.driver.session() as session:
-            result = session.run(query, parameters)
-            return result.values()
+        result = self.session.run(query, parameters)
+        return result.values()

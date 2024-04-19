@@ -23,8 +23,9 @@ NEO4J_USER = credentials["NEO4J_USER"]
 NEO4J_PASSWORD = credentials["NEO4J_PASSWORD"]
 
 from .cad_to_neo4j.utils.logger_utils import Logger, console_handler, file_handler # TODO setup logger here
-from .cad_to_neo4j.load import Neo4jLoader
 from .cad_to_neo4j.extract import extract_component_data
+from .cad_to_neo4j.load import Neo4jLoader
+from .cad_to_neo4j.tranform import Neo4jTransformer
 
 def run(context):
     global app, Logger, console_handler, file_handler, NEO4J_URI, NEO4J_USER, NEO4J_PASSWORD
@@ -58,10 +59,17 @@ def run(context):
         # Initialise Neo4J Loader 
         with Neo4jLoader(uri=NEO4J_URI, user=NEO4J_USER, password=NEO4J_PASSWORD, Logger=Logger) as Loader:
             # Extract component data
-            nodes, relationships = extract_component_data(design, Logger=Logger)
+            nodes, relationships = extract_component_data(design, Logger=Logger) # TODO turn into extractor object
             
             # Load all nodes and relationships in batch
             Loader.load_data(nodes, relationships)
+
+        with Neo4jTransformer(uri=NEO4J_URI, user=NEO4J_USER, password=NEO4J_PASSWORD, Logger=Logger) as Transformer:
+            # Transform graph data
+            _ = Transformer.create_timeline_relationships()
+            _ = Transformer.create_adjacent_face_relationships()
+            _ = Transformer.create_adjacent_edge_relationships()
+            _ = Transformer.create_profile_relationships()
 
         Logger.info('CAD extraction process completed')
 
