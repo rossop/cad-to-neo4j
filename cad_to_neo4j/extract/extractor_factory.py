@@ -24,7 +24,7 @@ from .base_extractor import BaseExtractor
 from .sketch_extractor import SketchExtractor
 from .feature_extractor import FeatureExtractor
 from .brep_extractor import BRepExtractor
-from ..utils.logger import Logger
+from ..utils.logger_utils import Logger
 
 __all__ = ['get_extractor', 'extract_data', 'extract_component_data']
 

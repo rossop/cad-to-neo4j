@@ -10,7 +10,6 @@ Classes:
 
 import adsk.fusion # TODO standardise this import for 
 from .base_extractor import BaseExtractor
-from ..utils.logger import log_function
 
 __all__ = ['BRepExtractor']
 

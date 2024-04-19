@@ -6,8 +6,9 @@ models from CAD software to the Neo4j graph database.
 It includes modules for logging and loading password files.
 
 Modules:
-    - logger.py: Logging functions and decorators using the logging module.
+    - logger_utils.py: Logging functions and decorators using the logging module.
 """
 
-from .logger import *
-__all__ = logger.__all__
+from .logger_utils import *
+
+__all__ = logger_utils.__all__
