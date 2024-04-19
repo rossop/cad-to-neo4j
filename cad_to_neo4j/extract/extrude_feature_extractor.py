@@ -7,6 +7,7 @@ Classes:
     - ExtrudeFeatureExtractor: Extractor for ExtrudeFeature objects.
 """
 from adsk.fusion import ExtrudeFeature
+import adsk.core
 from .feature_extractor import FeatureExtractor
 
 __all__ = ['ExtrudeFeatureExtractor']
@@ -19,17 +20,17 @@ class ExtrudeFeatureExtractor(FeatureExtractor):
         super().__init__(element)
 
     @property
-    def profile(self):
-        """Extracts the profiles used by the ExtrudeFeature.
+    def profile_tokens(self):
+        """Extracts the tokens of profiles used by the ExtrudeFeature.
 
         Returns:
-            list: A list of profiles used by the ExtrudeFeature.
+            list: A list of profile tokens used by the ExtrudeFeature.
         """
         try:
             profiles = self._obj.profile
             if isinstance(profiles, adsk.core.ObjectCollection):
-                return [profile for profile in profiles]
-            return [profiles]
+                return [profile.entityToken for profile in profiles]
+            return [profiles.entityToken]
         except AttributeError:
             return []
 
@@ -40,5 +41,7 @@ class ExtrudeFeatureExtractor(FeatureExtractor):
             dict: A dictionary containing the extracted information.
         """
         feature_info = super().extract_info()
-        extrude_info = {}
+        extrude_info = {
+            'profile_tokens': self.profile_tokens
+        }
         return {**feature_info, **extrude_info}

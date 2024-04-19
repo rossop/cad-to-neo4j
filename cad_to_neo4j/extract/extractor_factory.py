@@ -18,8 +18,7 @@ import logging
 from typing import Tuple, List, Dict
 
 from adsk.core import Base
-import adsk.fusion
-from adsk.fusion import Sketch, Feature, BRepBody, Component # TODO standardise adsk impors
+from adsk.fusion import Sketch, Feature, BRepBody, Component, Design # TODO standardise adsk impors
 from .base_extractor import BaseExtractor
 from .sketch_extractor import SketchExtractor
 from .extrude_feature_extractor import ExtrudeFeatureExtractor
@@ -68,7 +67,7 @@ def extract_data(element: Base) -> dict:
         Logger.error(f"Error in extract_data: {str(e)}")
         return None
 
-def extract_component_data(design: adsk.fusion.Design, 
+def extract_component_data(design: Design, 
                            Logger: logging.Logger = None) -> Tuple[List[Dict], List[Dict]]:
     """
     Extracs data from the components, and their children sketches, features and
@@ -107,10 +106,11 @@ def extract_component_data(design: adsk.fusion.Design,
                     nodes.append(extracted_info)
                     processed_ids.add(entity_id)
                 add_relationship(parent_id, entity_id, rel_type)
-            return entity_id
+                return entity_id    
         except Exception as e:
             if Logger:
                 Logger.error(f"Error extracting and appending data for {entity}: {str(e)}")
+                Logger.error(f"Extracted info: {extracted_info}")
         return None
     
     def extract_brep_entity_data(brep_entity, parent_id):
