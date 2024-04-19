@@ -68,7 +68,8 @@ def extract_data(element: Base) -> dict:
         Logger.error(f"Error in extract_data: {str(e)}")
         return None
 
-def extract_component_data(design: adsk.fusion.Design, Logger: logging.Logger = None) -> Tuple[List[Dict], List[Dict]]:
+def extract_component_data(design: adsk.fusion.Design, 
+                           Logger: logging.Logger = None) -> Tuple[List[Dict], List[Dict]]:
     """
     Extracs data from the components, and their children sketches, features and
     BRep bodies in the design.
@@ -83,6 +84,17 @@ def extract_component_data(design: adsk.fusion.Design, Logger: logging.Logger = 
     nodes = []
     relationships = [] # TODO turn into a set to avoid repetition
     processed_ids = set()  # Set to avoid duplication of nodes
+    processed_relationships = set()  # Set to avoid duplication of relationships
+
+    def add_relationship(from_id, to_id, rel_type):
+        """Helper function to add a relationship and avoid duplication."""
+        if (from_id, to_id, rel_type) not in processed_relationships:
+            relationships.append({
+                "from_id": from_id,
+                "to_id": to_id,
+                "rel_type": rel_type
+            })
+            processed_relationships.add((from_id, to_id, rel_type))
 
 
     def extract_and_append(entity, parent_id, rel_type):
@@ -94,11 +106,7 @@ def extract_component_data(design: adsk.fusion.Design, Logger: logging.Logger = 
                 if entity_id not in processed_ids:
                     nodes.append(extracted_info)
                     processed_ids.add(entity_id)
-                relationships.append({
-                    "from_id": parent_id,
-                    "to_id": entity_id,
-                    "rel_type": rel_type
-                })
+                add_relationship(parent_id, entity_id, rel_type)
             return entity_id
         except Exception as e:
             if Logger:
@@ -129,7 +137,17 @@ def extract_component_data(design: adsk.fusion.Design, Logger: logging.Logger = 
             for adjacent_face in face.tangentiallyConnectedFaces:
                 _ = extract_and_append(adjacent_face, face_id, "ADJACENT")
 
-    
+    def extract_sketch_profiles(sketch, parent_id):
+        """Helper function to extract profiles from a sketch and link them."""
+        sketch_id = extract_and_append(sketch, parent_id, "CONTAINS")
+        if not sketch_id:
+            return
+        
+        for profile in sketch.profiles:
+            profile_id = extract_and_append(profile, sketch_id, "CONTAINS")
+            if profile_id:
+                add_relationship(sketch_id, profile_id, "CONTAINS")
+
     comp = design.rootComponent
     if comp:
         Logger.info('Starting component Extraction')
@@ -143,7 +161,7 @@ def extract_component_data(design: adsk.fusion.Design, Logger: logging.Logger = 
 
         # Extract Sketches
         for sketch in comp.sketches:
-            _ = extract_and_append(sketch, component_id, "CONTAINS")
+            extract_sketch_profiles(sketch, component_id)
 
         # Extract Features 
         for feat in comp.features:

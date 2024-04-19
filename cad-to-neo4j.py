@@ -81,6 +81,7 @@ def run(context):
         
         # Get the active document and design
         product = app.activeProduct
+       
         design = adsk.fusion.Design.cast(product)
         if not design:
             Logger.error('No active Fusion design')
@@ -106,7 +107,6 @@ def run(context):
         for handler in Logger.handlers:
             if isinstance(handler, logging.StreamHandler):
                 text_palette.writeText(handler.stream.getvalue())
-        
 def stop(context):
     global Logger, console_handler, file_handler
     Logger.info("Stopping Script and cleaning up logger.")
