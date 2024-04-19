@@ -37,6 +37,7 @@ def setup_logger(name, level=logging.DEBUG):
     Returns:
         tuple: Configured logger, console handler, file handler.
     """
+    # TODO add type linting and have kwargs to determine the location and name of the logger
     Logger = logging.getLogger(name)
     Logger.setLevel(level)
 
@@ -49,14 +50,14 @@ def setup_logger(name, level=logging.DEBUG):
 
     # File Handler
     log_dir = os.path.expanduser('~/Desktop')
-    log_file = os.path.join(log_dir, 'cad_extractor.log')
+    log_file = os.path.join(log_dir, 'cad_to_graph.log')
     file_handler = logging.FileHandler(log_file, mode='a')
     file_handler.setFormatter(formatter)
     Logger.addHandler(file_handler)
 
     return Logger, console_handler, file_handler
 
-Logger, console_handler, file_handler = setup_logger('cad_extractor')
+Logger, console_handler, file_handler = setup_logger('cad_to_graph')
 
 # Logger Decorator
 def log_function(func):

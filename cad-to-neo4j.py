@@ -32,9 +32,9 @@ NEO4J_URI = os.getenv('NEO4J_URI')
 NEO4J_USER = os.getenv('NEO4J_USER')
 NEO4J_PASSWORD = os.getenv('NEO4J_PASSWORD')
 
-from .cad_to_neo4j.utils.logger_utils import Logger, log_function, console_handler, file_handler
+from .cad_to_neo4j.utils.logger_utils import Logger, console_handler, file_handler # TODO setup logger here
 from .cad_to_neo4j.load import Neo4jLoader
-from .cad_to_neo4j.extract import extract_component_data, extract_data
+from .cad_to_neo4j.extract import extract_component_data
 
 def run(context):
     global app, Logger, console_handler, file_handler, NEO4J_URI, NEO4J_USER, NEO4J_PASSWORD
