@@ -25,12 +25,13 @@ Classes:
     - get_extractor: Factory function to get the appropriate extractor for a given CAD object.
     - extract_data: Function to extract data from a CAD object.
     - extract_component_data: Function to extract data from components in a CAD design.
+    # TODO refactor isolating the modules
 """
 
 from .base_extractor import BaseExtractor
 from .sketch_extractor import SketchExtractor
 from .feature_extractor import FeatureExtractor
-from .brep_extractor import BRepExtractor
+from .brep_extractor import BRepExtractor, BRepEntityExtractor, BRepFaceExtractor, BRepEdgeExtractor
 from .extractor_factory import get_extractor, extract_data, extract_component_data
 
-__all__ = ['BaseExtractor', 'SketchExtractor', 'FeatureExtractor', 'BRepExtractor', 'get_extractor', 'extract_data', 'extract_component_data']
+__all__ = ['BaseExtractor', 'SketchExtractor', 'FeatureExtractor', 'BRepExtractor', 'get_extractor', 'extract_data', 'extract_component_data', 'BRepEntityExtractor', 'BRepFaceExtractor', 'BRepEdgeExtractor']

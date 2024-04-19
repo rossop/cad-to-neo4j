@@ -22,7 +22,7 @@ from adsk.fusion import Sketch, Feature, BRepBody, Component, Design # TODO stan
 from .base_extractor import BaseExtractor
 from .sketch_extractor import SketchExtractor
 from .extrude_feature_extractor import ExtrudeFeatureExtractor
-from .brep_extractor import BRepExtractor
+from .brep_extractor import BRepExtractor, BRepFaceExtractor, BRepEdgeExtractor
 from ..utils.logger_utils import Logger
 
 __all__ = ['get_extractor', 'extract_data', 'extract_component_data']
@@ -31,6 +31,8 @@ EXTRACTORS = {
     'adsk::fusion::Sketch': SketchExtractor,
     'adsk::fusion::ExtrudeFeature': ExtrudeFeatureExtractor, 
     'adsk::fusion::BRepBody': BRepExtractor, 
+    'adsk::fusion::BRepFace': BRepFaceExtractor,
+    'adsk::fusion::BRepEdge': BRepEdgeExtractor,
 }
 # TODO generalise for different features
 
@@ -122,20 +124,11 @@ def extract_component_data(design: Design,
         # Extract and append faces, edges, and vertices
         for face in brep_entity.faces:
             face_id = extract_and_append(face, entity_id, "CONTAINS")
+
             for edge in face.edges:
                 edge_id = extract_and_append(edge, face_id, "CONTAINS")
                 for vertex in [edge.startVertex, edge.endVertex]:
                     _ = extract_and_append(vertex, edge_id, "CONTAINS")
-
-                # Establish ADJACENT relationships for edges
-                # TODO avoid self adjacency
-                for adjacent_edge in edge.tangentiallyConnectedEdges:
-                    _ = extract_and_append(adjacent_edge, edge_id, "ADJACENT")
-
-            # Establish ADJACENT relationships for faces
-            # TODO understnad why there are no adjacency between faces
-            for adjacent_face in face.tangentiallyConnectedFaces:
-                _ = extract_and_append(adjacent_face, face_id, "ADJACENT")
 
     def extract_sketch_profiles(sketch, parent_id):
         """Helper function to extract profiles from a sketch and link them."""
