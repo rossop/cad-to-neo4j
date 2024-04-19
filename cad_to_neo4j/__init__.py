@@ -15,7 +15,7 @@ Modules:
 """
 
 from . import utils
-from .extract import *
+from . import extract
 from .load import *
 
 __all__ = utils.__all__ + extract.__all__ + load.__all__

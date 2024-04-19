@@ -12,7 +12,7 @@ from neo4j import GraphDatabase
 
 __all__ = ['Neo4jTransactionManager']
 
-class Neo4jTransactionManager:
+class Neo4jTransactionManager(object):
     """
     A class to manage Neo4j transactions, providing methods to execute Cypher queries
     and handle the lifecycle of the Neo4j driver.

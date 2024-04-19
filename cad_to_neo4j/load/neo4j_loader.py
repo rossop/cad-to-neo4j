@@ -9,13 +9,13 @@ Functions:
     - load_data: Loads extracted data into the Neo4j database.
 """
 
-from neo4j import GraphDatabase
+from ..utils.neo4j_utils import Neo4jTransactionManager
 from typing import Dict, List, Union
 import logging
 
-__all__ = ['Neo4jLoader', 'create_nodes', 'create_relationships', 'load_data']
+__all__ = ['Neo4jLoader']
 
-class Neo4jLoader(object):
+class Neo4jLoader(Neo4jTransactionManager):
     """
     A class to handle loading data into a Neo4j graph database.
 
@@ -23,6 +23,11 @@ class Neo4jLoader(object):
         driver (neo4j.GraphDatabase.driver): The Neo4j driver for database connections.
         _batch_size (int): The size of batches for bulk data loading.
         logger (logging.Logger): The logger for logging messages and errors.
+    
+    Methods:
+        create_nodes(tx, nodes): Creates multiple nodes in the Neo4j database in a batch.
+        create_relationships(tx, relationships): Creates multiple relationships in the Neo4j database in a batch.
+        load_data(nodes, relationships=None): Loads extracted data into the Neo4j database.
     """
     def __init__(self, uri: str, user: str, password: str, Logger: logging.Logger = None ):
         """
@@ -34,36 +39,9 @@ class Neo4jLoader(object):
             password (str): The password for authentication.
             Logger (logging.Logger, optional): The logger for logging messages and errors.
         """
-        self.driver = GraphDatabase.driver(uri, auth=(user, password))
+        super().__init__(uri, user, password)
         self._batch_size = 1000
         self.logger = Logger 
-
-    def close(self):
-        """
-        Closes the Neo4j driver connection and sets the logger to None.
-        """
-        # Clean up the Neo4j driver connection
-        if self.driver:
-            self.driver.close()
-        # Set the logger to None
-        self.Logger = None
-    
-    def __enter__(self):
-        """
-        Enters the runtime context related to this object.
-        
-        Returns:
-            Neo4jLoader: The instance of Neo4jLoader.
-        """
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        """
-        Exits the runtime context related to this object.
-        
-        Ensures resources are cleaned up.
-        """
-        self.close()
 
     def create_nodes(self, tx, nodes: List[Dict]):
         """Creates multiple nodes in the Neo4j database in a batch.
