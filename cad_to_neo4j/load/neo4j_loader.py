@@ -40,8 +40,8 @@ class Neo4jLoader(Neo4jTransactionManager):
             Logger (logging.Logger, optional): The logger for logging messages and errors.
         """
         super().__init__(uri, user, password)
-        self._batch_size = 1000
-        self.logger = Logger 
+        self._batch_size = 1000 # TODO turn this into a @property
+        self.logger = Logger  
 
     def create_nodes(self, tx, nodes: List[Dict]):
         """Creates multiple nodes in the Neo4j database in a batch.
