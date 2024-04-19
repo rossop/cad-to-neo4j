@@ -14,7 +14,7 @@ Modules:
     - utils: Common utility functions and classes used across the package.
 """
 
-from .utils import *
+from . import utils
 from .extract import *
 from .load import *
 

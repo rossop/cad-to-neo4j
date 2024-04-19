@@ -9,6 +9,6 @@ Modules:
     - logger_utils.py: Logging functions and decorators using the logging module.
 """
 
-from .logger_utils import *
+from . import logger_utils
 
 __all__ = logger_utils.__all__
