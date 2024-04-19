@@ -8,16 +8,11 @@ import sys
 import os
 import adsk.core, adsk.fusion, adsk.cam, traceback
 import logging
-from .cad_to_neo4j.utils.virtualenv_utils import add_virtualenv_to_path, remove_virtualenv_from_path
+
+# Import and run the virtual environment setup
+from .setup_environment import add_virtualenv_to_path, remove_virtualenv_from_path
+
 from .cad_to_neo4j.utils.credential_utils import load_credentials
-
-# Define the global variable for the added site-packages path
-SITE_PACKAGES_PATH = None
-
-# Add the virtual environment to the Python path
-VENV_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'fusion_venv')
-add_virtualenv_to_path(VENV_DIR)
-
 # Load environment variables from .env file
 dotenv_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.env')
 credentials = load_credentials(dotenv_path=dotenv_path)
