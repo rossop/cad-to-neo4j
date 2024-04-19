@@ -9,8 +9,6 @@ import os
 import adsk.core, adsk.fusion, adsk.cam, traceback
 import logging
 from typing import Union
-import pkg_resources
-from datetime import datetime
 from .cad_to_neo4j.utils.virtualenv_utils import add_virtualenv_to_path, remove_virtualenv_from_path
 
 # Define the global variable for the added site-packages path
