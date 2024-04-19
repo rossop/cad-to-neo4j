@@ -3,7 +3,8 @@ Utilities Package
 
 This package provides common utilities to Extract, Transform and Load CAD
 models from CAD software to the Neo4j graph database.
-It includes modules for logging and managing virtual environments.
+It includes modules for logging, managing virtual environments, and loading 
+credentials.
 
 Modules:
     - logger_utils.py: Logging functions and decorators using the logging module.
@@ -14,5 +15,6 @@ Modules:
 from . import logger_utils
 from . import virtualenv_utils
 from . import neo4j_utils
+from . import credential_utils
 
-__all__ = logger_utils.__all__ + virtualenv_utils.__all__ + neo4j_utils.__all__
+__all__ = logger_utils.__all__ + virtualenv_utils.__all__ + neo4j_utils.__all__ + credential_utils.__all__

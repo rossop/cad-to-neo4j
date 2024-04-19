@@ -8,8 +8,8 @@ import sys
 import os
 import adsk.core, adsk.fusion, adsk.cam, traceback
 import logging
-from typing import Union
 from .cad_to_neo4j.utils.virtualenv_utils import add_virtualenv_to_path, remove_virtualenv_from_path
+from .cad_to_neo4j.utils.credential_utils import load_credentials
 
 # Define the global variable for the added site-packages path
 SITE_PACKAGES_PATH = None
@@ -18,17 +18,14 @@ SITE_PACKAGES_PATH = None
 VENV_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'fusion_venv')
 add_virtualenv_to_path(VENV_DIR)
 
-# Import dotenv after adding the virtual environment to the path
-from dotenv import load_dotenv
-
 # Load environment variables from .env file
 dotenv_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.env')
-load_dotenv(dotenv_path=dotenv_path)
+credentials = load_credentials(dotenv_path=dotenv_path)
 
 # Neo4j credentials
-NEO4J_URI = os.getenv('NEO4J_URI')
-NEO4J_USER = os.getenv('NEO4J_USER')
-NEO4J_PASSWORD = os.getenv('NEO4J_PASSWORD')
+NEO4J_URI = credentials["NEO4J_URI"]
+NEO4J_USER = credentials["NEO4J_USER"]
+NEO4J_PASSWORD = credentials["NEO4J_PASSWORD"]
 
 from .cad_to_neo4j.utils.logger_utils import Logger, console_handler, file_handler # TODO setup logger here
 from .cad_to_neo4j.load import Neo4jLoader
