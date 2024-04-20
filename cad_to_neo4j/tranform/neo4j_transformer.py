@@ -18,7 +18,6 @@ class Neo4jTransformer(Neo4jTransactionManager):
 
     Attributes:
         driver (neo4j.GraphDatabase.driver): The Neo4j driver for database connections.
-        _batch_size (int): The size of batches for bulk data loading.
         logger (logging.Logger): The logger for logging messages and errors.
     
     Methods:
@@ -37,7 +36,6 @@ class Neo4jTransformer(Neo4jTransactionManager):
             logger (logging.Logger, optional): The logger for logging messages and errors.
         """
         super().__init__(uri, user, password)
-        self._batch_size = 1000  # TODO: turn this into a @property
         self.logger = Logger
 
     def create_timeline_relationships(self):
@@ -64,6 +62,7 @@ class Neo4jTransformer(Neo4jTransactionManager):
         """
 
         result = []
+        self.logger.info('Creating timeline relationships')
         try:
             result = self.execute_query(cypher_query)
         except Exception as e:
@@ -87,6 +86,7 @@ class Neo4jTransformer(Neo4jTransactionManager):
         RETURN f.id_token AS feature_id, collect(p.id_token) AS profile_ids
         """
         result = []
+        self.logger.info('Creating profile/feature relationships')
         try:
             result = self.execute_query(cypher_query)
         except Exception as e:
@@ -109,6 +109,7 @@ class Neo4jTransformer(Neo4jTransactionManager):
         RETURN f1.id_token AS face1_id, f2.id_token AS face2_id
         """
         result = []
+        self.logger.info('Creating adjacent face relationships')
         try:
             result = self.execute_query(cypher_query)
         except Exception as e:
@@ -131,8 +132,8 @@ class Neo4jTransformer(Neo4jTransactionManager):
         MERGE (e2)-[:ADJACENT]->(e1)
         RETURN e1.id_token AS edge1_id, collect(e2.id_token) AS adjacent_edge_ids
         """
-
         result = []
+        self.logger.info('Creating adjacent edge relationships')
         try:
             result = self.execute_query(cypher_query)
         except Exception as e:
