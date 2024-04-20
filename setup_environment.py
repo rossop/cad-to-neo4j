@@ -1,10 +1,10 @@
 # setup_environment.py
-
 """
 Environment Setup Script
 
 This script sets up the Fusion360 environment by adding the necessary 
 site-packages to the sys.path.
+The script was inspired by Jorge_Jaramillo's answer on the Autodesk Community.
 
 Here are provided functions to manage the inclusion and removal of 
 virtual environment site-packages in the sys.path. It ensures that the 
@@ -13,7 +13,7 @@ virtual environment.
 
 Functions:
     - add_virtualenv_to_path: Adds the virtual environment site-packages to sys.path.
-    - remove_virtualenv_from_path: Removes the virtual environment site-packages from sys.path
+    - remove_virtualenv_from_path: Removes the virtual environment site-packages from sys.path    
 """
 
 import sys
