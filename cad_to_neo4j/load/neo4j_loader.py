@@ -43,6 +43,19 @@ class Neo4jLoader(Neo4jTransactionManager):
         self._batch_size = 1000 # TODO turn this into a @property
         self.logger = Logger  
 
+    @property
+    def batch_size(self):
+        """Gets the batch size for bulk data loading."""
+        return self._batch_size
+
+    @batch_size.setter
+    def batch_size(self, value: int):
+        """Sets the batch size for bulk data loading."""
+        if value > 0:
+            self._batch_size = value
+        else:
+            raise ValueError("Batch size must be a positive integer")
+
     def create_nodes(self, tx, nodes: List[Dict]):
         """Creates multiple nodes in the Neo4j database in a batch.
 
@@ -70,8 +83,6 @@ class Neo4jLoader(Neo4jTransactionManager):
             relationships (list): List of relationship dictionaries.
         """
         try:
-            # if self.logger:
-                # self.logger.debug(f"{relationships}")
             query = """
             UNWIND $relationships AS rel
             MATCH (a {id_token: rel.from_id}), (b {id_token: rel.to_id})
@@ -97,20 +108,16 @@ class Neo4jLoader(Neo4jTransactionManager):
 
         try:
             # Create nodes in batches
-            with self.driver.session() as session:
-                if nodes:
-                    for i in range(0, len(nodes), self._batch_size):
-                        if self.logger:
-                            self.logger.info(f"Loading batch {i // self._batch_size + 1} with {len(nodes[i:i + self._batch_size])} nodes")
-                        session.write_transaction(self.create_nodes, nodes[i:i + self._batch_size])
+            if nodes:
+                for i in range(0, len(nodes), self.batch_size):
+                    self.logger.info(f"Loading batch {i // self.batch_size + 1} with {len(nodes[i:i + self.batch_size])} nodes")
+                    self.session.write_transaction(self.create_nodes, nodes[i:i + self.batch_size])
 
-                # Create relationships in batches
-                if relationships:
-                    for i in range(0, len(relationships), self._batch_size):
-                        if self.logger:
-                            self.logger.info(f"Loading batch {i // self._batch_size + 1} with {len(relationships[i:i + self._batch_size])} relationships")
-                        session.write_transaction(self.create_relationships, relationships[i:i + self._batch_size])
-
+            # Create relationships in batches
+            if relationships:
+                for i in range(0, len(relationships), self.batch_size):
+                    self.logger.info(f"Loading batch {i // self.batch_size + 1} with {len(relationships[i:i + self.batch_size])} relationships")
+                    self.session.write_transaction(self.create_relationships, relationships[i:i + self.batch_size])
         except Exception as e:
             if self.logger:
                 self.logger.error(f"Error loading data: {e}")
@@ -119,17 +126,16 @@ class Neo4jLoader(Neo4jTransactionManager):
 if __name__ == "__main__":
     # Imports only relevant to this example
     import os
-    from dotenv import load_dotenv
+    from ..utils.credential_utils import load_credentials
 
     # Load environment variables from .env file
-    dotenv_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), '.env')
-    load_dotenv(dotenv_path=dotenv_path)
+    dotenv_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.env')
+    credentials = load_credentials(dotenv_path=dotenv_path)
 
     # Neo4j credentials
-    NEO4J_URI = os.getenv('NEO4J_URI')
-    NEO4J_USER = os.getenv('NEO4J_USER')
-    NEO4J_PASSWORD = os.getenv('NEO4J_PASSWORD')
-
+    NEO4J_URI = credentials["NEO4J_URI"]
+    NEO4J_USER = credentials["NEO4J_USER"]
+    NEO4J_PASSWORD = credentials["NEO4J_PASSWORD"]
 
     Loader = Neo4jLoader(uri=NEO4J_URI, user=NEO4J_USER, password=NEO4J_PASSWORD)
     
