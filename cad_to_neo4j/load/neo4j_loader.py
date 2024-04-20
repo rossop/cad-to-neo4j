@@ -9,13 +9,13 @@ Functions:
     - load_data: Loads extracted data into the Neo4j database.
 """
 
-from neo4j import GraphDatabase
+from ..utils.neo4j_utils import Neo4jTransactionManager
 from typing import Dict, List, Union
 import logging
 
-__all__ = ['Neo4jLoader', 'create_nodes', 'create_relationships', 'load_data']
+__all__ = ['Neo4jLoader']
 
-class Neo4jLoader(object):
+class Neo4jLoader(Neo4jTransactionManager):
     """
     A class to handle loading data into a Neo4j graph database.
 
@@ -23,6 +23,11 @@ class Neo4jLoader(object):
         driver (neo4j.GraphDatabase.driver): The Neo4j driver for database connections.
         _batch_size (int): The size of batches for bulk data loading.
         logger (logging.Logger): The logger for logging messages and errors.
+    
+    Methods:
+        create_nodes(tx, nodes): Creates multiple nodes in the Neo4j database in a batch.
+        create_relationships(tx, relationships): Creates multiple relationships in the Neo4j database in a batch.
+        load_data(nodes, relationships=None): Loads extracted data into the Neo4j database.
     """
     def __init__(self, uri: str, user: str, password: str, Logger: logging.Logger = None ):
         """
@@ -34,36 +39,22 @@ class Neo4jLoader(object):
             password (str): The password for authentication.
             Logger (logging.Logger, optional): The logger for logging messages and errors.
         """
-        self.driver = GraphDatabase.driver(uri, auth=(user, password))
-        self._batch_size = 1000
-        self.logger = Logger 
+        super().__init__(uri, user, password)
+        self._batch_size = 1000 # TODO turn this into a @property
+        self.logger = Logger  
 
-    def close(self):
-        """
-        Closes the Neo4j driver connection and sets the logger to None.
-        """
-        # Clean up the Neo4j driver connection
-        if self.driver:
-            self.driver.close()
-        # Set the logger to None
-        self.Logger = None
-    
-    def __enter__(self):
-        """
-        Enters the runtime context related to this object.
-        
-        Returns:
-            Neo4jLoader: The instance of Neo4jLoader.
-        """
-        return self
+    @property
+    def batch_size(self):
+        """Gets the batch size for bulk data loading."""
+        return self._batch_size
 
-    def __exit__(self, exc_type, exc_value, traceback):
-        """
-        Exits the runtime context related to this object.
-        
-        Ensures resources are cleaned up.
-        """
-        self.close()
+    @batch_size.setter
+    def batch_size(self, value: int):
+        """Sets the batch size for bulk data loading."""
+        if value > 0:
+            self._batch_size = value
+        else:
+            raise ValueError("Batch size must be a positive integer")
 
     def create_nodes(self, tx, nodes: List[Dict]):
         """Creates multiple nodes in the Neo4j database in a batch.
@@ -92,8 +83,6 @@ class Neo4jLoader(object):
             relationships (list): List of relationship dictionaries.
         """
         try:
-            # if self.logger:
-                # self.logger.debug(f"{relationships}")
             query = """
             UNWIND $relationships AS rel
             MATCH (a {id_token: rel.from_id}), (b {id_token: rel.to_id})
@@ -119,20 +108,16 @@ class Neo4jLoader(object):
 
         try:
             # Create nodes in batches
-            with self.driver.session() as session:
-                if nodes:
-                    for i in range(0, len(nodes), self._batch_size):
-                        if self.logger:
-                            self.logger.info(f"Loading batch {i // self._batch_size + 1} with {len(nodes[i:i + self._batch_size])} nodes")
-                        session.write_transaction(self.create_nodes, nodes[i:i + self._batch_size])
+            if nodes:
+                for i in range(0, len(nodes), self.batch_size):
+                    self.logger.info(f"Loading batch {i // self.batch_size + 1} with {len(nodes[i:i + self.batch_size])} nodes")
+                    self.session.write_transaction(self.create_nodes, nodes[i:i + self.batch_size])
 
-                # Create relationships in batches
-                if relationships:
-                    for i in range(0, len(relationships), self._batch_size):
-                        if self.logger:
-                            self.logger.info(f"Loading batch {i // self._batch_size + 1} with {len(relationships[i:i + self._batch_size])} relationships")
-                        session.write_transaction(self.create_relationships, relationships[i:i + self._batch_size])
-
+            # Create relationships in batches
+            if relationships:
+                for i in range(0, len(relationships), self.batch_size):
+                    self.logger.info(f"Loading batch {i // self.batch_size + 1} with {len(relationships[i:i + self.batch_size])} relationships")
+                    self.session.write_transaction(self.create_relationships, relationships[i:i + self.batch_size])
         except Exception as e:
             if self.logger:
                 self.logger.error(f"Error loading data: {e}")
@@ -141,17 +126,16 @@ class Neo4jLoader(object):
 if __name__ == "__main__":
     # Imports only relevant to this example
     import os
-    from dotenv import load_dotenv
+    from ..utils.credential_utils import load_credentials
 
     # Load environment variables from .env file
-    dotenv_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), '.env')
-    load_dotenv(dotenv_path=dotenv_path)
+    dotenv_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.env')
+    credentials = load_credentials(dotenv_path=dotenv_path)
 
     # Neo4j credentials
-    NEO4J_URI = os.getenv('NEO4J_URI')
-    NEO4J_USER = os.getenv('NEO4J_USER')
-    NEO4J_PASSWORD = os.getenv('NEO4J_PASSWORD')
-
+    NEO4J_URI = credentials["NEO4J_URI"]
+    NEO4J_USER = credentials["NEO4J_USER"]
+    NEO4J_PASSWORD = credentials["NEO4J_PASSWORD"]
 
     Loader = Neo4jLoader(uri=NEO4J_URI, user=NEO4J_USER, password=NEO4J_PASSWORD)
     
