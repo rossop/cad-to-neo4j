@@ -13,11 +13,9 @@ Classes:
 from typing import Optional, Dict, List, Any
 from adsk.fusion import Sketch, SketchEntity, SketchPoint, SketchCurve, SketchLine, SketchDimension, Profile
 from .base_extractor import BaseExtractor
+from ..utils.general_utils import nested_getattr
 
 import adsk.core, trace
-app = adsk.core.Application.get()
-ui = app.userInterface
-
 
 __all__ = ['SketchExtractor','SketchPointExtractor', 'SketchCurveExtractor', 'SketchDimensionExtractor', 'ProfileExtractor']
 
@@ -63,7 +61,7 @@ class SketchExtractor(SketchElementExtractor):
             int: The timeline index of the Sketch object, or None if not available.
         """
         try:
-            return getattr(self._obj.timelineObject,'index', None)
+            return nested_getattr(self._obj,'timelineObject.index', None)
         except AttributeError:
             return None
     
@@ -152,14 +150,14 @@ class SketchLineExtractor(SketchCurveExtractor):
     @property
     def startSketchPoint(self):
         try:
-            return getattr(self._obj.startSketchPoint, 'entityToken', None)
+            return nested_getattr(self._obj, 'startSketchPoint.entityToken', None)
         except AttributeError:
             return None 
 
     @property
     def endSketchPoint(self):
         try:
-            return getattr(self._obj.endSketchPoint, 'entityToken', None)
+            return nested_getattr(self._obj, 'endSketchPoint.entityToken', None)
         except AttributeError:
             return None
     
@@ -228,7 +226,7 @@ class ProfileExtractor(BaseExtractor):
             id_tokens = []
             for profile_loop in self._profile_loops:
                 for profile_curve in getattr(profile_loop, 'profileCurves', []):
-                    token = getattr(profile_curve.sketchEntity, 'entityToken', None)  
+                    token = nested_getattr(profile_curve, 'sketchEntity.entityToken', None)  
                     if token is not None:                     
                         id_tokens.append(token)
             return id_tokens
