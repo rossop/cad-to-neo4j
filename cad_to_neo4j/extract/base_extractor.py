@@ -10,6 +10,8 @@ Classes:
 from adsk.core import Base # TODO fix import
 from typing import Optional, Dict
 
+__all__ = ['BaseExtractor']
+
 class BaseExtractor(object):
     """Base class for extracting basic properties from CAD objects."""
 
