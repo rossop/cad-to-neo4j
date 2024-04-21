@@ -18,9 +18,10 @@ import logging
 from typing import Tuple, List, Dict
 
 from adsk.core import Base
-from adsk.fusion import Sketch, Feature, BRepBody, Component, Design # TODO standardise adsk impors
+import traceback
+from adsk.fusion import Sketch, Feature, BRepBody, Component, Design, SketchPoint, SketchCurve, SketchDimension # TODO Standardized imports
 from .base_extractor import BaseExtractor
-from .sketch_extractor import SketchExtractor
+from .sketch_extractor import SketchExtractor, SketchPointExtractor, SketchCurveExtractor, SketchDimensionExtractor, ProfileExtractor
 from .extrude_feature_extractor import ExtrudeFeatureExtractor
 from .brep_extractor import BRepExtractor, BRepFaceExtractor, BRepEdgeExtractor
 from ..utils.logger_utils import Logger
@@ -29,6 +30,10 @@ __all__ = ['get_extractor', 'extract_data', 'extract_component_data']
 
 EXTRACTORS = {
     'adsk::fusion::Sketch': SketchExtractor,
+    'adsk::fusion::SketchPoint': SketchPointExtractor,
+    'adsk::fusion::SketchCurve': SketchCurveExtractor,
+    'adsk::fusion::SketchDimension': SketchDimensionExtractor,
+    'adsk::fusion::Profile': ProfileExtractor,
     'adsk::fusion::ExtrudeFeature': ExtrudeFeatureExtractor, 
     'adsk::fusion::BRepBody': BRepExtractor, 
     'adsk::fusion::BRepFace': BRepFaceExtractor,
@@ -61,12 +66,15 @@ def extract_data(element: Base) -> dict:
     try:
         Extractor = get_extractor(element)
         extracted_info = Extractor.extract_info()
-        return {
-            "type": element.classType(),
-            "properties": extracted_info
-        }
+        if extracted_info:
+            return {
+                "type": element.classType(),
+                "properties": extracted_info
+            }
+        return None
     except Exception as e:
         Logger.error(f"Error in extract_data: {str(e)}")
+        Logger.error(f"Failed:\n{traceback.format_exc()}")
         return None
 
 def extract_component_data(design: Design, 
@@ -112,7 +120,7 @@ def extract_component_data(design: Design,
         except Exception as e:
             if Logger:
                 Logger.error(f"Error extracting and appending data for {entity}: {str(e)}")
-                Logger.error(f"Extracted info: {extracted_info}")
+                Logger.error(f"Failed:\n{traceback.format_exc()}")
         return None
     
     def extract_brep_entity_data(brep_entity, parent_id):
@@ -134,12 +142,24 @@ def extract_component_data(design: Design,
         """Helper function to extract profiles from a sketch and link them."""
         sketch_id = extract_and_append(sketch, parent_id, "CONTAINS")
         if not sketch_id:
-            return
+            return None
         
         for profile in sketch.profiles:
             profile_id = extract_and_append(profile, sketch_id, "CONTAINS")
             if profile_id:
                 add_relationship(sketch_id, profile_id, "CONTAINS")
+        return sketch_id
+
+    def scrape_sketch(sketch, sketch_id):
+        """Helper function to extract entities froma sketch and link them"""
+        for point in sketch.sketchPoints:
+            _ = extract_and_append(point, sketch_id, "CONTAINS")
+        
+        for curve in sketch.sketchCurves:
+            _ = extract_and_append(curve, sketch_id, "CONTAINS")
+
+        for dimension in sketch.sketchDimensions:
+            _ = extract_and_append(dimension, sketch_id, "CONTAINS")
 
     comp = design.rootComponent
     if comp:
@@ -154,7 +174,9 @@ def extract_component_data(design: Design,
 
         # Extract Sketches
         for sketch in comp.sketches:
-            extract_sketch_profiles(sketch, component_id)
+            sketch_id = extract_sketch_profiles(sketch, component_id)
+            if sketch_id:
+                scrape_sketch(sketch, sketch_id)
 
         # Extract Features 
         for feat in comp.features:

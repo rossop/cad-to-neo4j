@@ -29,9 +29,9 @@ Classes:
 """
 
 from .base_extractor import BaseExtractor
-from .sketch_extractor import SketchExtractor
+from .sketch_extractor import SketchExtractor, SketchPointExtractor, SketchCurveExtractor, SketchDimensionExtractor
 from .feature_extractor import FeatureExtractor
 from .brep_extractor import BRepExtractor, BRepEntityExtractor, BRepFaceExtractor, BRepEdgeExtractor
 from .extractor_factory import get_extractor, extract_data, extract_component_data
 
-__all__ = ['BaseExtractor', 'SketchExtractor', 'FeatureExtractor', 'BRepExtractor', 'get_extractor', 'extract_data', 'extract_component_data', 'BRepEntityExtractor', 'BRepFaceExtractor', 'BRepEdgeExtractor']
+__all__ = ['BaseExtractor', 'SketchExtractor', 'SketchPointExtractor', 'SketchCurveExtractor', 'SketchDimensionExtractor', 'ProfileExtractor', 'FeatureExtractor', 'BRepExtractor', 'get_extractor', 'extract_data', 'extract_component_data', 'BRepEntityExtractor', 'BRepFaceExtractor', 'BRepEdgeExtractor']

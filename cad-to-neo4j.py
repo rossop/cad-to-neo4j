@@ -1,7 +1,7 @@
 """
 # Author: Peter Rosso
 # Description: This script is used to extract information regarding the Fusion 360
-# environment to facilitate development. The script was inspired by Jorge_Jaramillo's answer on the Autodesk Community.
+# environment to facilitate development. 
 """
 
 import sys
