@@ -19,14 +19,14 @@ Modules:
 """
 
 from . import base_extractor
-from . import sketch_extractor
+from . import sketch_extractors
 from . import feature_extractor
 from . import brep_extractor
 from .extractor_factory import *
 
 __all__ = (
     base_extractor.__all__ + 
-    sketch_extractor.__all__ + 
+    sketch_extractors.__all__ + 
     feature_extractor.__all__ + 
     brep_extractor.__all__ + 
     extractor_factory.__all__
