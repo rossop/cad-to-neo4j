@@ -73,7 +73,17 @@ cad-to-neo4j/
 │   │   ├── 📄 extractor_factory.py
 │   │   ├── 📄 extrude_feature_extractor.py
 │   │   ├── 📄 feature_extractor.py
-│   │   ├── 📄 sketch_extractor.py
+│   │   ├── 📂 sketch_extractors/
+│   │       ├── 📄 __init__.py
+│   │       ├── 📄 base_extractor.py
+│   │       ├── 📄 profile_extractor.py
+│   │       ├── 📄 sketch_curve_extractor.py
+│   │       ├── 📄 sketch_dimension_extractor.py
+│   │       ├── 📄 sketch_extractor.py
+│   │       ├── 📄 sketch_line_extractor.py
+│   │       ├── 📄 sketch_point_extractor.py
+│   │       ├── 📄 sketch_circle_extractor.py
+│   │       └── 📄 sketch_arc_extractor.py
 │   │
 │   ├── 📂 load/
 │   │   ├── 📄 __init__.py
@@ -94,7 +104,6 @@ cad-to-neo4j/
 │   ├── 📂 validation/    [ TO BE DEVELOPED  ]
 │       ├── 📄 __init__.py
 │       ├── 📄 graph_model_tester.py
-│
 
 ```
 
