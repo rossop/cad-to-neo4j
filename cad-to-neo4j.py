@@ -66,10 +66,7 @@ def run(context):
 
         with Neo4jTransformer(uri=NEO4J_URI, user=NEO4J_USER, password=NEO4J_PASSWORD, Logger=Logger) as Transformer:
             # Transform graph data
-            _ = Transformer.create_timeline_relationships()
-            _ = Transformer.create_adjacent_face_relationships()
-            _ = Transformer.create_adjacent_edge_relationships()
-            _ = Transformer.create_profile_relationships()
+            _ = Transformer.execute()
 
         Logger.info('CAD extraction process completed')
 

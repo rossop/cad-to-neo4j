@@ -24,6 +24,8 @@ class Neo4jTransformer(Neo4jTransactionManager):
         create_timeline_relationships(): Creates relationships between nodes based on their timeline index.
         create_profile_relationships(): Creates 'USES_PROFILE' relationships between extrusions and profiles.
         create_adjacent_face_relationships(): Creates 'ADJACENT' relationships between faces sharing the same edge.
+        create_adjacent_edge_relationships(): Creates 'ADJACENT' relationships between edges sharing the same vertex.
+        create_sketch_relationships(): Creates various relationships between sketch entities.
     """
     def __init__(self, uri: str, user: str, password: str, Logger: logging.Logger = None):
         """
@@ -37,6 +39,44 @@ class Neo4jTransformer(Neo4jTransactionManager):
         """
         super().__init__(uri, user, password)
         self.logger = Logger
+
+    def execute(self):
+        """
+        Run all transformation methods to create relationships in the model.
+        
+        Returns:
+            dict: Results of all transformations.
+        """
+        results = {}
+        
+        self.logger.info('Running all transformations...')
+        
+        try:
+            results['timeline_relationships'] = self.create_timeline_relationships()
+        except Exception as e:
+            self.logger.error(f'Exception in creating timeline relationships: {e}')
+        
+        try:
+            results['profile_relationships'] = self.create_profile_relationships()
+        except Exception as e:
+            self.logger.error(f'Exception in creating profile relationships: {e}')
+        
+        try:
+            results['adjacent_face_relationships'] = self.create_adjacent_face_relationships()
+        except Exception as e:
+            self.logger.error(f'Exception in creating adjacent face relationships: {e}')
+        
+        try:
+            results['adjacent_edge_relationships'] = self.create_adjacent_edge_relationships()
+        except Exception as e:
+            self.logger.error(f'Exception in creating adjacent edge relationships: {e}')
+        
+        try:
+            results['sketch_relationships'] = self.create_sketch_relationships()
+        except Exception as e:
+            self.logger.error(f'Exception in creating sketch relationships: {e}')
+        
+        return results
 
     def create_timeline_relationships(self):
         """
@@ -56,7 +96,7 @@ class Neo4jTransformer(Neo4jTransactionManager):
         UNWIND range(0, size(nodes) - 2) AS i
         WITH nodes[i] AS node1, nodes[i + 1] AS node2
 
-        MERGE (node1)-[:NEXT]->(node2)
+        MERGE (node1)-[:NEXT_ON_TIMELINE]->(node2)
 
         RETURN node1, node2
         """
@@ -139,6 +179,68 @@ class Neo4jTransformer(Neo4jTransactionManager):
         except Exception as e:
             self.logger.error(f'Exception: {e}')
         return result
+    
+    def create_sketch_relationships(self):
+        """
+        Creates various relationships between sketch entities.
+        - CONNECTED_TO relationships between SketchPoints and SketchEntities.
+        - STARTS_AT and ENDS_AT relationships for SketchCurves and SketchPoints.
+        - STARTS_AT and ENDS_AT relationships for SketchLines and SketchPoints.
+        - CONTAINS relationships between Sketches and Profiles.
+        - CONTAINS relationships between Profiles and SketchEntities.
+
+        Returns:
+            list: The result values from the query execution.
+        """
+        queries = {
+            'connected_entities': """
+            MATCH (sp:`adsk::fusion::SketchPoint`)
+            WHERE sp.connectedEntities IS NOT NULL
+            UNWIND sp.connectedEntities AS entity_token
+            MATCH (se {id_token: entity_token})
+            MERGE (sp)-[:CONNECTED_TO]->(se)
+            """,
+            'sketch_curves': """
+            MATCH (sc:`adsk::fusion::SketchCurve`)
+            WHERE sc.startPoint IS NOT NULL AND sc.endPoint IS NOT NULL
+            MATCH (sp1 {id_token: sc.startPoint})
+            MATCH (sp2 {id_token: sc.endPoint})
+            MERGE (sc)-[:STARTS_AT]->(sp1)
+            MERGE (sc)-[:ENDS_AT]->(sp2)
+            """,
+            'profile_contains': """
+            MATCH (s:`adsk::fusion::Sketch`)-[:CONTAINS]->(p:`adsk::fusion::Profile`)
+            WHERE p.profile_curves IS NOT NULL
+            UNWIND p.profile_curves AS curve_token
+            MATCH (sc {id_token: curve_token})
+            MERGE (p)-[:CONTAINS]->(sc)
+            """,
+            'sketch_lines': """
+            MATCH (sc:`adsk::fusion::SketchLine`)
+            WHERE sc.startPoint IS NOT NULL AND sc.endPoint IS NOT NULL
+
+            // Ensure that the startPoint and endPoint nodes exist
+            WITH sc, sc.startPoint AS startPointToken, sc.endPoint AS endPointToken
+            MATCH (sp1 {id_token: startPointToken})
+            MATCH (sp2 {id_token: endPointToken})
+
+            // Create relationships
+            MERGE (sc)-[:STARTS_AT]->(sp1)
+            MERGE (sc)-[:ENDS_AT]->(sp2)
+
+            RETURN sc, sp1, sp2
+            """
+        }
+        result = []
+        for name, query in queries.items():
+            self.logger.info(f'Creating relationships for {name}')
+            try:
+                res = self.execute_query(query)
+                result.extend(res)
+            except Exception as e:
+                self.logger.error(f'Exception in {name} relationships: {e}')
+        return result
+
 
 # Usage example
 if __name__ == "__main__":
