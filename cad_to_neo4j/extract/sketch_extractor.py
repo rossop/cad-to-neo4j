@@ -15,7 +15,7 @@ from adsk.fusion import Sketch, SketchEntity, SketchPoint, SketchCurve, SketchLi
 from .base_extractor import BaseExtractor
 from ..utils.general_utils import nested_getattr
 
-import adsk.core, trace
+import adsk.core, traceback
 
 __all__ = ['SketchExtractor','SketchPointExtractor', 'SketchCurveExtractor', 'SketchDimensionExtractor', 'ProfileExtractor']
 
