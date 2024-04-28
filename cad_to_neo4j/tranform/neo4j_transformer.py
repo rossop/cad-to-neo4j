@@ -51,32 +51,30 @@ class Neo4jTransformer(Neo4jTransactionManager):
         
         self.logger.info('Running all transformations...')
         
-        try:
-            results['timeline_relationships'] = self.create_timeline_relationships()
-        except Exception as e:
-            self.logger.error(f'Exception in creating timeline relationships: {e}')
+        transformation_methods = [
+            self.create_timeline_relationships,
+            self.create_profile_relationships,
+            self.create_adjacent_face_relationships,
+            self.create_adjacent_edge_relationships,
+            self.create_sketch_relationships,
+            self.link_sketches_to_planes,
+            self.link_sketch_entities_to_dimensions,
+        ]
         
-        try:
-            results['profile_relationships'] = self.create_profile_relationships()
-        except Exception as e:
-            self.logger.error(f'Exception in creating profile relationships: {e}')
+        results = {}
         
-        try:
-            results['adjacent_face_relationships'] = self.create_adjacent_face_relationships()
-        except Exception as e:
-            self.logger.error(f'Exception in creating adjacent face relationships: {e}')
+        self.logger.info('Running all transformations...')
         
-        try:
-            results['adjacent_edge_relationships'] = self.create_adjacent_edge_relationships()
-        except Exception as e:
-            self.logger.error(f'Exception in creating adjacent edge relationships: {e}')
-        
-        try:
-            results['sketch_relationships'] = self.create_sketch_relationships()
-        except Exception as e:
-            self.logger.error(f'Exception in creating sketch relationships: {e}')
+        for method in transformation_methods:
+            method_name = method.__name__
+            try:
+                results[method_name] = method()
+                self.logger.info(f'Successfully completed {method_name}')
+            except Exception as e:
+                self.logger.error(f'Exception in {method_name}: {e}')
         
         return results
+
 
     def create_timeline_relationships(self):
         """
@@ -140,7 +138,7 @@ class Neo4jTransformer(Neo4jTransactionManager):
         Returns:
             list: The result values from the query execution.
         """
-        cypher_query = """
+        cypher_query = r"""
         MATCH (e:`adsk::fusion::BRepEdge`)<-[:CONTAINS]-(f1:`adsk::fusion::BRepFace`), 
               (e)<-[:CONTAINS]-(f2:`adsk::fusion::BRepFace`)
         WHERE id(f1) <> id(f2)
@@ -163,7 +161,7 @@ class Neo4jTransformer(Neo4jTransactionManager):
         Returns:
             list: The result values from the query execution.
         """
-        cypher_query = """
+        cypher_query = r"""
         // Find BRepEdges that share BRepVertices and create ADJACENT relationships between them
         MATCH (v:`adsk::fusion::BRepVertex`)<-[:CONTAINS]-(e1:`adsk::fusion::BRepEdge`), 
             (v)<-[:CONTAINS]-(e2:`adsk::fusion::BRepEdge`)
@@ -193,14 +191,14 @@ class Neo4jTransformer(Neo4jTransactionManager):
             list: The result values from the query execution.
         """
         queries = {
-            'connected_entities': """
+            'connected_entities': r"""
             MATCH (sp:`adsk::fusion::SketchPoint`)
             WHERE sp.connectedEntities IS NOT NULL
             UNWIND sp.connectedEntities AS entity_token
             MATCH (se {id_token: entity_token})
             MERGE (sp)-[:CONNECTED_TO]->(se)
             """,
-            'sketch_curves': """
+            'sketch_curves': r"""
             MATCH (sc:`adsk::fusion::SketchCurve`)
             WHERE sc.startPoint IS NOT NULL AND sc.endPoint IS NOT NULL
             MATCH (sp1 {id_token: sc.startPoint})
@@ -208,14 +206,14 @@ class Neo4jTransformer(Neo4jTransactionManager):
             MERGE (sc)-[:STARTS_AT]->(sp1)
             MERGE (sc)-[:ENDS_AT]->(sp2)
             """,
-            'profile_contains': """
+            'profile_contains': r"""
             MATCH (s:`adsk::fusion::Sketch`)-[:CONTAINS]->(p:`adsk::fusion::Profile`)
             WHERE p.profile_curves IS NOT NULL
             UNWIND p.profile_curves AS curve_token
             MATCH (sc {id_token: curve_token})
             MERGE (p)-[:CONTAINS]->(sc)
             """,
-            'sketch_lines': """
+            'sketch_lines': r"""
             MATCH (sc:`adsk::fusion::SketchLine`)
             WHERE sc.startPoint IS NOT NULL AND sc.endPoint IS NOT NULL
 
@@ -239,6 +237,57 @@ class Neo4jTransformer(Neo4jTransactionManager):
                 result.extend(res)
             except Exception as e:
                 self.logger.error(f'Exception in {name} relationships: {e}')
+        return result
+    
+    def link_sketches_to_planes(self):
+        """
+        Creates 'BUILT_ON' relationships between sketches and their reference planes or faces.
+
+        Returns:
+            list: The result values from the query execution.
+        """
+        cypher_query = r"""
+        MATCH (s:`adsk::fusion::Sketch`)
+        WHERE s.reference_plane_entity_token IS NOT NULL
+        MATCH (p {id_token: s.reference_plane_entity_token})
+        MERGE (s)-[:BUILT_ON]->(p)
+        RETURN s.id_token AS sketch_id, p.id_token AS plane_id, labels(p) AS plane_labels
+        """
+        
+        result = []
+        self.logger.info('Creating sketch to plane/face relationships')
+        try:
+            result = self.execute_query(cypher_query)
+        except Exception as e:
+            self.logger.error(f'Exception in linking sketches to planes: {e}')
+        return result
+    
+    def link_sketch_entities_to_dimensions(self):
+        """
+        Creates 'LINKED_TO_DIMENSION' relationships between sketch entities and their corresponding dimensions.
+
+        This function connects any node with a sketchDimensions property to all the SketchDimension nodes
+        that share the same id_token as the ones in the list under the sketchDimensions property.
+
+        Returns:
+            list: The result values from the query execution.
+        """
+        cypher_query = r"""
+        MATCH (n)
+        WHERE n.sketchDimensions IS NOT NULL AND size(n.sketchDimensions) > 0
+        WITH n, n.sketchDimensions AS dimension_tokens
+        UNWIND dimension_tokens AS dimension_token
+        MATCH (d) WHERE d.id_token = dimension_token
+        MERGE (n)-[:LINKED_TO_DIMENSION]->(d)
+        RETURN n.id_token AS entity_id, collect(d.id_token) AS dimension_ids, labels(n) AS entity_labels
+        """
+        
+        result = []
+        self.logger.info('Creating relationships between sketch entities and their dimensions')
+        try:
+            result = self.execute_query(cypher_query)
+        except Exception as e:
+            self.logger.error(f'Exception in linking sketch entities to dimensions: {e}')
         return result
 
 

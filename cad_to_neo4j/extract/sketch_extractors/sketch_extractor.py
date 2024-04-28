@@ -25,6 +25,19 @@ class SketchExtractor(SketchElementExtractor):
         """Initialize the extractor with the Sketch element."""
         super().__init__(element)
 
+    def extract_info(self) -> dict:
+        """Extract all information from the Sketch element.
+        
+        Returns:
+            dict: A dictionary containing the extracted information.
+        """
+        basic_info = super().extract_info()
+        sketch_info = {
+            'timeline_index': self.timeline_index,
+            'reference_plane_entity_token': self.reference_plane_entity_token
+        }
+        return {**basic_info, **sketch_info}
+    
     @property
     def timeline_index(self) -> Optional[int]:
         """Extracts the timeline index of the Sketch object.
@@ -36,15 +49,19 @@ class SketchExtractor(SketchElementExtractor):
             return nested_getattr(self._obj,'timelineObject.index', None)
         except AttributeError:
             return None
-    
-    def extract_info(self) -> dict:
-        """Extract all information from the Sketch element.
         
-        Returns:
-            dict: A dictionary containing the extracted information.
+    @property
+    def reference_plane_entity_token(self) -> Optional[str]:
         """
-        basic_info = super().extract_info()
-        sketch_info = {
-            'timeline_index': self.timeline_index
-        }
-        return {**basic_info, **sketch_info}
+        Extracts the entity token of the face or plane the sketch is built on.
+
+        This method checks for the referencePlane attribute of the Sketch object,
+        which provides information about the plane or face the sketch is created on.
+        If the attribute exists, it returns the entity token of the reference plane.
+
+        Returns:
+            Optional[str]: The entity token of the reference plane, or None if not available.
+        """
+        if hasattr(self._obj, 'referencePlane'):
+            return nested_getattr(self._obj, 'referencePlane.entityToken', None)
+        return None
