@@ -12,6 +12,8 @@ Functions:
 from ..utils.neo4j_utils import Neo4jTransactionManager
 from typing import Dict, List, Union
 import logging
+import traceback
+from ..utils.logger_utils import Logger
 
 __all__ = ['Neo4jLoader']
 
@@ -40,7 +42,7 @@ class Neo4jLoader(Neo4jTransactionManager):
             Logger (logging.Logger, optional): The logger for logging messages and errors.
         """
         super().__init__(uri, user, password)
-        self._batch_size = 1000 # TODO turn this into a @property
+        self._batch_size = 1000
         self.logger = Logger  
 
     @property
@@ -66,14 +68,14 @@ class Neo4jLoader(Neo4jTransactionManager):
         try:
             query = """
             UNWIND $nodes AS node
-            CALL apoc.create.node([node.type], node.properties) YIELD node AS created_node
+            CALL apoc.create.node(node.type, node) YIELD node AS created_node
             RETURN created_node
             """
             tx.run(query, nodes=nodes)
             self.logger.info(f"Created {len(nodes)} nodes")
         except Exception as e:
             if self.logger:
-                self.logger.error(f"Error creating nodes: {e}")
+                self.logger.error(f"Failed:\n{traceback.format_exc()}")
 
     def create_relationships(self, tx, relationships: List[Dict]):
         """Creates multiple relationships in the Neo4j database in a batch.
@@ -94,7 +96,7 @@ class Neo4jLoader(Neo4jTransactionManager):
                 self.logger.info(f"Created {len(relationships)} relationships")
         except Exception as e:
             if self.logger:
-                self.logger.error(f"Error creating relationships: {e}")
+                self.logger.error(f"Failed:\n{traceback.format_exc()}")
         
     def load_data(self, nodes: Union[Dict, List[Dict]], relationships: List[Dict] = None):
         """Loads extracted data into the Neo4j database.
@@ -120,7 +122,7 @@ class Neo4jLoader(Neo4jTransactionManager):
                     self.session.write_transaction(self.create_relationships, relationships[i:i + self.batch_size])
         except Exception as e:
             if self.logger:
-                self.logger.error(f"Error loading data: {e}")
+                self.logger.error(f"Failed:\n{traceback.format_exc()}")
 
 # Usage example
 if __name__ == "__main__":
@@ -141,8 +143,8 @@ if __name__ == "__main__":
     
     # Example data to load
     data = [
-        {'type': 'Sketch', 'properties': {'id_token': 'id1', 'name': 'Sketch1'}},
-        {'type': 'Feature', 'properties': {'id_token': 'id2', 'name': 'Extrude1'}},
+        {'type': 'Sketch', 'id_token': 'id1', 'name': 'Sketch1'},
+        {'type': 'Feature', 'id_token': 'id2', 'name': 'Extrude1'},
         # Add more data as needed
     ]
     Loader.load_data(data)

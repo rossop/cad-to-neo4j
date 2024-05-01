@@ -68,10 +68,7 @@ def extract_data(element: Base) -> dict:
         Extractor = get_extractor(element)
         extracted_info = Extractor.extract_info()
         if extracted_info:
-            return {
-                "type": element.classType(),
-                "properties": extracted_info
-            }
+            return extracted_info
         return None
     except Exception as e:
         Logger.error(f"Error in extract_data: {str(e)}")
@@ -112,7 +109,7 @@ def extract_component_data(design: Design,
         try:
             extracted_info = extract_data(entity)
             if extracted_info:
-                entity_id = extracted_info['properties']['id_token']
+                entity_id = extracted_info['id_token']
                 if entity_id not in processed_ids:
                     nodes.append(extracted_info)
                     processed_ids.add(entity_id)
@@ -171,7 +168,7 @@ def extract_component_data(design: Design,
         component_info = extract_data(comp)
         if component_info:
             nodes.append(component_info)
-            component_id = component_info['properties']['id_token']
+            component_id = component_info['id_token']
 
         # Extract Sketches
         for sketch in comp.sketches:
