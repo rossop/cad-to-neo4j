@@ -12,7 +12,7 @@ Classes:
     - BRepEdgeExtractor: Extractor for BRepEdge objects.
 """
 import adsk.fusion # TODO standardise this import for 
-from .base_extractor import BaseExtractor
+from ..base_extractor import BaseExtractor
 
 __all__ = ['BRepExtractor','BRepEntityExtractor', 'BRepFaceExtractor', 'BRepEdgeExtractor']
 

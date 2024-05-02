@@ -21,9 +21,10 @@ from adsk.core import Base
 import traceback
 from adsk.fusion import Sketch, Feature, BRepBody, Component, Design, SketchPoint, SketchCurve, SketchDimension # TODO Standardized imports
 from .base_extractor import BaseExtractor
-from .sketch_extractors import SketchExtractor, SketchPointExtractor, SketchCurveExtractor, SketchLineExtractor, SketchDimensionExtractor, ProfileExtractor
-from .extrude_feature_extractor import ExtrudeFeatureExtractor
-from .brep_extractor import BRepExtractor, BRepFaceExtractor, BRepEdgeExtractor
+from .sketch import SketchExtractor, SketchPointExtractor, SketchCurveExtractor, SketchLineExtractor, ProfileExtractor
+from .sketch.dimension import SketchDimensionExtractor
+from .feature import ExtrudeFeatureExtractor, FeatureExtractor
+from .brep import BRepExtractor, BRepFaceExtractor, BRepEdgeExtractor
 from ..utils.logger_utils import Logger
 
 __all__ = ['get_extractor', 'extract_data', 'extract_component_data']

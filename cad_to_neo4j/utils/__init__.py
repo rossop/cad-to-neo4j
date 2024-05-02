@@ -1,7 +1,7 @@
 """
 Utilities Package
 
-This package provides common utilities to Extract, Transform and Load CAD
+This submodule provides common utilities to Extract, Transform and Load CAD
 models from CAD software to the Neo4j graph database.
 It includes modules for logging, and loading credentials.
 

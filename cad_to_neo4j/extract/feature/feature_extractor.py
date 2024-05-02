@@ -8,7 +8,7 @@ Classes:
 """
 from typing import Optional
 from adsk.fusion import Feature
-from .base_extractor import BaseExtractor
+from ..base_extractor import BaseExtractor
 
 __all__ = ['FeatureExtractor']
 

@@ -8,26 +8,26 @@ for processing CAD models and storing them in a Neo4j graph database.
 Modules:
     - base_extractor.py: Provides the BaseExtractor class for extracting basic properties such as 
       name, type, and id token from CAD objects.
-    - feature_extractor.py: Provides the FeatureExtractor class for extracting properties specific 
+    - feature: Provides the FeatureExtractor class for extracting properties specific 
       to feature objects in CAD models.
-    - sketch_extractor.py: Provides the SketchExtractor class for extracting properties specific 
+    - sketch: Provides the SketchExtractor class for extracting properties specific 
       to sketch objects in CAD models.
-    - brep_extractor.py: Provides the BRepExtractor class for extracting properties specific 
+    - brep: Provides the BRepExtractor class for extracting properties specific 
       to BRep (Boundary Representation) objects in CAD models.
-    - extractor_factory.py: Provides the factory function to get the appropriate extractor based 
+    - extractor.py: Provides the factory function to get the appropriate extractor based 
       on the type of CAD object, and functions for extracting data from components.
 """
 
 from . import base_extractor
-from . import sketch_extractors
-from . import feature_extractor
-from . import brep_extractor
-from .extractor_factory import *
+from . import sketch
+from . import feature
+from . import brep
+from .extractor import *
 
 __all__ = (
     base_extractor.__all__ + 
-    sketch_extractors.__all__ + 
-    feature_extractor.__all__ + 
-    brep_extractor.__all__ + 
-    extractor_factory.__all__
+    sketch.__all__ + 
+    feature.__all__ + 
+    brep.__all__ + 
+    extractor.__all__
     )
