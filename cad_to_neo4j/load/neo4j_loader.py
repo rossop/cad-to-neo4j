@@ -58,6 +58,18 @@ class Neo4jLoader(Neo4jTransactionManager):
         else:
             raise ValueError("Batch size must be a positive integer")
 
+    def clear(self):
+        """Clears all nodes and relationships in the Neo4j database."""
+        try:
+            with self.driver.session() as session:
+                query = """
+                MATCH (n) DETACH DELETE n
+                """
+                session.write_transaction(lambda tx: tx.run(query))
+                self.logger.info("Cleared Database")
+        except Exception as e:
+            self.logger.error(f"Failed to clear database:\n{traceback.format_exc()}")
+
     def create_nodes(self, tx, nodes: List[Dict]):
         """Creates multiple nodes in the Neo4j database in a batch.
 
