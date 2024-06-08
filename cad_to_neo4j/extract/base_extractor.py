@@ -8,8 +8,9 @@ Classes:
 """
 
 from adsk.core import Base # TODO fix import
-from typing import Optional, Dict, List
+from typing import Optional, Dict, List, Any
 from ..utils.logger_utils import Logger
+from ..utils.general_utils import nested_getattr, nested_hasattr
 import traceback
 import inspect
 
@@ -107,6 +108,31 @@ class BaseExtractor(object):
         """
         parts = class_name.split('::')
         return parts[-1] if len(parts) > 1 else class_name
+    
+    def extract_ids(self, attribute, id_attr='entityToken'):
+        """Extracts a list of IDs from a given attribute."""
+        try:
+            collection = getattr(self._obj, attribute, [])
+            if hasattr(collection, "__iter__"):
+                ids = [getattr(item, id_attr, None) for item in collection]
+            return ids 
+        except AttributeError as e:
+            self.logger.error(f'Error extracting IDs from {attribute}: {e}\n{traceback.format_exc()}')
+            return []
+        
+    def get_first_valid_attribute(self, attributes: List[str]) -> Optional[Any]:
+        """Attempt to retrieve the first valid attribute from a list of possible attributes.
+
+        Args:
+            attributes (List[str]): A list of attribute names to attempt to retrieve.
+
+        Returns:
+            Optional[Any]: The value of the first valid attribute found, or None if none are found.
+        """
+        for attr in attributes:
+            if nested_hasattr(self._obj, attr):
+                return nested_getattr(self._obj, attr, None)
+        return None
 
     def extract_info(self) -> Dict[str, Optional[str]]:
         """Extracts basic information (name, type, id token) of the CAD object.
