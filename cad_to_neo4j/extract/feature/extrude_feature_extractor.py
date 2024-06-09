@@ -203,7 +203,7 @@ class ExtrudeFeatureExtractor(FeatureExtractor):
             dict: A dictionary containing the extracted information.
         """
         feature_info = super().extract_info()
-        extrude_info = {k: v if v is not None else 'A' for k, v in {
+        extrude_info = {k: v if v is not None else 'Missing' for k, v in {
             'profile_tokens': self.profile_tokens,
             'bodies': self.bodies,
             'start_faces': self.start_faces,

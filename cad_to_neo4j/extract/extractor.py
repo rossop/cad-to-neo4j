@@ -32,7 +32,7 @@ import traceback
 from .base_extractor import BaseExtractor
 from .sketch import SketchExtractor, SketchPointExtractor, SketchCurveExtractor, SketchLineExtractor, ProfileExtractor
 from .sketch.dimension import SketchDimensionExtractor
-from .feature import ExtrudeFeatureExtractor, FeatureExtractor
+from .feature import ExtrudeFeatureExtractor, RevolveFeatureExtractor, FeatureExtractor
 from .brep import BRepExtractor, BRepFaceExtractor, BRepEdgeExtractor
 from ..utils.logger_utils import Logger
 
@@ -52,6 +52,7 @@ EXTRACTORS = {
     'adsk::fusion::SketchDimension': SketchDimensionExtractor,
     'adsk::fusion::Profile': ProfileExtractor,
     'adsk::fusion::ExtrudeFeature': ExtrudeFeatureExtractor, 
+    'adsk::fusion::RevolveFeature': RevolveFeatureExtractor, 
     'adsk::fusion::BRepBody': BRepExtractor, 
     'adsk::fusion::BRepFace': BRepFaceExtractor,
     'adsk::fusion::BRepEdge': BRepEdgeExtractor,
@@ -66,6 +67,7 @@ class ExtractorOrchestrator:
         design (Design): The Fusion 360 design object.
         logger (logging.Logger, optional): The logger object for logging messages and errors.
     """
+    # TODO Refactor methods
     def __init__(self, design: Design, logger: logging.Logger = None):
         self.design = design
         self.logger = logger or Logger
@@ -436,13 +438,13 @@ class ExtractorOrchestrator:
                 elif isinstance(entity, Sketch):
                     self._extract_sketch(entity, comp, index, component_id)
 
+
                 # Update previous sets
                 previous_faces = current_faces.copy()
                 previous_edges = current_edges.copy()
                 previous_vertices = current_vertices.copy()
     
         # Extract final BRep entities and establish relationships
-        # self.extract_final_brep_entities(comp, component_id)
         self.extract_brep_relationships(comp)
 
         return self.nodes, self.relationships
