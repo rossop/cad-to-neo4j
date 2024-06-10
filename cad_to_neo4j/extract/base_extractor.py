@@ -71,6 +71,18 @@ class BaseExtractor(object):
             self.logger.error(f'Error : {e}\n{traceback.format_exc()}')
             return None
         
+    @property
+    def timeline_index(self) -> Optional[int]:
+        """Extracts the timeline index of the Sketch object.
+        
+        Returns:
+            int: The timeline index of the Sketch object, or None if not available.
+        """
+        try:
+            return nested_getattr(self._obj, 'timelineObject.index', None)
+        except AttributeError:
+            return None 
+        
     def _get_class_hierarchy(self) -> List[str]:
         """Gets the class hierarchy of the CAD object.
         
@@ -144,4 +156,5 @@ class BaseExtractor(object):
             'name': self.name,
             'type': self.type,
             'id_token': self.id_token,
+            'timeline_index': self.timeline_index,
         }

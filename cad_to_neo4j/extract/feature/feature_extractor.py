@@ -20,18 +20,6 @@ class FeatureExtractor(BaseExtractor):
     def __init__(self, element: Feature):
         """Initialize the extractor with the Feature element."""
         super().__init__(element)
-
-    @property
-    def timeline_index(self) -> Optional[int]:
-        """Extracts the timeline index of the Sketch object.
-        
-        Returns:
-            int: The timeline index of the Sketch object, or None if not available.
-        """
-        try:
-            return nested_getattr(self._obj, 'timelineObject.index', None)
-        except AttributeError:
-            return None
         
     @property
     def faces(self) -> Optional[List[str]]:
@@ -71,7 +59,6 @@ class FeatureExtractor(BaseExtractor):
         """
         basic_info = super().extract_info()
         feature_info = {
-            'timeline_index': self.timeline_index,
             'faces': self.faces,
             
         }

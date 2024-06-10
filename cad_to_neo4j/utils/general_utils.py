@@ -35,7 +35,10 @@ def nested_getattr(obj: object, attr: str, default: Optional[Any] = None) -> Any
     """
     try:
         for key in attr.split('.'):
-            obj = getattr(obj, key)
+            if hasattr(obj, key):
+                obj = getattr(obj, key)
+            else:
+                return default
         return obj
     except AttributeError:
         return default

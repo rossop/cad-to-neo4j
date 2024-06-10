@@ -400,6 +400,14 @@ class ExtractorOrchestrator:
                         self.add_relationship(edge_id, vertex_id, "HAS_VERTEX")
                         self.add_relationship(face_id, vertex_id, "HAS_VERTEX")
 
+    def _extract_other_entity(self, entity: Base, component_id: Optional[str]) -> None:
+        """Extract data for other entity types."""
+        entity_info = self.extract_data(entity)
+        if entity_info:
+            self.nodes.append(entity_info)
+            entity_id = entity_info['id_token']
+            self.add_relationship(component_id, entity_id, "CONTAINS")
+
     def extract_timeline_based_data(self) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
         """
         Extract data based on the timeline order.
@@ -437,7 +445,8 @@ class ExtractorOrchestrator:
                     self._extract_feature(entity, comp, index, component_id, previous_faces, previous_edges, previous_vertices)
                 elif isinstance(entity, Sketch):
                     self._extract_sketch(entity, comp, index, component_id)
-
+                else:
+                     self._extract_other_entity(entity, component_id)
 
                 # Update previous sets
                 previous_faces = current_faces.copy()
