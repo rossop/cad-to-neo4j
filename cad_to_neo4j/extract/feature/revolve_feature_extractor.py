@@ -144,13 +144,13 @@ class RevolveFeatureExtractor(FeatureExtractor):
             dict: A dictionary containing the extracted information.
         """
         feature_info = super().extract_info()
-        revolve_info = {k: v if v is not None else 'Missing' for k, v in {
+        revolve_info = {
             'profile_tokens': self.profile_tokens,
             'axis_token': self.axis_token,
             'is_solid': self.is_solid,
             'operation': self.operation,
             'participant_bodies': self.participant_bodies,
-        }.items()}
+        }
 
         # Add extent one information
         extent_one_info = self.extent_one

@@ -203,7 +203,7 @@ class ExtrudeFeatureExtractor(FeatureExtractor):
             dict: A dictionary containing the extracted information.
         """
         feature_info = super().extract_info()
-        extrude_info = {k: v if v is not None else 'Missing' for k, v in {
+        extrude_info = {
             'profile_tokens': self.profile_tokens,
             'bodies': self.bodies,
             'start_faces': self.start_faces,
@@ -212,7 +212,7 @@ class ExtrudeFeatureExtractor(FeatureExtractor):
             'extent_type': self.extent_type,
             'operation': self.operation,
             'participant_bodies': self.participant_bodies,
-        }.items()}
+        }
         # Add extent one information
         extent_one_info = self.extent_one
         if extent_one_info is not None:

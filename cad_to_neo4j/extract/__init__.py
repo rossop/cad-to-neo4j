@@ -22,6 +22,7 @@ from . import base_extractor
 from . import sketch
 from . import feature
 from . import brep
+from . import construction_plane_extractor
 from .extractor import *
 
 __all__ = (
@@ -29,5 +30,6 @@ __all__ = (
     sketch.__all__ + 
     feature.__all__ + 
     brep.__all__ + 
-    extractor.__all__
+    extractor.__all__ +
+    construction_plane_extractor.__all__
     )
