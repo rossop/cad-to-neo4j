@@ -59,6 +59,7 @@ class Neo4jTransformer(Neo4jTransactionManager):
             self.create_sketch_relationships,
             self.link_sketches_to_planes,
             self.link_sketch_entities_to_dimensions,
+            self.link_construction_planes,
         ]
         
         results = {}
@@ -290,6 +291,87 @@ class Neo4jTransformer(Neo4jTransactionManager):
             self.logger.error(f'Exception in linking sketch entities to dimensions: {e}')
         return result
 
+    def link_construction_planes(self):
+        """
+        Creates relationships between construction planes and their defining entities.
+
+        Returns:
+            list: The result values from the query execution.
+        """
+        cypher_queries = {
+            'at_angle': """
+                MATCH (cp:`ConstructionPlane` {definition_type: 'AtAngle'})
+                MATCH (linearEntity {id_token: cp.linear_entity}), (planarEntity {id_token: cp.planar_entity})
+                MERGE (cp)-[:DEFINED_BY]->(linearEntity)
+                MERGE (cp)-[:DEFINED_BY]->(planarEntity)
+                RETURN cp.id_token AS plane_id, linearEntity.id_token AS linear_entity_id, planarEntity.id_token AS planar_entity_id
+            """,
+            'by_plane': """
+                MATCH (cp:`ConstructionPlane` {definition_type: 'ByPlane'})
+                MATCH (plane {id_token: cp.plane})
+                MERGE (cp)-[:DEFINED_BY]->(plane)
+                RETURN cp.id_token AS plane_id, plane.id_token AS plane_entity_id
+            """,
+            'distance_on_path': """
+                MATCH (cp:`ConstructionPlane` {definition_type: 'DistanceOnPath'})
+                MATCH (pathEntity {id_token: cp.path_entity})
+                MERGE (cp)-[:DEFINED_BY]->(pathEntity)
+                RETURN cp.id_token AS plane_id, pathEntity.id_token AS path_entity_id
+            """,
+            'midplane': """
+                MATCH (cp:`ConstructionPlane` {definition_type: 'Midplane'})
+                MATCH (planarEntityOne {id_token: cp.planar_entity_one}), (planarEntityTwo {id_token: cp.planar_entity_two})
+                MERGE (cp)-[:DEFINED_BY]->(planarEntityOne)
+                MERGE (cp)-[:DEFINED_BY]->(planarEntityTwo)
+                RETURN cp.id_token AS plane_id, planarEntityOne.id_token AS planar_entity_one_id, planarEntityTwo.id_token AS planar_entity_two_id
+            """,
+            'offset': """
+                MATCH (cp:`ConstructionPlane` {definition_type: 'Offset'})
+                MATCH (planarEntity {id_token: cp.planar_entity})
+                MERGE (cp)-[:DEFINED_BY]->(planarEntity)
+                RETURN cp.id_token AS plane_id, planarEntity.id_token AS planar_entity_id
+            """,
+            'tangent_at_point': """
+                MATCH (cp:`ConstructionPlane` {definition_type: 'TangentAtPoint'})
+                MATCH (tangentFace {id_token: cp.tangent_face}), (pointEntity {id_token: cp.point_entity})
+                MERGE (cp)-[:DEFINED_BY]->(tangentFace)
+                MERGE (cp)-[:DEFINED_BY]->(pointEntity)
+                RETURN cp.id_token AS plane_id, tangentFace.id_token AS tangent_face_id, pointEntity.id_token AS point_entity_id
+            """,
+            'tangent': """
+                MATCH (cp:`ConstructionPlane` {definition_type: 'Tangent'})
+                MATCH (tangentFace {id_token: cp.tangent_face}), (planarEntity {id_token: cp.planar_entity})
+                MERGE (cp)-[:DEFINED_BY]->(tangentFace)
+                MERGE (cp)-[:DEFINED_BY]->(planarEntity)
+                RETURN cp.id_token AS plane_id, tangentFace.id_token AS tangent_face_id, planarEntity.id_token AS planar_entity_id
+            """,
+            'three_points': """
+                MATCH (cp:`ConstructionPlane` {definition_type: 'ThreePoints'})
+                MATCH (pointEntityOne {id_token: cp.point_entity_one}), (pointEntityTwo {id_token: cp.point_entity_two}), (pointEntityThree {id_token: cp.point_entity_three})
+                MERGE (cp)-[:DEFINED_BY]->(pointEntityOne)
+                MERGE (cp)-[:DEFINED_BY]->(pointEntityTwo)
+                MERGE (cp)-[:DEFINED_BY]->(pointEntityThree)
+                RETURN cp.id_token AS plane_id, pointEntityOne.id_token AS point_entity_one_id, pointEntityTwo.id_token AS point_entity_two_id, pointEntityThree.id_token AS point_entity_three_id
+            """,
+            'two_edges': """
+                MATCH (cp:`ConstructionPlane` {definition_type: 'TwoEdges'})
+                MATCH (linearEntityOne {id_token: cp.linear_entity_one}), (linearEntityTwo {id_token: cp.linear_entity_two})
+                MERGE (cp)-[:DEFINED_BY]->(linearEntityOne)
+                MERGE (cp)-[:DEFINED_BY]->(linearEntityTwo)
+                RETURN cp.id_token AS plane_id, linearEntityOne.id_token AS linear_entity_one_id, linearEntityTwo.id_token AS linear_entity_two_id
+            """
+        }
+
+        result = []
+        self.logger.info('Creating relationships for construction planes')
+        for definition_type, query in cypher_queries.items():
+            try:
+                self.logger.info(f'Processing {definition_type} definition type')
+                res = self.execute_query(query)
+                result.extend(res)
+            except Exception as e:
+                self.logger.error(f'Exception in linking {definition_type} construction planes: {e}')
+        return result
 
 # Usage example
 if __name__ == "__main__":
