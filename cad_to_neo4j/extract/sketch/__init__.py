@@ -1,7 +1,7 @@
 """
 Sketch Extractors Package
 
-This package contains modules for extracting various properties and information 
+This submodule contains modules for extracting various properties and information 
 from sketch-related CAD objects. It includes extractors for sketches, sketch points, 
 sketch curves, sketch dimensions, and profiles. These extractors are part of the extraction 
 phase of the ELT (Extract, Load, Transform) pipeline for processing CAD models 
@@ -32,10 +32,11 @@ from .sketch_curve_extractor import SketchCurveExtractor
 from .sketch_line_extractor import SketchLineExtractor
 from .sketch_circle_extractor import SketchCircleExtractor
 from .sketch_arc_extractor import SketchArcExtractor
-from .sketch_dimension_extractor import SketchDimensionExtractor
 from .profile_extractor import ProfileExtractor
+from . import dimension
 
-__all__ = [
+__all__ =  [
+    
     'SketchExtractor',
     'SketchPointExtractor',
     'SketchCurveExtractor',
@@ -43,5 +44,5 @@ __all__ = [
     'SketchCircleExtractor',
     'SketchArcExtractor',
     'SketchDimensionExtractor',
-    'ProfileExtractor'
-]
+    'ProfileExtractor',
+] + dimension.__all__
