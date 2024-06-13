@@ -60,6 +60,8 @@ class Neo4jTransformer(Neo4jTransactionManager):
             self.link_sketches_to_planes,
             self.link_sketch_entities_to_dimensions,
             self.link_construction_planes,
+            self.link_feature_to_extents_and_faces,
+            self.link_feature_to_axes_bodies_extents,
         ]
         
         results = {}
@@ -372,6 +374,120 @@ class Neo4jTransformer(Neo4jTransactionManager):
             except Exception as e:
                 self.logger.error(f'Exception in linking {definition_type} construction planes: {e}')
         return result
+    
+    def link_feature_to_extents_and_faces(self):
+        """
+        Links features to their extents and faces based on various properties.
+
+        Returns:
+            list: The result values from the query execution.
+        """
+        cypher_query = r"""
+        MATCH (f)
+        WHERE f.extentOne IS NOT NULL OR f.extentTwo IS NOT NULL
+        OPTIONAL MATCH (e1 {id_token: f.extentOne_object_id})
+        OPTIONAL MATCH (e2 {id_token: f.extentTwo_object_id})
+        
+        // Create relationships to extents
+        FOREACH (ignore IN CASE WHEN f.extentOne_object_id IS NOT NULL THEN [1] ELSE [] END |
+            MERGE (f)-[:HAS_EXTENT_ONE]->(e1)
+        )
+        FOREACH (ignore IN CASE WHEN f.extentTwo_object_id IS NOT NULL THEN [1] ELSE [] END |
+            MERGE (f)-[:HAS_EXTENT_TWO]->(e2)
+        )
+        
+        // Link to faces
+        WITH f
+        OPTIONAL MATCH (sf {id_token: f.start_faces})
+        OPTIONAL MATCH (ef {id_token: f.end_faces})
+        OPTIONAL MATCH (sif {id_token: f.side_faces})
+        
+        // Create relationships to faces
+        FOREACH (ignore IN CASE WHEN f.start_faces IS NOT NULL THEN [1] ELSE [] END |
+            MERGE (f)-[:HAS_START_FACE]->(sf)
+        )
+        FOREACH (ignore IN CASE WHEN f.end_faces IS NOT NULL THEN [1] ELSE [] END |
+            MERGE (f)-[:HAS_END_FACE]->(ef)
+        )
+        FOREACH (ignore IN CASE WHEN f.side_faces IS NOT NULL THEN [1] ELSE [] END |
+            MERGE (f)-[:HAS_SIDE_FACE]->(sif)
+        )
+        
+        RETURN f.id_token AS feature_id, 
+               f.extentOne_object_id AS extent_one_id, 
+               f.extentTwo_object_id AS extent_two_id,
+               f.start_faces AS start_faces,
+               f.end_faces AS end_faces,
+               f.side_faces AS side_faces
+        """
+        
+        result = []
+        self.logger.info('Linking features to extents and faces')
+        try:
+            result = self.execute_query(cypher_query)
+        except Exception as e:
+            self.logger.error(f'Exception in linking features to extents and faces: {e}')
+        return result
+
+    def link_feature_to_axes_bodies_extents(self):
+        """
+        Links features to their axes, participant bodies, and extents based on various properties.
+
+        Returns:
+            list: The result values from the query execution.
+        """
+        queries = {
+            "axis_relationships": r"""
+            MATCH (f)
+            WHERE f.axis_token IS NOT NULL
+            OPTIONAL MATCH (a {id_token: f.axis_token})
+            FOREACH (ignore IN CASE WHEN f.axis_token IS NOT NULL THEN [1] ELSE [] END |
+                MERGE (f)-[:HAS_AXIS]->(a)
+            )
+            RETURN f.id_token AS feature_id, f.axis_token AS axis_id
+            """,
+            "participant_body_relationships": r"""
+            MATCH (f)
+            WHERE f.participant_bodies IS NOT NULL
+            UNWIND f.participant_bodies AS body_token
+            OPTIONAL MATCH (b {id_token: body_token})
+            WITH f, b, body_token WHERE b IS NOT NULL
+            FOREACH (ignore IN CASE WHEN body_token IS NOT NULL THEN [1] ELSE [] END |
+                MERGE (f)-[:HAS_PARTICIPANT_BODY]->(b)
+            )
+            RETURN f.id_token AS feature_id, collect(b.id_token) AS participant_body_ids
+            """,
+            "extent_one_relationships": r"""
+            MATCH (f)
+            WHERE f.extentOne_object_id IS NOT NULL
+            OPTIONAL MATCH (e1 {id_token: f.extentOne_object_id})
+            FOREACH (ignore IN CASE WHEN f.extentOne_object_id IS NOT NULL THEN [1] ELSE [] END |
+                MERGE (f)-[:HAS_EXTENT_ONE]->(e1)
+            )
+            RETURN f.id_token AS feature_id, f.extentOne_object_id AS extent_one_id
+            """,
+            "extent_two_relationships": r"""
+            MATCH (f)
+            WHERE f.extentTwo_object_id IS NOT NULL
+            OPTIONAL MATCH (e2 {id_token: f.extentTwo_object_id})
+            FOREACH (ignore IN CASE WHEN f.extentTwo_object_id IS NOT NULL THEN [1] ELSE [] END |
+                MERGE (f)-[:HAS_EXTENT_TWO]->(e2)
+            )
+            RETURN f.id_token AS feature_id, f.extentTwo_object_id AS extent_two_id
+            """
+        }
+
+        results = []
+        self.logger.info('Linking features to axes, participant bodies, and extents')
+        for name, query in queries.items():
+            try:
+                result = self.execute_query(query)
+                results.extend(result)
+                self.logger.info(f'Successfully completed {name}')
+            except Exception as e:
+                self.logger.error(f'Exception in {name}: {e}')
+
+        return results
 
 # Usage example
 if __name__ == "__main__":
