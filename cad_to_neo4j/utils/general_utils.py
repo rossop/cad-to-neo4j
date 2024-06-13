@@ -4,10 +4,11 @@ This module provides general utility functions that can be used across
 various parts of the project. These functions are designed to simplify 
 common tasks and ensure code reusability.
 """
+from typing import Optional, Any
 
-__all__ = ['nested_getattr']
+__all__ = ['nested_getattr', 'nested_hasattr']
 
-def nested_getattr(obj, attr, default=None):
+def nested_getattr(obj: object, attr: str, default: Optional[Any] = None) -> Any:
     """
     Recursively get attributes from an object.
 
@@ -34,7 +35,30 @@ def nested_getattr(obj, attr, default=None):
     """
     try:
         for key in attr.split('.'):
-            obj = getattr(obj, key)
+            if hasattr(obj, key):
+                obj = getattr(obj, key)
+            else:
+                return default
         return obj
     except AttributeError:
         return default
+    
+def nested_hasattr(obj, attr: str) -> bool:
+    """
+    Recursively check if the nested attribute exists.
+
+    Args:
+        obj: The object to check.
+        attr: A string representing the nested attribute, separated by dots.
+
+    Returns:
+        bool: True if the nested attribute exists, False otherwise.
+    """
+    try:
+        for key in attr.split('.'):
+            if not hasattr(obj, key):
+                return False
+            obj = getattr(obj, key)
+        return True
+    except AttributeError:
+        return False

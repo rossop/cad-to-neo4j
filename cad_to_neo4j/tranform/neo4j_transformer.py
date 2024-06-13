@@ -59,6 +59,9 @@ class Neo4jTransformer(Neo4jTransactionManager):
             self.create_sketch_relationships,
             self.link_sketches_to_planes,
             self.link_sketch_entities_to_dimensions,
+            self.link_construction_planes,
+            self.link_feature_to_extents_and_faces,
+            self.link_feature_to_axes_bodies_extents,
         ]
         
         results = {}
@@ -116,10 +119,10 @@ class Neo4jTransformer(Neo4jTransactionManager):
         """
         cypher_query = r"""
         // Find extrusions with profile_tokens property and match them to profiles with the same id_token
-        MATCH (f:`adsk::fusion::ExtrudeFeature`)
+        MATCH (f:`ExtrudeFeature`)
         WHERE f.profile_tokens IS NOT NULL
         UNWIND f.profile_tokens AS profile_token
-        MATCH (p:`adsk::fusion::Profile` {id_token: profile_token})
+        MATCH (p:`Profile` {id_token: profile_token})
         MERGE (f)-[:USES_PROFILE]->(p)
         RETURN f.id_token AS feature_id, collect(p.id_token) AS profile_ids
         """
@@ -139,8 +142,8 @@ class Neo4jTransformer(Neo4jTransactionManager):
             list: The result values from the query execution.
         """
         cypher_query = r"""
-        MATCH (e:`adsk::fusion::BRepEdge`)<-[:CONTAINS]-(f1:`adsk::fusion::BRepFace`), 
-              (e)<-[:CONTAINS]-(f2:`adsk::fusion::BRepFace`)
+        MATCH (e:`BRepEdge`)<-[:CONTAINS]-(f1:`BRepFace`), 
+              (e)<-[:CONTAINS]-(f2:`BRepFace`)
         WHERE id(f1) <> id(f2)
         MERGE (f1)-[:ADJACENT]->(f2)
         MERGE (f2)-[:ADJACENT]->(f1)
@@ -163,8 +166,8 @@ class Neo4jTransformer(Neo4jTransactionManager):
         """
         cypher_query = r"""
         // Find BRepEdges that share BRepVertices and create ADJACENT relationships between them
-        MATCH (v:`adsk::fusion::BRepVertex`)<-[:CONTAINS]-(e1:`adsk::fusion::BRepEdge`), 
-            (v)<-[:CONTAINS]-(e2:`adsk::fusion::BRepEdge`)
+        MATCH (v:`BRepVertex`)<-[:CONTAINS]-(e1:`BRepEdge`), 
+            (v)<-[:CONTAINS]-(e2:`BRepEdge`)
         WHERE id(e1) <> id(e2)
         MERGE (e1)-[:ADJACENT]->(e2)
         MERGE (e2)-[:ADJACENT]->(e1)
@@ -192,14 +195,14 @@ class Neo4jTransformer(Neo4jTransactionManager):
         """
         queries = {
             'connected_entities': r"""
-            MATCH (sp:`adsk::fusion::SketchPoint`)
+            MATCH (sp:`SketchPoint`)
             WHERE sp.connectedEntities IS NOT NULL
             UNWIND sp.connectedEntities AS entity_token
             MATCH (se {id_token: entity_token})
             MERGE (sp)-[:CONNECTED_TO]->(se)
             """,
             'sketch_curves': r"""
-            MATCH (sc:`adsk::fusion::SketchCurve`)
+            MATCH (sc:`SketchCurve`)
             WHERE sc.startPoint IS NOT NULL AND sc.endPoint IS NOT NULL
             MATCH (sp1 {id_token: sc.startPoint})
             MATCH (sp2 {id_token: sc.endPoint})
@@ -207,14 +210,14 @@ class Neo4jTransformer(Neo4jTransactionManager):
             MERGE (sc)-[:ENDS_AT]->(sp2)
             """,
             'profile_contains': r"""
-            MATCH (s:`adsk::fusion::Sketch`)-[:CONTAINS]->(p:`adsk::fusion::Profile`)
+            MATCH (s:`Sketch`)-[:CONTAINS]->(p:`Profile`)
             WHERE p.profile_curves IS NOT NULL
             UNWIND p.profile_curves AS curve_token
             MATCH (sc {id_token: curve_token})
             MERGE (p)-[:CONTAINS]->(sc)
             """,
             'sketch_lines': r"""
-            MATCH (sc:`adsk::fusion::SketchLine`)
+            MATCH (sc:`SketchLine`)
             WHERE sc.startPoint IS NOT NULL AND sc.endPoint IS NOT NULL
 
             // Ensure that the startPoint and endPoint nodes exist
@@ -247,7 +250,7 @@ class Neo4jTransformer(Neo4jTransactionManager):
             list: The result values from the query execution.
         """
         cypher_query = r"""
-        MATCH (s:`adsk::fusion::Sketch`)
+        MATCH (s:`Sketch`)
         WHERE s.reference_plane_entity_token IS NOT NULL
         MATCH (p {id_token: s.reference_plane_entity_token})
         MERGE (s)-[:BUILT_ON]->(p)
@@ -290,6 +293,201 @@ class Neo4jTransformer(Neo4jTransactionManager):
             self.logger.error(f'Exception in linking sketch entities to dimensions: {e}')
         return result
 
+    def link_construction_planes(self):
+        """
+        Creates relationships between construction planes and their defining entities.
+
+        Returns:
+            list: The result values from the query execution.
+        """
+        cypher_queries = {
+            'at_angle': """
+                MATCH (cp:`ConstructionPlane` {definition_type: 'AtAngle'})
+                MATCH (linearEntity {id_token: cp.linear_entity}), (planarEntity {id_token: cp.planar_entity})
+                MERGE (cp)-[:DEFINED_BY]->(linearEntity)
+                MERGE (cp)-[:DEFINED_BY]->(planarEntity)
+                RETURN cp.id_token AS plane_id, linearEntity.id_token AS linear_entity_id, planarEntity.id_token AS planar_entity_id
+            """,
+            'by_plane': """
+                MATCH (cp:`ConstructionPlane` {definition_type: 'ByPlane'})
+                MATCH (plane {id_token: cp.plane})
+                MERGE (cp)-[:DEFINED_BY]->(plane)
+                RETURN cp.id_token AS plane_id, plane.id_token AS plane_entity_id
+            """,
+            'distance_on_path': """
+                MATCH (cp:`ConstructionPlane` {definition_type: 'DistanceOnPath'})
+                MATCH (pathEntity {id_token: cp.path_entity})
+                MERGE (cp)-[:DEFINED_BY]->(pathEntity)
+                RETURN cp.id_token AS plane_id, pathEntity.id_token AS path_entity_id
+            """,
+            'midplane': """
+                MATCH (cp:`ConstructionPlane` {definition_type: 'Midplane'})
+                MATCH (planarEntityOne {id_token: cp.planar_entity_one}), (planarEntityTwo {id_token: cp.planar_entity_two})
+                MERGE (cp)-[:DEFINED_BY]->(planarEntityOne)
+                MERGE (cp)-[:DEFINED_BY]->(planarEntityTwo)
+                RETURN cp.id_token AS plane_id, planarEntityOne.id_token AS planar_entity_one_id, planarEntityTwo.id_token AS planar_entity_two_id
+            """,
+            'offset': """
+                MATCH (cp:`ConstructionPlane` {definition_type: 'Offset'})
+                MATCH (planarEntity {id_token: cp.planar_entity})
+                MERGE (cp)-[:DEFINED_BY]->(planarEntity)
+                RETURN cp.id_token AS plane_id, planarEntity.id_token AS planar_entity_id
+            """,
+            'tangent_at_point': """
+                MATCH (cp:`ConstructionPlane` {definition_type: 'TangentAtPoint'})
+                MATCH (tangentFace {id_token: cp.tangent_face}), (pointEntity {id_token: cp.point_entity})
+                MERGE (cp)-[:DEFINED_BY]->(tangentFace)
+                MERGE (cp)-[:DEFINED_BY]->(pointEntity)
+                RETURN cp.id_token AS plane_id, tangentFace.id_token AS tangent_face_id, pointEntity.id_token AS point_entity_id
+            """,
+            'tangent': """
+                MATCH (cp:`ConstructionPlane` {definition_type: 'Tangent'})
+                MATCH (tangentFace {id_token: cp.tangent_face}), (planarEntity {id_token: cp.planar_entity})
+                MERGE (cp)-[:DEFINED_BY]->(tangentFace)
+                MERGE (cp)-[:DEFINED_BY]->(planarEntity)
+                RETURN cp.id_token AS plane_id, tangentFace.id_token AS tangent_face_id, planarEntity.id_token AS planar_entity_id
+            """,
+            'three_points': """
+                MATCH (cp:`ConstructionPlane` {definition_type: 'ThreePoints'})
+                MATCH (pointEntityOne {id_token: cp.point_entity_one}), (pointEntityTwo {id_token: cp.point_entity_two}), (pointEntityThree {id_token: cp.point_entity_three})
+                MERGE (cp)-[:DEFINED_BY]->(pointEntityOne)
+                MERGE (cp)-[:DEFINED_BY]->(pointEntityTwo)
+                MERGE (cp)-[:DEFINED_BY]->(pointEntityThree)
+                RETURN cp.id_token AS plane_id, pointEntityOne.id_token AS point_entity_one_id, pointEntityTwo.id_token AS point_entity_two_id, pointEntityThree.id_token AS point_entity_three_id
+            """,
+            'two_edges': """
+                MATCH (cp:`ConstructionPlane` {definition_type: 'TwoEdges'})
+                MATCH (linearEntityOne {id_token: cp.linear_entity_one}), (linearEntityTwo {id_token: cp.linear_entity_two})
+                MERGE (cp)-[:DEFINED_BY]->(linearEntityOne)
+                MERGE (cp)-[:DEFINED_BY]->(linearEntityTwo)
+                RETURN cp.id_token AS plane_id, linearEntityOne.id_token AS linear_entity_one_id, linearEntityTwo.id_token AS linear_entity_two_id
+            """
+        }
+
+        result = []
+        self.logger.info('Creating relationships for construction planes')
+        for definition_type, query in cypher_queries.items():
+            try:
+                self.logger.info(f'Processing {definition_type} definition type')
+                res = self.execute_query(query)
+                result.extend(res)
+            except Exception as e:
+                self.logger.error(f'Exception in linking {definition_type} construction planes: {e}')
+        return result
+    
+    def link_feature_to_extents_and_faces(self):
+        """
+        Links features to their extents and faces based on various properties.
+
+        Returns:
+            list: The result values from the query execution.
+        """
+        cypher_query = r"""
+        MATCH (f)
+        WHERE f.extentOne IS NOT NULL OR f.extentTwo IS NOT NULL
+        OPTIONAL MATCH (e1 {id_token: f.extentOne_object_id})
+        OPTIONAL MATCH (e2 {id_token: f.extentTwo_object_id})
+        
+        // Create relationships to extents
+        FOREACH (ignore IN CASE WHEN f.extentOne_object_id IS NOT NULL THEN [1] ELSE [] END |
+            MERGE (f)-[:HAS_EXTENT_ONE]->(e1)
+        )
+        FOREACH (ignore IN CASE WHEN f.extentTwo_object_id IS NOT NULL THEN [1] ELSE [] END |
+            MERGE (f)-[:HAS_EXTENT_TWO]->(e2)
+        )
+        
+        // Link to faces
+        WITH f
+        OPTIONAL MATCH (sf {id_token: f.start_faces})
+        OPTIONAL MATCH (ef {id_token: f.end_faces})
+        OPTIONAL MATCH (sif {id_token: f.side_faces})
+        
+        // Create relationships to faces
+        FOREACH (ignore IN CASE WHEN f.start_faces IS NOT NULL THEN [1] ELSE [] END |
+            MERGE (f)-[:HAS_START_FACE]->(sf)
+        )
+        FOREACH (ignore IN CASE WHEN f.end_faces IS NOT NULL THEN [1] ELSE [] END |
+            MERGE (f)-[:HAS_END_FACE]->(ef)
+        )
+        FOREACH (ignore IN CASE WHEN f.side_faces IS NOT NULL THEN [1] ELSE [] END |
+            MERGE (f)-[:HAS_SIDE_FACE]->(sif)
+        )
+        
+        RETURN f.id_token AS feature_id, 
+               f.extentOne_object_id AS extent_one_id, 
+               f.extentTwo_object_id AS extent_two_id,
+               f.start_faces AS start_faces,
+               f.end_faces AS end_faces,
+               f.side_faces AS side_faces
+        """
+        
+        result = []
+        self.logger.info('Linking features to extents and faces')
+        try:
+            result = self.execute_query(cypher_query)
+        except Exception as e:
+            self.logger.error(f'Exception in linking features to extents and faces: {e}')
+        return result
+
+    def link_feature_to_axes_bodies_extents(self):
+        """
+        Links features to their axes, participant bodies, and extents based on various properties.
+
+        Returns:
+            list: The result values from the query execution.
+        """
+        queries = {
+            "axis_relationships": r"""
+            MATCH (f)
+            WHERE f.axis_token IS NOT NULL
+            OPTIONAL MATCH (a {id_token: f.axis_token})
+            FOREACH (ignore IN CASE WHEN f.axis_token IS NOT NULL THEN [1] ELSE [] END |
+                MERGE (f)-[:HAS_AXIS]->(a)
+            )
+            RETURN f.id_token AS feature_id, f.axis_token AS axis_id
+            """,
+            "participant_body_relationships": r"""
+            MATCH (f)
+            WHERE f.participant_bodies IS NOT NULL
+            UNWIND f.participant_bodies AS body_token
+            OPTIONAL MATCH (b {id_token: body_token})
+            WITH f, b, body_token WHERE b IS NOT NULL
+            FOREACH (ignore IN CASE WHEN body_token IS NOT NULL THEN [1] ELSE [] END |
+                MERGE (f)-[:HAS_PARTICIPANT_BODY]->(b)
+            )
+            RETURN f.id_token AS feature_id, collect(b.id_token) AS participant_body_ids
+            """,
+            "extent_one_relationships": r"""
+            MATCH (f)
+            WHERE f.extentOne_object_id IS NOT NULL
+            OPTIONAL MATCH (e1 {id_token: f.extentOne_object_id})
+            FOREACH (ignore IN CASE WHEN f.extentOne_object_id IS NOT NULL THEN [1] ELSE [] END |
+                MERGE (f)-[:HAS_EXTENT_ONE]->(e1)
+            )
+            RETURN f.id_token AS feature_id, f.extentOne_object_id AS extent_one_id
+            """,
+            "extent_two_relationships": r"""
+            MATCH (f)
+            WHERE f.extentTwo_object_id IS NOT NULL
+            OPTIONAL MATCH (e2 {id_token: f.extentTwo_object_id})
+            FOREACH (ignore IN CASE WHEN f.extentTwo_object_id IS NOT NULL THEN [1] ELSE [] END |
+                MERGE (f)-[:HAS_EXTENT_TWO]->(e2)
+            )
+            RETURN f.id_token AS feature_id, f.extentTwo_object_id AS extent_two_id
+            """
+        }
+
+        results = []
+        self.logger.info('Linking features to axes, participant bodies, and extents')
+        for name, query in queries.items():
+            try:
+                result = self.execute_query(query)
+                results.extend(result)
+                self.logger.info(f'Successfully completed {name}')
+            except Exception as e:
+                self.logger.error(f'Exception in {name}: {e}')
+
+        return results
 
 # Usage example
 if __name__ == "__main__":

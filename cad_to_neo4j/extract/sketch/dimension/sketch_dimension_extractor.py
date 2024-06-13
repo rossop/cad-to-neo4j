@@ -8,7 +8,7 @@ Classes:
 """
 from typing import Optional, Dict, Any
 from adsk.fusion import SketchDimension
-from ..base_extractor import BaseExtractor
+from ...base_extractor import BaseExtractor
 
 __all__ = ['SketchDimensionExtractor']
 

@@ -1,7 +1,7 @@
 """
 Transform Package
 
-This package provides modules and classes for transforming CAD data 
+This submodule provides modules and classes for transforming CAD data 
 stored in a Neo4j graph database. The transformations include creating 
 derived relationships and enhancing the data model to support analysis.
 
