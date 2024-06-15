@@ -16,9 +16,9 @@ __all__ = ['SketchLineExtractor']
 class SketchLineExtractor(SketchCurveExtractor):
     """Extractor for extracting detailed information from SketchLine objects."""
     
-    def __init__(self, element: SketchLine) -> None:
+    def __init__(self, obj: SketchLine) -> None:
         """Initialize the extractor with the SketchLine element."""
-        super().__init__(element)
+        super().__init__(obj)
 
     @property
     def startSketchPoint(self) -> Optional[str]:

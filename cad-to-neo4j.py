@@ -22,13 +22,13 @@ NEO4J_URI = credentials["NEO4J_URI"]
 NEO4J_USER = credentials["NEO4J_USER"]
 NEO4J_PASSWORD = credentials["NEO4J_PASSWORD"]
 
-from .cad_to_neo4j.utils.logger_utils import Logger, console_handler, file_handler # TODO setup logger here
+from .cad_to_neo4j.utils.logger_utils import logger_utility
 from .cad_to_neo4j.extract import ExtractorOrchestrator
 from .cad_to_neo4j.load import Neo4jLoader
 from .cad_to_neo4j.tranform import Neo4jTransformer
 
 def run(context):
-    global app, Logger, console_handler, file_handler, NEO4J_URI, NEO4J_USER, NEO4J_PASSWORD
+    global app, logger_utility, NEO4J_URI, NEO4J_USER, NEO4J_PASSWORD
     ui = None
     Loader = None
     try:
@@ -38,12 +38,12 @@ def run(context):
         # Get the command palette
         text_palette = ui.palettes.itemById('TextCommands')
         if not text_palette:
-            Logger.error("Couldn't get the Text Commands palette")
+            logger_utility.logger.error("Couldn't get the Text Commands palette")
             return
     
         
-        if Logger:
-            Logger.info('Starting CAD extraction process')
+        if logger_utility.logger:
+            logger_utility.logger.info('Starting CAD extraction process')
         else:
             app.log('No Logger vailable')
 
@@ -53,56 +53,48 @@ def run(context):
        
         design = adsk.fusion.Design.cast(product)
         if not design:
-            Logger.error('No active Fusion design')
+            logger_utility.logger.error('No active Fusion design')
             return None
        
         # Initialise Neo4J Loader 
-        with Neo4jLoader(uri=NEO4J_URI, user=NEO4J_USER, password=NEO4J_PASSWORD, Logger=Logger) as Loader:
+        with Neo4jLoader(uri=NEO4J_URI, user=NEO4J_USER, password=NEO4J_PASSWORD, Logger=logger_utility.logger) as Loader:
             
             # Clear Graph:
             Loader.clear()
             # Initialize the orchestrator
-            orchestrator = ExtractorOrchestrator(design, Logger)
+            Orchestrator = ExtractorOrchestrator(design, logger_utility.logger)
 
             # Extract component data
-            nodes, relationships = orchestrator.extract_timeline_based_data()
+            nodes, relationships = Orchestrator.extract_timeline_based_data()
             
             # Load all nodes and relationships in batch
             Loader.load_data(nodes, relationships)
 
-        with Neo4jTransformer(uri=NEO4J_URI, user=NEO4J_USER, password=NEO4J_PASSWORD, Logger=Logger) as Transformer:
+        with Neo4jTransformer(uri=NEO4J_URI, user=NEO4J_USER, password=NEO4J_PASSWORD, Logger=logger_utility.logger) as Transformer:
             # Transform graph data
             _ = Transformer.execute()
 
-        Logger.info('CAD extraction process completed')
+        logger_utility.logger.info('CAD extraction process completed')
 
     except Exception as e:
         if ui:
             ui.messageBox(f'Failed:\n{traceback.format_exc()}')
-        Logger.error(f'Exception: {e}')
+        logger_utility.logger.error(f'Exception: {e}')
     finally:
         # Cleanup
-        if Logger:
-            for handler in Logger.handlers:
+        if logger_utility.logger:
+            for handler in logger_utility.logger.handlers:
                 if isinstance(handler, logging.StreamHandler):
                     text_palette.writeText(handler.stream.getvalue())
 
 
 def stop(context):
-    global Logger, console_handler, file_handler, app
-    Logger.info("Stopping Script and cleaning up logger.")
-    if Logger:
-        Logger.removeHandler(console_handler)
-        Logger.removeHandler(file_handler)
-        Logger = None
+    global logger_utility, app
+    logger_utility.logger.info("Stopping Script and cleaning up logger.")
     
-    if console_handler:
-        console_handler.close()
-        console_handler = None
-    
-    if file_handler:
-        file_handler.close()
-        file_handler = None
+    # Clean up logger
+    if logger_utility:
+        del logger_utility
 
     try:
         remove_virtualenv_from_path()

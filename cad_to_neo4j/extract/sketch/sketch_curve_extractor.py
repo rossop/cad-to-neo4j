@@ -16,9 +16,9 @@ __all__ = ['SketchCurveExtractor']
 class SketchCurveExtractor(SketchElementExtractor):
     """Extractor for extracting detailed information from SketchCurve objects."""
     
-    def __init__(self, element: SketchCurve) -> None:
+    def __init__(self, obj: SketchCurve) -> None:
         """Initialize the extractor with the SketchCurve element."""
-        super().__init__(element)
+        super().__init__(obj)
     
     def extract_info(self) -> Dict[str,Any]:
         """Extract all information from the SketchCurve element.

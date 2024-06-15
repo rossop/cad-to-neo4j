@@ -16,9 +16,9 @@ __all__ = ['SketchCircleExtractor']
 class SketchCircleExtractor(SketchCurveExtractor):
     """Extractor for extracting detailed information from SketchCircle objects."""
     
-    def __init__(self, element: SketchCircle) -> None:
+    def __init__(self, obj: SketchCircle) -> None:
         """Initialize the extractor with the SketchCircle element."""
-        super().__init__(element)
+        super().__init__(obj)
 
     @property
     def centerSketchPoint(self) -> Optional[str]:

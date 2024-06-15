@@ -35,7 +35,6 @@ from .sketch.dimension import SketchDimensionExtractor
 from .feature import ExtrudeFeatureExtractor, RevolveFeatureExtractor, FeatureExtractor
 from .construction_plane_extractor import ConstructionPlaneExtractor
 from .brep import BRepExtractor, BRepFaceExtractor, BRepEdgeExtractor
-from ..utils.logger_utils import Logger
 
 # adsk Debug
 import adsk.core, traceback
@@ -60,7 +59,7 @@ EXTRACTORS = {
     'adsk::fusion::ConstructionPlane': ConstructionPlaneExtractor,
 }
 
-class ExtractorOrchestrator:
+class ExtractorOrchestrator(object):
     """
     Manages the extraction process, coordinating between various extractors 
     and ensuring data is collected in a timeline-based order.
@@ -72,7 +71,7 @@ class ExtractorOrchestrator:
     # TODO Refactor methods
     def __init__(self, design: Design, logger: logging.Logger = None):
         self.design = design
-        self.logger = logger or Logger
+        self.logger = logger
         self.nodes = []
         self.relationships = []
         self.processed_ids = set()
@@ -106,8 +105,8 @@ class ExtractorOrchestrator:
                 return extracted_info
             return None
         except Exception as e:
-            Logger.error(f"Error in extract_data: {str(e)}")
-            Logger.error(f"Failed:\n{traceback.format_exc()}")
+            self.logger.error(f"Error in extract_data: {str(e)}")
+            self.logger.error(f"Failed:\n{traceback.format_exc()}")
             return None
         
     def add_relationship(self, from_id: str, to_id: str, rel_type: str) -> None:

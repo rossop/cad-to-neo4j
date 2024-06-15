@@ -13,7 +13,6 @@ from ..utils.neo4j_utils import Neo4jTransactionManager
 from typing import Dict, List, Union
 import logging
 import traceback
-from ..utils.logger_utils import Logger
 
 __all__ = ['Neo4jLoader']
 
