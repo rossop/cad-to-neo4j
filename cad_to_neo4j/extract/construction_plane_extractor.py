@@ -18,9 +18,9 @@ __all__ = ['ConstructionPlaneExtractor']
 class ConstructionPlaneExtractor(BaseExtractor):
     """Extractor for extracting detailed information from ConstructionPlane objects."""
 
-    def __init__(self, element: ConstructionPlane):
+    def __init__(self, obj: ConstructionPlane):
         """Initialize the extractor with the ConstructionPlane element."""
-        super().__init__(element)
+        super().__init__(obj)
 
     @property
     def geometry(self) -> Optional[Dict[str, float]]:

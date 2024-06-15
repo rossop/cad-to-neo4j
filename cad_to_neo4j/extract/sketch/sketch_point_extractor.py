@@ -17,9 +17,9 @@ __all__ = ['SketchPointExtractor']
 class SketchPointExtractor(SketchElementExtractor):
     """Extractor for extracting detailed information from Sketch Point objects."""
 
-    def __init__(self, element: SketchPoint) -> None:
+    def __init__(self, obj: SketchPoint) -> None:
         """Initialize the extractor with the SketchPoint element."""
-        super().__init__(element)
+        super().__init__(obj)
 
     @property
     def coordinates(self) -> Optional[List[float]]:

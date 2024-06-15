@@ -17,9 +17,9 @@ __all__ = ['FeatureExtractor']
 class FeatureExtractor(BaseExtractor):
     """Extractor for extracting detailed information from Feature objects."""
 
-    def __init__(self, element: Feature):
+    def __init__(self, obj: Feature):
         """Initialize the extractor with the Feature element."""
-        super().__init__(element)
+        super().__init__(obj)
         
     @property
     def faces(self) -> Optional[List[str]]:

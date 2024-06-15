@@ -8,11 +8,12 @@ Classes:
 """
 
 from adsk.core import Base # TODO fix import
+import logging
 from typing import Optional, Dict, List, Any
-from ..utils.logger_utils import Logger
 from ..utils.general_utils import nested_getattr, nested_hasattr
 import traceback
 import inspect
+from ..utils.logger_utils import logger_utility
 
 __all__ = ['BaseExtractor']
 
@@ -27,7 +28,7 @@ class BaseExtractor(object):
         """
         self._obj = obj
         self._type = None  # Initialise the type to None
-        self.logger = Logger
+        self.logger = logger_utility
 
     @property
     def name(self) -> Optional[str]:

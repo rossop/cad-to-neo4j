@@ -15,9 +15,9 @@ __all__ = ['SketchDimensionExtractor']
 class SketchDimensionExtractor(BaseExtractor):
     """Extractor for extracting detailed information from SketchDimension objects."""
 
-    def __init__(self, element: SketchDimension):
+    def __init__(self, obj: SketchDimension):
         """Initialize the extractor with the SketchDimension element."""
-        super().__init__(element)
+        super().__init__(obj)
 
     @property
     def dimension_value(self) -> Optional[float]:
