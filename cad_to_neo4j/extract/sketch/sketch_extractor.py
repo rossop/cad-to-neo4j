@@ -21,9 +21,9 @@ __all__ = ['SketchExtractor']
 class SketchExtractor(SketchElementExtractor):
     """Extractor for extracting detailed information from Sketch objects."""
 
-    def __init__(self, element: Sketch):
+    def __init__(self, obj: Sketch):
         """Initialize the extractor with the Sketch element."""
-        super().__init__(element)
+        super().__init__(obj)
 
     def extract_info(self) -> dict:
         """Extract all information from the Sketch element.
