@@ -17,9 +17,9 @@ __all__ = ['SketchElementExtractor']
 class SketchElementExtractor(BaseExtractor):
     """Parent Class for other Sketch Entities"""
 
-    def __init__(self, element: SketchEntity):
+    def __init__(self, obj: SketchEntity):
         """Initialize the extractor with the Sketch Elements."""
-        super().__init__(element)
+        super().__init__(obj)
 
     @property
     def sketchDimensions(self) -> Optional[List[SketchDimension]]:

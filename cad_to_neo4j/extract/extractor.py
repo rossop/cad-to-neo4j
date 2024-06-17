@@ -32,7 +32,24 @@ import traceback
 from .base_extractor import BaseExtractor
 from .sketch import SketchExtractor, SketchPointExtractor, SketchCurveExtractor, SketchLineExtractor, ProfileExtractor
 from .sketch.dimension import SketchDimensionExtractor
-from .sketch.constraint import GeometricConstraintExtractor, VerticalConstraintExtractor, HorizontalConstraintExtractor, MidPointConstraintExtractor, PerpendicularConstraintExtractor, CoincidentConstraintExtractor
+from .sketch.constraint import (
+    GeometricConstraintExtractor, 
+    VerticalConstraintExtractor, 
+    HorizontalConstraintExtractor, 
+    MidPointConstraintExtractor, 
+    PerpendicularConstraintExtractor, 
+    CoincidentConstraintExtractor, 
+    OffsetConstraintExtractor,
+    CoincidentToSurfaceConstraintExtractor,
+    CollinearConstraintExtractor,
+    ConcentricConstraintExtractor,
+    EqualConstraintExtractor,
+    HorizontalPointsConstraintExtractor,
+    LineOnPlanarSurfaceConstraintExtractor,
+    LineParallelToPlanarSurfaceConstraintExtractor,
+    CircularPatternConstraintExtractor,
+    )
+    
 from .feature import ExtrudeFeatureExtractor, RevolveFeatureExtractor, FeatureExtractor
 from .construction_plane_extractor import ConstructionPlaneExtractor
 from .brep import BRepExtractor, BRepFaceExtractor, BRepEdgeExtractor
@@ -64,6 +81,15 @@ EXTRACTORS = {
     'adsk::fusion::MidPointConstraint' : MidPointConstraintExtractor,
     'adsk::fusion::PerpendicularConstraint' : PerpendicularConstraintExtractor,
     'adsk::fusion::CoincidentConstraint' : CoincidentConstraintExtractor,
+    'adsk::fusion::OffsetConstraint' : OffsetConstraintExtractor,
+    'adsk::fusion::LineOnPlanarSurfaceConstraint': LineOnPlanarSurfaceConstraintExtractor,
+    'adsk::fusion::LineParallelToPlanarSurfaceConstraint': LineParallelToPlanarSurfaceConstraintExtractor,
+    'adsk::fusion::CircularPatternConstraint': CircularPatternConstraintExtractor,
+    'adsk::fusion::CoincidentToSurfaceConstraint': CoincidentToSurfaceConstraintExtractor,
+    'adsk::fusion::CollinearConstraint': CollinearConstraintExtractor,
+    'adsk::fusion::ConcentricConstraint': ConcentricConstraintExtractor,
+    'adsk::fusion::EqualConstraint': EqualConstraintExtractor,
+    'adsk::fusion::HorizontalPointsConstraint': HorizontalPointsConstraintExtractor,
 }
 
 class ExtractorOrchestrator(object):

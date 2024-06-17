@@ -16,9 +16,9 @@ __all__ = ['ProfileExtractor']
 class ProfileExtractor(BaseExtractor):
     """Extractor for extracting detailed information from Profile objects."""
 
-    def __init__(self, element: Profile):
+    def __init__(self, obj: Profile):
         """Initialize the extractor with the Profile element."""
-        super().__init__(element)
+        super().__init__(obj)
 
     @property
     def _profile_loops(self) -> Optional[List[str]]:
