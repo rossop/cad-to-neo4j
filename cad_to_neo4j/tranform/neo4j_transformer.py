@@ -62,6 +62,7 @@ class Neo4jTransformer(Neo4jTransactionManager):
             self.link_construction_planes,
             self.link_feature_to_extents_and_faces,
             self.link_feature_to_axes_bodies_extents,
+            self.link_geometric_constraints,
         ]
         
         results = {}
@@ -487,6 +488,151 @@ class Neo4jTransformer(Neo4jTransactionManager):
             except Exception as e:
                 self.logger.error(f'Exception in {name}: {e}')
 
+        return results
+
+
+    def link_geometric_constraints(self):
+        """
+        Creates relationships between entities and their geometric constraints based on various properties.
+
+        Returns:
+            dict: A dictionary containing the results of all transformations.
+        """
+        queries = [
+            """
+            MATCH (gc:GeometricConstraint)
+            WHERE gc.point IS NOT NULL
+            MATCH (e) WHERE e.id_token = gc.point
+            MERGE (e)-[:HAS_CONSTRAINT]->(gc)
+            """,
+            """
+            MATCH (gc:GeometricConstraint)
+            WHERE gc.point_one IS NOT NULL
+            MATCH (e) WHERE e.id_token = gc.point_one
+            MERGE (e)-[:HAS_CONSTRAINT]->(gc)
+            """,
+            """
+            MATCH (gc:GeometricConstraint)
+            WHERE gc.point_two IS NOT NULL
+            MATCH (e) WHERE e.id_token = gc.point_two
+            MERGE (e)-[:HAS_CONSTRAINT]->(gc)
+            """,
+            """
+            MATCH (gc:GeometricConstraint)
+            WHERE gc.line IS NOT NULL
+            MATCH (e) WHERE e.id_token = gc.line
+            MERGE (e)-[:HAS_CONSTRAINT]->(gc)
+            """,
+            """
+            MATCH (gc:GeometricConstraint)
+            WHERE gc.curve_one IS NOT NULL
+            MATCH (e) WHERE e.id_token = gc.curve_one
+            MERGE (e)-[:HAS_CONSTRAINT]->(gc)
+            """,
+            """
+            MATCH (gc:GeometricConstraint)
+            WHERE gc.curve_two IS NOT NULL
+            MATCH (e) WHERE e.id_token = gc.curve_two
+            MERGE (e)-[:HAS_CONSTRAINT]->(gc)
+            """,
+            """
+            MATCH (gc:GeometricConstraint)
+            WHERE gc.line_one IS NOT NULL
+            MATCH (e) WHERE e.id_token = gc.line_one
+            MERGE (e)-[:HAS_CONSTRAINT]->(gc)
+            """,
+            """
+            MATCH (gc:GeometricConstraint)
+            WHERE gc.line_two IS NOT NULL
+            MATCH (e) WHERE e.id_token = gc.line_two
+            MERGE (e)-[:HAS_CONSTRAINT]->(gc)
+            """,
+            """
+            MATCH (gc:GeometricConstraint)
+            WHERE gc.entities IS NOT NULL
+            UNWIND gc.entities AS entity_token
+            MATCH (e) WHERE e.id_token = entity_token
+            MERGE (e)-[:HAS_CONSTRAINT]->(gc)
+            """,
+            """
+            MATCH (gc:GeometricConstraint)
+            WHERE gc.entity IS NOT NULL
+            MATCH (e) WHERE e.id_token = gc.entity
+            MERGE (e)-[:HAS_CONSTRAINT]->(gc)
+            """,
+            """
+            MATCH (gc:GeometricConstraint)
+            WHERE gc.entity_one IS NOT NULL
+            MATCH (e) WHERE e.id_token = gc.entity_one
+            MERGE (e)-[:HAS_CONSTRAINT]->(gc)
+            """,
+            """
+            MATCH (gc:GeometricConstraint)
+            WHERE gc.entity_two IS NOT NULL
+            MATCH (e) WHERE e.id_token = gc.entity_two
+            MERGE (e)-[:HAS_CONSTRAINT]->(gc)
+            """,
+            """
+            MATCH (gc:GeometricConstraint)
+            WHERE gc.created_entities IS NOT NULL
+            UNWIND gc.created_entities AS entity_token
+            MATCH (e) WHERE e.id_token = entity_token
+            MERGE (e)-[:HAS_CONSTRAINT]->(gc)
+            """,
+            """
+            MATCH (gc:GeometricConstraint)
+            WHERE gc.center_point IS NOT NULL
+            MATCH (e) WHERE e.id_token = gc.center_point
+            MERGE (e)-[:HAS_CONSTRAINT]->(gc)
+            """,
+            """
+            MATCH (gc:GeometricConstraint)
+            WHERE gc.planar_surface IS NOT NULL
+            MATCH (e) WHERE e.id_token = gc.planar_surface
+            MERGE (e)-[:HAS_CONSTRAINT]->(gc)
+            """,
+            """
+            MATCH (gc:GeometricConstraint)
+            WHERE gc.mid_point_curve IS NOT NULL
+            MATCH (e) WHERE e.id_token = gc.mid_point_curve
+            MERGE (e)-[:HAS_CONSTRAINT]->(gc)
+            """,
+            """
+            MATCH (gc:GeometricConstraint)
+            WHERE gc.surface IS NOT NULL
+            MATCH (e) WHERE e.id_token = gc.surface
+            MERGE (e)-[:HAS_CONSTRAINT]->(gc)
+            """,
+            """
+            MATCH (gc:GeometricConstraint)
+            WHERE gc.child_curves IS NOT NULL
+            UNWIND gc.child_curves AS entity_token
+            MATCH (e) WHERE e.id_token = entity_token
+            MERGE (e)-[:HAS_CONSTRAINT]->(gc)
+            """,
+            """
+            MATCH (gc:GeometricConstraint)
+            WHERE gc.dimension IS NOT NULL
+            MATCH (e) WHERE e.id_token = gc.dimension
+            MERGE (e)-[:HAS_CONSTRAINT]->(gc)
+            """,
+            """
+            MATCH (gc:GeometricConstraint)
+            WHERE gc.parent_curves IS NOT NULL
+            UNWIND gc.parent_curves AS entity_token
+            MATCH (e) WHERE e.id_token = entity_token
+            MERGE (e)-[:HAS_CONSTRAINT]->(gc)
+            """
+        ]
+        
+        results = []
+        for query in queries:
+            try:
+                result = self.execute_query(query)
+                results.extend(result)
+            except Exception as e:
+                self.logger.error(f'Exception in executing query: {e}')
+        
         return results
 
 # Usage example

@@ -48,18 +48,18 @@ class GeometricConstraintExtractor(BaseExtractor):
             self.logger.error(f'Error extracting parentSketch: {e}\n{traceback.format_exc()}')
             return None
 
-    @property
-    def assembly_context(self) -> Optional[str]:
-        """Extracts the assembly context of the geometric constraint.
+    # @property
+    # def assembly_context(self) -> Optional[str]:
+    #     """Extracts the assembly context of the geometric constraint.
 
-        Returns:
-            str: The entity token of the assembly context.
-        """
-        try:
-            return nested_getattr(self._obj, 'assemblyContext.entityToken', None)
-        except AttributeError as e:
-            self.logger.error(f'Error extracting assemblyContext: {e}\n{traceback.format_exc()}')
-            return None
+    #     Returns:
+    #         str: The entity token of the assembly context.
+    #     """
+    #     try:
+    #         return nested_getattr(self._obj, 'assemblyContext.entityToken', None)
+    #     except AttributeError as e:
+    #         self.logger.error(f'Error extracting assemblyContext: {e}\n{traceback.format_exc()}')
+    #         return None
 
     # @property
     # def attributes(self) -> Optional[Dict[str, Any]]:
@@ -87,6 +87,6 @@ class GeometricConstraintExtractor(BaseExtractor):
         constraint_info = {
             'is_deletable': self.is_deletable,
             'parent_sketch': self.parent_sketch,
-            'assembly_context': self.assembly_context,
+            # 'assembly_context': self.assembly_context,
         }
         return {**base_info, **constraint_info}
