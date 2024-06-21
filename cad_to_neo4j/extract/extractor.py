@@ -30,8 +30,23 @@ from adsk.fusion import Design, Component,  Feature, Sketch, BRepBody
 import traceback
 
 from .base_extractor import BaseExtractor
-from .sketch import SketchExtractor, SketchPointExtractor, SketchCurveExtractor, SketchLineExtractor, ProfileExtractor
-from .sketch.dimension import SketchDimensionExtractor
+from .sketch import SketchExtractor, SketchPointExtractor, SketchCurveExtractor, SketchLineExtractor, ProfileExtractor 
+from .sketch.dimension import (
+    SketchDimensionExtractor,
+    SketchAngularDimensionExtractor,
+    SketchConcentricCircleDimensionExtractor,
+    SketchDiameterDimensionExtractor,
+    SketchDistanceBetweenLineAndPlanarSurfaceDimensionExtractor,
+    SketchDistanceBetweenPointAndSurfaceDimensionExtractor,
+    SketchEllipseMajorRadiusDimensionExtractor,
+    SketchEllipseMinorRadiusDimensionExtractor,
+    SketchLinearDiameterDimensionExtractor,
+    SketchLinearDimensionExtractor,
+    SketchOffsetCurvesDimensionExtractor,
+    SketchOffsetDimensionExtractor,
+    SketchRadialDimensionExtractor,
+    SketchTangentDistanceDimensionExtractor
+)
 from .feature import ExtrudeFeatureExtractor, RevolveFeatureExtractor, FeatureExtractor
 from .construction_plane_extractor import ConstructionPlaneExtractor
 from .brep import BRepExtractor, BRepFaceExtractor, BRepEdgeExtractor
@@ -50,6 +65,19 @@ EXTRACTORS = {
     'adsk::fusion::SketchCurve': SketchCurveExtractor,
     'adsk::fusion::SketchLine': SketchLineExtractor,
     'adsk::fusion::SketchDimension': SketchDimensionExtractor,
+    'adsk::fusion::SketchAngularDimension': SketchAngularDimensionExtractor,
+    'adsk::fusion::SketchConcentricCircleDimension': SketchConcentricCircleDimensionExtractor,
+    'adsk::fusion::SketchDiameterDimension': SketchDiameterDimensionExtractor,
+    'adsk::fusion::SketchDistanceBetweenLineAndPlanarSurfaceDimension': SketchDistanceBetweenLineAndPlanarSurfaceDimensionExtractor,
+    'adsk::fusion::SketchDistanceBetweenPointAndSurfaceDimension': SketchDistanceBetweenPointAndSurfaceDimensionExtractor,
+    'adsk::fusion::SketchEllipseMajorRadiusDimension': SketchEllipseMajorRadiusDimensionExtractor,
+    'adsk::fusion::SketchEllipseMinorRadiusDimension': SketchEllipseMinorRadiusDimensionExtractor,
+    'adsk::fusion::SketchLinearDiameterDimension': SketchLinearDiameterDimensionExtractor,
+    'adsk::fusion::SketchLinearDimension': SketchLinearDimensionExtractor,
+    'adsk::fusion::SketchOffsetCurvesDimension': SketchOffsetCurvesDimensionExtractor,
+    'adsk::fusion::SketchOffsetDimension': SketchOffsetDimensionExtractor,
+    'adsk::fusion::SketchRadialDimension': SketchRadialDimensionExtractor,
+    'adsk::fusion::SketchTangentDistanceDimension': SketchTangentDistanceDimensionExtractor,
     'adsk::fusion::Profile': ProfileExtractor,
     'adsk::fusion::ExtrudeFeature': ExtrudeFeatureExtractor, 
     'adsk::fusion::RevolveFeature': RevolveFeatureExtractor, 
