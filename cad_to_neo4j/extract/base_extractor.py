@@ -28,7 +28,7 @@ class BaseExtractor(object):
         """
         self._obj = obj
         self._type = None  # Initialise the type to None
-        self.logger = logger_utility
+        self.logger = logger_utility.logger
 
     @property
     def name(self) -> Optional[str]:
