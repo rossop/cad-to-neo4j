@@ -33,7 +33,7 @@ from .base_extractor import BaseExtractor
 from .sketch import SketchExtractor, SketchPointExtractor, SketchCurveExtractor, SketchLineExtractor, ProfileExtractor
 from .sketch.dimension import SketchDimensionExtractor
 from .feature import ExtrudeFeatureExtractor, RevolveFeatureExtractor, FeatureExtractor
-from .construction_plane_extractor import ConstructionPlaneExtractor
+# from .construction_plane_extractor import ConstructionPlaneExtractor
 from .brep import BRepExtractor, BRepFaceExtractor, BRepEdgeExtractor
 
 # adsk Debug
@@ -56,7 +56,7 @@ EXTRACTORS = {
     'adsk::fusion::BRepBody': BRepExtractor, 
     'adsk::fusion::BRepFace': BRepFaceExtractor,
     'adsk::fusion::BRepEdge': BRepEdgeExtractor,
-    'adsk::fusion::ConstructionPlane': ConstructionPlaneExtractor,
+    # 'adsk::fusion::ConstructionPlane': ConstructionPlaneExtractor,
 }
 
 class ExtractorOrchestrator(object):
@@ -409,6 +409,36 @@ class ExtractorOrchestrator(object):
             entity_id = entity_info['id_token']
             self.add_relationship(component_id, entity_id, "CONTAINS")
 
+    def _extract_construction_geometry(self, comp: Component, component_id: str) -> None:
+        """
+        Extracts construction planes and axes from the component.
+
+        Args:
+            comp (Component): The Fusion 360 component.
+            component_id (str): The ID of the component node.
+        """
+        construction_planes = [
+            comp.xYConstructionPlane,
+            comp.xZConstructionPlane,
+            comp.yZConstructionPlane
+        ]
+
+        construction_axes = [
+            comp.xConstructionAxis,
+            comp.yConstructionAxis,
+            comp.zConstructionAxis
+        ]
+
+        origin = comp.originConstructionPoint
+
+        for plane in construction_planes:
+            self.extract_and_append(plane, component_id, "CONTAINS")
+
+        for axis in construction_axes:
+            self.extract_and_append(axis, component_id, "CONTAINS")
+
+        self.extract_and_append(origin, component_id, "CONTAINS")
+
     def extract_timeline_based_data(self) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
         """
         Extract data based on the timeline order.
@@ -427,8 +457,12 @@ class ExtractorOrchestrator(object):
         if component_info:
             self.nodes.append(component_info)
             component_id = component_info['id_token']
+            self._extract_construction_geometry(comp, component_id)
+
         else:
             component_id = None
+            # TODO should this return None, two empty lists or nothing
+            #   if so the type checking might need to change
 
         for index in range(timeline.count):
             timeline_object = timeline.item(index)
