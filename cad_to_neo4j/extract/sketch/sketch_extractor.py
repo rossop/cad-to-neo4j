@@ -29,12 +29,12 @@ class SketchExtractor(SketchElementExtractor):
     FEAT: use getattr(self._obj, 'revisionId', None) for observer
     '''
 
-    def __init__(self, element: Sketch):
-        """Initialize the extractor with the Sketch element."""
-        super().__init__(element)
+    def __init__(self, obj: Sketch):
+        """Initialize the extractor with the Sketch object."""
+        super().__init__(obj)
 
     def extract_info(self) -> dict:
-        """Extract all information from the Sketch element.
+        """Extract all information from the Sketch object.
         
         Returns:
             dict: A dictionary containing the extracted information.
@@ -101,27 +101,31 @@ class SketchExtractor(SketchElementExtractor):
         Returns:
             List[float]: The transform of the Sketch object.
         """
-        transform = nested_getattr(self._obj, 'transform', None)
-        if transform:
-            return [
-                transform.getAsArray()[0],  # 'm11'
-                transform.getAsArray()[1],  # 'm12'
-                transform.getAsArray()[2],  # 'm13'
-                transform.getAsArray()[3],  # 'm14'
-                transform.getAsArray()[4],  # 'm21'
-                transform.getAsArray()[5],  # 'm22'
-                transform.getAsArray()[6],  # 'm23'
-                transform.getAsArray()[7],  # 'm24'
-                transform.getAsArray()[8],  # 'm31'
-                transform.getAsArray()[9],  # 'm32'
-                transform.getAsArray()[10], # 'm33'
-                transform.getAsArray()[11], # 'm34'
-                transform.getAsArray()[12], # 'm41'
-                transform.getAsArray()[13], # 'm42'
-                transform.getAsArray()[14], # 'm43'
-                transform.getAsArray()[15], # 'm44'
-            ]
-        return None
+        try:
+            transform = nested_getattr(self._obj, 'transform', None)
+            if transform:
+                return [
+                    transform.getAsArray()[0],  # 'm11'
+                    transform.getAsArray()[1],  # 'm12'
+                    transform.getAsArray()[2],  # 'm13'
+                    transform.getAsArray()[3],  # 'm14'
+                    transform.getAsArray()[4],  # 'm21'
+                    transform.getAsArray()[5],  # 'm22'
+                    transform.getAsArray()[6],  # 'm23'
+                    transform.getAsArray()[7],  # 'm24'
+                    transform.getAsArray()[8],  # 'm31'
+                    transform.getAsArray()[9],  # 'm32'
+                    transform.getAsArray()[10], # 'm33'
+                    transform.getAsArray()[11], # 'm34'
+                    transform.getAsArray()[12], # 'm41'
+                    transform.getAsArray()[13], # 'm42'
+                    transform.getAsArray()[14], # 'm43'
+                    transform.getAsArray()[15], # 'm44'
+                ]
+            return None
+        except AttributeError as e:
+            self.logger.error(f'Error extracting transform matrix: {e}\n{traceback.format_exc()}')
+            return None
     
     @property
     def is_parametric(self) -> Optional[bool]:
