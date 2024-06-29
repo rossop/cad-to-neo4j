@@ -32,7 +32,12 @@ import traceback
 from .base_extractor import BaseExtractor
 from .sketch import SketchExtractor, SketchPointExtractor, SketchCurveExtractor, SketchLineExtractor, ProfileExtractor
 from .sketch.dimension import SketchDimensionExtractor
-from .feature import ExtrudeFeatureExtractor, RevolveFeatureExtractor, FeatureExtractor
+from .feature import (
+    FeatureExtractor,
+    ExtrudeFeatureExtractor, 
+    RevolveFeatureExtractor, 
+    HoleFeatureExtractor,
+)
 from .construction_plane_extractor import ConstructionPlaneExtractor
 from .brep import BRepExtractor, BRepFaceExtractor, BRepEdgeExtractor
 
@@ -53,6 +58,7 @@ EXTRACTORS = {
     'adsk::fusion::Profile': ProfileExtractor,
     'adsk::fusion::ExtrudeFeature': ExtrudeFeatureExtractor, 
     'adsk::fusion::RevolveFeature': RevolveFeatureExtractor, 
+    'adsk::fusion::HoleFeature': HoleFeatureExtractor, 
     'adsk::fusion::BRepBody': BRepExtractor, 
     'adsk::fusion::BRepFace': BRepFaceExtractor,
     'adsk::fusion::BRepEdge': BRepEdgeExtractor,
