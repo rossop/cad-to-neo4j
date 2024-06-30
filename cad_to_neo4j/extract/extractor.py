@@ -33,7 +33,7 @@ from .base_extractor import BaseExtractor
 from .sketch import SketchExtractor, SketchPointExtractor, SketchCurveExtractor, SketchLineExtractor, ProfileExtractor
 from .sketch.dimension import SketchDimensionExtractor
 from .feature import ExtrudeFeatureExtractor, RevolveFeatureExtractor, FeatureExtractor
-from .construction_geometry import ConstructionPlaneExtractor, ConstructionAxisExtractor
+from .construction_geometry import ConstructionPlaneExtractor, ConstructionAxisExtractor, ConstructionPointExtractor
 from .brep import BRepExtractor, BRepFaceExtractor, BRepEdgeExtractor
 
 # adsk Debug
@@ -58,6 +58,7 @@ EXTRACTORS = {
     'adsk::fusion::BRepEdge': BRepEdgeExtractor,
     'adsk::fusion::ConstructionPlane': ConstructionPlaneExtractor,
     'adsk::fusion::ConstructionAxis': ConstructionAxisExtractor,
+    'adsk::fusion::ConstructionPoint': ConstructionPointExtractor,
 }
 
 class ExtractorOrchestrator(object):

@@ -19,10 +19,10 @@ Classes:
 
 from .construction_plane_extractor import ConstructionPlaneExtractor
 from .construction_axis_extractor import ConstructionAxisExtractor
-# from .origin_construction_point_extractor import OriginConstructionPointExtractor
+from .construction_point_extractor import ConstructionPointExtractor
 
 __all__ = [
     'ConstructionPlaneExtractor',
     'ConstructionAxisExtractor',
-    # 'OriginConstructionPointExtractor',
+    'ConstructionPointExtractor',
 ]
