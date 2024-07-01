@@ -105,22 +105,22 @@ class SketchExtractor(SketchElementExtractor):
             transform = nested_getattr(self._obj, 'transform', None)
             if transform:
                 return [
-                    transform.getAsArray()[0],  # 'm11'
-                    transform.getAsArray()[1],  # 'm12'
-                    transform.getAsArray()[2],  # 'm13'
-                    transform.getAsArray()[3],  # 'm14'
-                    transform.getAsArray()[4],  # 'm21'
-                    transform.getAsArray()[5],  # 'm22'
-                    transform.getAsArray()[6],  # 'm23'
-                    transform.getAsArray()[7],  # 'm24'
-                    transform.getAsArray()[8],  # 'm31'
-                    transform.getAsArray()[9],  # 'm32'
-                    transform.getAsArray()[10], # 'm33'
-                    transform.getAsArray()[11], # 'm34'
-                    transform.getAsArray()[12], # 'm41'
-                    transform.getAsArray()[13], # 'm42'
-                    transform.getAsArray()[14], # 'm43'
-                    transform.getAsArray()[15], # 'm44'
+                    transform.asArray()[0],  # 'm11'
+                    transform.asArray()[1],  # 'm12'
+                    transform.asArray()[2],  # 'm13'
+                    transform.asArray()[3],  # 'm14'
+                    transform.asArray()[4],  # 'm21'
+                    transform.asArray()[5],  # 'm22'
+                    transform.asArray()[6],  # 'm23'
+                    transform.asArray()[7],  # 'm24'
+                    transform.asArray()[8],  # 'm31'
+                    transform.asArray()[9],  # 'm32'
+                    transform.asArray()[10], # 'm33'
+                    transform.asArray()[11], # 'm34'
+                    transform.asArray()[12], # 'm41'
+                    transform.asArray()[13], # 'm42'
+                    transform.asArray()[14], # 'm43'
+                    transform.asArray()[15], # 'm44'
                 ]
             return None
         except AttributeError as e:
