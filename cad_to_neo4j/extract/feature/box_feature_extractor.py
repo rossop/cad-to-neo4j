@@ -48,14 +48,8 @@ class BoxFeatureExtractor(FeatureExtractor):
         """
         feature_info = super().extract_info()
         box_info = {
-            # 'length': self.length,
+            # 'length': self.length, 
             # 'width': self.width,
             # 'height': self.height,
-        }
-        TEXT = f''
-        for m in dir(self._obj):
-            val = getattr(self._obj,m,None)
-            TEXT += f'{m} \n {val}\n\n' 
-
-        self.logger.debug(TEXT)               
+        }             
         return {**feature_info, **box_info}

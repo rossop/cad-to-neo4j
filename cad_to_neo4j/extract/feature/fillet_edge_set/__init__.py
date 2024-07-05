@@ -16,13 +16,11 @@ Classes:
     - ChordLengthFilletEdgeSetExtractor
 """
 
-from .base_edge_set_extractor import BaseEdgeSetExtractor
 from .constant_radius_fillet_edge_set_extractor import ConstantRadiusFilletEdgeSetExtractor
 from .variable_radius_fillet_edge_set_extractor import VariableRadiusFilletEdgeSetExtractor
 from .chord_length_fillet_edge_set_extractor import ChordLengthFilletEdgeSetExtractor
 
 __all__ = [
-    'BaseEdgeSetExtractor',
     'ConstantRadiusFilletEdgeSetExtractor',
     'VariableRadiusFilletEdgeSetExtractor',
     'ChordLengthFilletEdgeSetExtractor'

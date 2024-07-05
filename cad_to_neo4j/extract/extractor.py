@@ -38,6 +38,7 @@ from .feature import (
     RevolveFeatureExtractor, 
     HoleFeatureExtractor,
     FilletFeatureExtractor,
+    ChamferFeatureExtractor,
     BoxFeatureExtractor,
 )
 from .construction_plane_extractor import ConstructionPlaneExtractor
@@ -62,6 +63,7 @@ EXTRACTORS = {
     'adsk::fusion::RevolveFeature': RevolveFeatureExtractor, 
     'adsk::fusion::HoleFeature': HoleFeatureExtractor, 
     'adsk::fusion::FilletFeature': FilletFeatureExtractor, 
+    'adsk::fusion::ChamferFeature': ChamferFeatureExtractor, 
     'adsk::fusion::BoxFeature': BoxFeatureExtractor, 
     'adsk::fusion::BRepBody': BRepExtractor, 
     'adsk::fusion::BRepFace': BRepFaceExtractor,
