@@ -44,9 +44,9 @@ class FilletFeatureExtractor(FeatureExtractor):
         try:
             for edge_set in self._obj.edgeSets:
                 if edge_set is not None:
+                    pass
                     # edge_set_id_list.append(edge_set.entityToken) # TODO find a list of fillets in edgeset
                     # edge_set_id_list += [edge.entityToken for edge in edge_set]
-
         except AttributeError as e:
             self.logger.error(f'Error extracting edge sets: {e}\n{traceback.format_exc()}')
         return edge_set_id_list
