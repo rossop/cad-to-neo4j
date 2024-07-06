@@ -17,9 +17,9 @@ __all__ = ['ExtrudeFeatureExtractor']
 class ExtrudeFeatureExtractor(FeatureExtractor):
     """Extractor for extracting detailed information from ExtrudeFeature objects."""
 
-    def __init__(self, element: adsk.fusion.ExtrudeFeature):
+    def __init__(self, obj: adsk.fusion.ExtrudeFeature):
         """Initialize the extractor with the ExtrudeFeature element."""
-        super().__init__(element)
+        super().__init__(obj)
 
     @property
     def profile_tokens(self):

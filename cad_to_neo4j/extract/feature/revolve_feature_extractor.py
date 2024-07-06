@@ -17,9 +17,9 @@ __all__ = ['RevolveFeatureExtractor']
 class RevolveFeatureExtractor(FeatureExtractor):
     """Extractor for extracting detailed information from RevolveFeature objects."""
 
-    def __init__(self, element: adsk.fusion.RevolveFeature):
+    def __init__(self, obj: adsk.fusion.RevolveFeature):
         """Initialize the extractor with the RevolveFeature element."""
-        super().__init__(element)
+        super().__init__(obj)
 
     @property
     def profile_tokens(self):

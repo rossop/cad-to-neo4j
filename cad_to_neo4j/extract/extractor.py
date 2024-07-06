@@ -32,6 +32,24 @@ import traceback
 from .base_extractor import BaseExtractor
 from .sketch import SketchExtractor, SketchPointExtractor, SketchCurveExtractor, SketchLineExtractor, ProfileExtractor
 from .sketch.dimension import SketchDimensionExtractor
+from .sketch.constraint import (
+    GeometricConstraintExtractor, 
+    VerticalConstraintExtractor, 
+    HorizontalConstraintExtractor, 
+    MidPointConstraintExtractor, 
+    PerpendicularConstraintExtractor, 
+    CoincidentConstraintExtractor, 
+    OffsetConstraintExtractor,
+    CoincidentToSurfaceConstraintExtractor,
+    CollinearConstraintExtractor,
+    ConcentricConstraintExtractor,
+    EqualConstraintExtractor,
+    HorizontalPointsConstraintExtractor,
+    LineOnPlanarSurfaceConstraintExtractor,
+    LineParallelToPlanarSurfaceConstraintExtractor,
+    CircularPatternConstraintExtractor,
+    )
+    
 from .feature import ExtrudeFeatureExtractor, RevolveFeatureExtractor, FeatureExtractor
 from .construction_plane_extractor import ConstructionPlaneExtractor
 from .brep import BRepExtractor, BRepFaceExtractor, BRepEdgeExtractor
@@ -57,6 +75,21 @@ EXTRACTORS = {
     'adsk::fusion::BRepFace': BRepFaceExtractor,
     'adsk::fusion::BRepEdge': BRepEdgeExtractor,
     'adsk::fusion::ConstructionPlane': ConstructionPlaneExtractor,
+    'adsk::fusion::GeometricConstraint' : GeometricConstraintExtractor,
+    'adsk::fusion::VerticalConstraint' : VerticalConstraintExtractor,
+    'adsk::fusion::HorizontalConstraint' : HorizontalConstraintExtractor,
+    'adsk::fusion::MidPointConstraint' : MidPointConstraintExtractor,
+    'adsk::fusion::PerpendicularConstraint' : PerpendicularConstraintExtractor,
+    'adsk::fusion::CoincidentConstraint' : CoincidentConstraintExtractor,
+    'adsk::fusion::OffsetConstraint' : OffsetConstraintExtractor,
+    'adsk::fusion::LineOnPlanarSurfaceConstraint': LineOnPlanarSurfaceConstraintExtractor,
+    'adsk::fusion::LineParallelToPlanarSurfaceConstraint': LineParallelToPlanarSurfaceConstraintExtractor,
+    'adsk::fusion::CircularPatternConstraint': CircularPatternConstraintExtractor,
+    'adsk::fusion::CoincidentToSurfaceConstraint': CoincidentToSurfaceConstraintExtractor,
+    'adsk::fusion::CollinearConstraint': CollinearConstraintExtractor,
+    'adsk::fusion::ConcentricConstraint': ConcentricConstraintExtractor,
+    'adsk::fusion::EqualConstraint': EqualConstraintExtractor,
+    'adsk::fusion::HorizontalPointsConstraint': HorizontalPointsConstraintExtractor,
 }
 
 class ExtractorOrchestrator(object):
@@ -228,6 +261,9 @@ class ExtractorOrchestrator(object):
 
         for dimension in sketch.sketchDimensions:
             _ = self.extract_and_append(dimension, sketch_id, "CONTAINS")
+
+        for constraint in sketch.geometricConstraints:
+            _ = self.extract_and_append(constraint, sketch_id, "CONTAINS")
 
     def extract_component_data(self) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
         """

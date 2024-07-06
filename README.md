@@ -77,6 +77,10 @@ cad-to-neo4j/
 │   │       ├── 📂 dimension/
 │   │           ├── 📄 __init__.py
 │   │           ├── 📄 sketch_dimension_extractor.py
+│   │       
+│   │       ├── 📂 dimension/
+│   │           ├── 📄 __init__.py
+│   │       
 │   │       ├── 📄 __init__.py
 │   │       ├── 📄 base_extractor.py
 │   │       ├── 📄 profile_extractor.py
@@ -100,7 +104,6 @@ cad-to-neo4j/
 │   │   ├── 📄 credential_utils.py
 │   │   ├── 📄 logger_utils.py
 │   │   ├── 📄 neo4j_transaction_manager_utils.py
-│   │   ├── 📄 virtualenv_utils.py
 │   │   ├── 📄 neo4j_utils.py
 │   │
 │   ├── 📂 validation/    [ TO BE DEVELOPED  ]
