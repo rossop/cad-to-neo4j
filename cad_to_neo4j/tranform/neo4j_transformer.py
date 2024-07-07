@@ -202,6 +202,7 @@ class Neo4jTransformer(Neo4jTransactionManager):
             WHERE sp.connectedEntities IS NOT NULL
             UNWIND sp.connectedEntities AS entity_token
             MATCH (se {id_token: entity_token})
+            WHERE NOT 'SketchCurve' IN labels(se)
             MERGE (sp)-[:CONNECTED_TO]->(se)
             """,
             'sketch_curves': r"""
@@ -278,20 +279,35 @@ class Neo4jTransformer(Neo4jTransactionManager):
         Returns:
             list: The result values from the query execution.
         """
-        cypher_query = r"""
-        MATCH (n)
-        WHERE n.sketchDimensions IS NOT NULL AND size(n.sketchDimensions) > 0
-        WITH n, n.sketchDimensions AS dimension_tokens
-        UNWIND dimension_tokens AS dimension_token
-        MATCH (d) WHERE d.id_token = dimension_token
-        MERGE (n)-[:LINKED_TO_DIMENSION]->(d)
-        RETURN n.id_token AS entity_id, collect(d.id_token) AS dimension_ids, labels(n) AS entity_labels
-        """
+        cypher_queries = [
+            # r"""
+            # MATCH (n)
+            # WHERE n.sketchDimensions IS NOT NULL AND size(n.sketchDimensions) > 0
+            # WITH n, n.sketchDimensions AS dimension_tokens
+            # UNWIND dimension_tokens AS dimension_token
+            # MATCH (d) WHERE d.id_token = dimension_token
+            # MERGE (n)-[:LINKED_TO_DIMENSION]->(d)
+            # RETURN n.id_token AS entity_id, collect(d.id_token) AS dimension_ids, labels(n) AS entity_labels
+            # """, 
+            #
+            # Match SketchDimension or SketchLinearDimension nodes that have both entity_one and entity_two
+            """
+            MATCH (d)
+            WHERE (d:SketchDimension OR d:SketchLinearDimension) 
+                AND d.entity_one IS NOT NULL 
+                AND d.entity_two IS NOT NULL
+            MATCH (a {id_token: d.entity_one})
+            MATCH (b {id_token: d.entity_two})
+            MERGE (a)-[:DIMENSIONED]->(d)
+            MERGE (d)-[:DIMENSIONED]->(b)
+            """,   
+        ]
         
         result = []
         self.logger.info('Creating relationships between sketch entities and their dimensions')
         try:
-            result = self.execute_query(cypher_query)
+            for query in cypher_queries:
+                result.append(self.execute_query(query))
         except Exception as e:
             self.logger.error(f'Exception in linking sketch entities to dimensions: {e}')
         return result
