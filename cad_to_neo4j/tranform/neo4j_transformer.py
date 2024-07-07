@@ -9,6 +9,7 @@ Classes:
 
 from ..utils.neo4j_utils import Neo4jTransactionManager
 import logging
+import traceback 
 
 __all__ = ['Neo4jTransformer']
 
@@ -62,6 +63,7 @@ class Neo4jTransformer(Neo4jTransactionManager):
             self.link_construction_planes,
             self.link_feature_to_extents_and_faces,
             self.link_feature_to_axes_bodies_extents,
+            self.create_sketch_axis_and_origin_for_all_sketches,
             self.link_geometric_constraints,
         ]
         
@@ -75,7 +77,7 @@ class Neo4jTransformer(Neo4jTransactionManager):
                 results[method_name] = method()
                 self.logger.info(f'Successfully completed {method_name}')
             except Exception as e:
-                self.logger.error(f'Exception in {method_name}: {e}')
+                self.logger.error(f'Exception in {method_name}: {e}\n{traceback.format_exc()}')
         
         return results
 
@@ -108,7 +110,7 @@ class Neo4jTransformer(Neo4jTransactionManager):
         try:
             result = self.execute_query(cypher_query)
         except Exception as e:
-            self.logger.error(f'Exception: {e}')
+            self.logger.error(f'Exception: {e}\n{traceback.format_exc()}')
         return result
 
     def create_profile_relationships(self):
@@ -132,7 +134,7 @@ class Neo4jTransformer(Neo4jTransactionManager):
         try:
             result = self.execute_query(cypher_query)
         except Exception as e:
-            self.logger.error(f'Exception: {e}')
+            self.logger.error(f'Exception: {e}\n{traceback.format_exc()}')
         return result
 
     def create_adjacent_face_relationships(self):
@@ -155,7 +157,7 @@ class Neo4jTransformer(Neo4jTransactionManager):
         try:
             result = self.execute_query(cypher_query)
         except Exception as e:
-            self.logger.error(f'Exception: {e}')
+            self.logger.error(f'Exception: {e}\n{traceback.format_exc()}')
         return result
 
     def create_adjacent_edge_relationships(self):
@@ -179,7 +181,7 @@ class Neo4jTransformer(Neo4jTransactionManager):
         try:
             result = self.execute_query(cypher_query)
         except Exception as e:
-            self.logger.error(f'Exception: {e}')
+            self.logger.error(f'Exception: {e}\n{traceback.format_exc()}')
         return result
     
     def create_sketch_relationships(self):
@@ -263,7 +265,7 @@ class Neo4jTransformer(Neo4jTransactionManager):
         try:
             result = self.execute_query(cypher_query)
         except Exception as e:
-            self.logger.error(f'Exception in linking sketches to planes: {e}')
+            self.logger.error(f'Exception in linking sketches to planes: {e}\n{traceback.format_exc()}')
         return result
     
     def link_sketch_entities_to_dimensions(self):
@@ -373,7 +375,7 @@ class Neo4jTransformer(Neo4jTransactionManager):
                 res = self.execute_query(query)
                 result.extend(res)
             except Exception as e:
-                self.logger.error(f'Exception in linking {definition_type} construction planes: {e}')
+                self.logger.error(f'Exception in linking {definition_type} construction planes: {e}\n{traceback.format_exc()}')
         return result
     
     def link_feature_to_extents_and_faces(self):
@@ -486,6 +488,8 @@ class Neo4jTransformer(Neo4jTransactionManager):
                 results.extend(result)
                 self.logger.info(f'Successfully completed {name}')
             except Exception as e:
+                self.logger.error(f'Exception in {name}: {e}\n{traceback.format_exc()}')
+
                 self.logger.error(f'Exception in {name}: {e}')
 
         return results
@@ -740,6 +744,37 @@ class Neo4jTransformer(Neo4jTransactionManager):
                 self.logger.error(f'Exception in executing query: {e}')
         
         return results
+    
+    def create_sketch_axis_and_origin_for_all_sketches(self):
+        """
+        Matches all existing Sketch nodes, extracts axis and origin information,
+        and creates SketchAxis and SketchOrigin nodes with relationships.
+
+        Returns:
+            None
+        """
+        try:
+            query = """
+            MATCH (sketch:Sketch)
+            WITH sketch, sketch.origin AS origin_position, sketch.x_direction AS x_axis_vector, sketch.y_direction AS y_axis_vector, sketch.origin_point AS origin_id_token
+            MERGE (origin:SketchEntity {id_token: origin_id_token})
+            ON CREATE SET origin.position = origin_position
+            ON MATCH SET origin :SketchOrigin
+            SET origin :SketchEntity
+            MERGE (x_axis:SketchAxis:SketchEntity {name: 'x', vector: x_axis_vector})
+            MERGE (y_axis:SketchAxis:SketchEntity {name: 'y', vector: y_axis_vector})
+            MERGE (x_axis)-[:STARTS_WITH]->(origin)
+            MERGE (y_axis)-[:STARTS_WITH]->(origin)
+            MERGE (y_axis)-[:PERPENDICULAR_TO]->(x_axis)
+            MERGE (sketch)-[:CONTAINS]->(x_axis)
+            MERGE (sketch)-[:CONTAINS]->(y_axis)
+            MERGE (sketch)-[:CONTAINS]->(origin)
+            """
+
+            self.execute_query(query)
+            self.logger.info("Successfully created sketch axis and origin nodes for all sketches")
+        except Exception as e:
+            self.logger.error(f"Error creating sketch axis and origin nodes for all sketches: {e}\n{traceback.format_exc()}")
 
 # Usage example
 if __name__ == "__main__":

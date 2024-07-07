@@ -6,46 +6,74 @@ This module provides an extractor class for extracting information from Construc
 Classes:
     - ConstructionPlaneExtractor: Extractor for ConstructionPlane objects.
 """
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, List, Any
 import adsk.core
 from adsk.fusion import ConstructionPlane, ConstructionPlaneDefinition, ConstructionPlaneAtAngleDefinition, ConstructionPlaneByPlaneDefinition, ConstructionPlaneDistanceOnPathDefinition, ConstructionPlaneMidplaneDefinition, ConstructionPlaneOffsetDefinition, ConstructionPlaneTangentAtPointDefinition, ConstructionPlaneTangentDefinition, ConstructionPlaneThreePointsDefinition, ConstructionPlaneTwoEdgesDefinition
-from .base_extractor import BaseExtractor
+from ..base_extractor import BaseExtractor
 import traceback
-from ..utils.general_utils import nested_getattr
+from ...utils.general_utils import nested_getattr
 
 __all__ = ['ConstructionPlaneExtractor']
 
 class ConstructionPlaneExtractor(BaseExtractor):
-    """Extractor for extracting detailed information from ConstructionPlane objects."""
+    """
+    Extractor for ConstructionPlane objects.
+    
+    This class provides methods to extract various properties from a ConstructionPlane object.
+
+    Attributes:
+        plane (ConstructionPlane): The construction plane object to extract data from.
+    """
 
     def __init__(self, obj: ConstructionPlane):
-        """Initialize the extractor with the ConstructionPlane element."""
+        """Initialises the ConstructionPlaneExtractor with a construction plane object.
+
+        Args:
+            obj: The construction plane object to extract information from.
+        """
         super().__init__(obj)
 
     @property
-    def geometry(self) -> Optional[Dict[str, float]]:
+    def geometry(self) -> Optional[Dict[str, List[float]]]:
         """Extracts the geometry of the construction plane.
 
         Returns:
             dict: A dictionary containing the origin and normal vector of the construction plane.
         """
         try:
-            geometry = self._obj.geometry
-            return {
+            origin = nested_getattr(self._obj, 'geometry.origin', None)
+            normal =  nested_getattr(self._obj, 'geometry.normal', None)
+            if normal is not None and origin is not None:
+                return {
 
-                'origin' : [
-                    nested_getattr(geometry, 'origin.x', None),
-                    nested_getattr(geometry, 'origin.y', None),
-                    nested_getattr(geometry, 'origin.z', None)
-                ],
-                'normal' : [
-                    nested_getattr(geometry, 'normal.x', None),
-                    nested_getattr(geometry, 'normal.y', None),
-                    nested_getattr(geometry, 'normal.z', None)
-                ],
-            }
+                    'origin' : [
+                        getattr(origin, 'x', None),
+                        getattr(origin, 'y', None),
+                        getattr(origin, 'z', None),
+                    ],
+                    'normal' : [
+                        getattr(normal, 'x', None),
+                        getattr(normal, 'y', None),
+                        getattr(normal, 'z', None),
+                    ],
+                }
+            else:
+                return None
         except AttributeError as e:
             self.logger.error(f'Error extracting geometry: {e}\n{traceback.format_exc()}')
+            return None
+        
+    @property
+    def timeline_object(self) -> Optional[str]:
+        """Extracts the timeline object associated with this construction plane.
+
+        Returns:
+            List[str]: The timeline object, or an empty list if not available.
+        """
+        try:
+            return nested_getattr(self._obj, 'timelineObject.entity.entityToken', None)
+        except AttributeError as e:
+            self.logger.error(f'Error extracting timeline object: {e}\n{traceback.format_exc()}')
             return None
 
     @property
@@ -56,10 +84,96 @@ class ConstructionPlaneExtractor(BaseExtractor):
             bool: True if the construction plane is parametric, False otherwise.
         """
         try:
-            return self._obj.isParametric
+            return getattr(self._obj, 'isParametric', None)
         except AttributeError as e:
             self.logger.error(f'Error extracting parametric state: {e}\n{traceback.format_exc()}')
             return None
+        
+    @property
+    def is_visible(self) -> Optional[bool]:
+        """Indicates if the construction plane is visible.
+
+        Returns:
+            bool: True if the construction plane is visible, False otherwise.
+        """
+        try:
+            return getattr(self._obj, 'isVisible', None)
+        except AttributeError as e:
+            self.logger.error(f'Error extracting visibility: {e}\n{traceback.format_exc()}')
+            return None
+    
+    @property
+    def health_state(self) -> Optional[str]:
+        """Extracts the current health state of this plane.
+
+        Returns:
+            str: The health state, or None if not available.
+        """
+        try:
+            return getattr(self._obj, 'healthState', None)
+        except AttributeError as e:
+            self.logger.error(f'Error extracting health state: {e}\n{traceback.format_exc()}')
+            return None
+        
+    @property
+    def error_or_warning_message(self) -> Optional[str]:
+        """Extracts the error or warning message, if any, associated with the health state of this plane.
+
+        Returns:
+            str: The error or warning message, or None if not available.
+        """
+        try:
+            return getattr(self._obj, 'errorOrWarningMessage', None)
+        except AttributeError as e:
+            self.logger.error(f'Error extracting error or warning message: {e}\n{traceback.format_exc()}')
+            return None
+
+    @property
+    def transform(self) -> Optional[List[float]]:
+        """Extracts the transform of the Construction Plane object.
+
+        Returns:
+            List[float]: The transform of the Construction Plane object.
+        """
+        try:
+            transform = nested_getattr(self._obj, 'transform', None)
+            if transform:
+                return [
+                    transform.asArray()[0],  # 'm11'
+                    transform.asArray()[1],  # 'm12'
+                    transform.asArray()[2],  # 'm13'
+                    transform.asArray()[3],  # 'm14'
+                    transform.asArray()[4],  # 'm21'
+                    transform.asArray()[5],  # 'm22'
+                    transform.asArray()[6],  # 'm23'
+                    transform.asArray()[7],  # 'm24'
+                    transform.asArray()[8],  # 'm31'
+                    transform.asArray()[9],  # 'm32'
+                    transform.asArray()[10], # 'm33'
+                    transform.asArray()[11], # 'm34'
+                    transform.asArray()[12], # 'm41'
+                    transform.asArray()[13], # 'm42'
+                    transform.asArray()[14], # 'm43'
+                    transform.asArray()[15], # 'm44'
+                ]
+            return None
+        except AttributeError as e:
+            self.logger.error(f'Error extracting transform matrix: {e}\n{traceback.format_exc()}')
+            return None
+        
+    @property
+    def base_feature(self) -> Optional[str]:
+        """Extracts the base feature associated with this plane, if available.
+
+        Returns:
+            str: The base feature, or None if not available.
+        """
+        try:
+            return getattr(self._obj, 'baseFeature', None)
+        except AttributeError as e:
+            self.logger.error(f'Error extracting base feature: {e}\n{traceback.format_exc()}')
+            return None
+
         
     def extract_definition_info(self, definition: ConstructionPlaneDefinition) -> Optional[Dict[str, Any]]:
         """Extracts the definition information for the construction plane.
@@ -128,8 +242,9 @@ class ConstructionPlaneExtractor(BaseExtractor):
                     'linear_entity_two': definition.linearEntityTwo.entityToken
                 }
             return None
-        except AttributeError as e:
-            self.logger.error(f'Error extracting definition info: {e}\n{traceback.format_exc()}')
+        except AttributeError:
+            # TODO add logger
+            # TODO understand which definition type the origin planes fit under
             return None
 
     @property
@@ -147,6 +262,12 @@ class ConstructionPlaneExtractor(BaseExtractor):
         base_info = super().extract_info()
         construction_plane_info = {
             'is_parametric': self.is_parametric,
+            'is_visible': self.is_visible,
+            'timeline_object': self.timeline_object,
+            'base_feature': self.base_feature,
+            'health_state': self.health_state,
+            'error_or_warning_message': self.error_or_warning_message,
+            'transform': self.transform,
         }
         
         # Add extent two information if available
