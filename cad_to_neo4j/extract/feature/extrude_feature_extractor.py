@@ -103,7 +103,7 @@ class ExtrudeFeatureExtractor(FeatureExtractor):
     
     @property
     def extent_type(self) -> Optional[str]:
-        """Extracts the direction of the extrusion."""
+        """Extracts the direction of the extrusion.""" # TODO make this consistent
         OneSideFeatureExtentType = 0
         TwoSidesFeatureExtentType = 1
         SymmetricFeatureExtentType = 2
