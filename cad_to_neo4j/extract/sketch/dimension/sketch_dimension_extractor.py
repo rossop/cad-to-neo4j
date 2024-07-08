@@ -23,7 +23,7 @@ class SketchDimensionExtractor(BaseExtractor):
     def dimension_value(self) -> Optional[float]:
         """Extract the value of the sketch dimension."""
         try:
-            return None
+            return getattr(self._obj, 'value', None)
         except AttributeError:
             return None
 
