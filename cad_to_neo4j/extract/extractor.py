@@ -37,6 +37,11 @@ from .sketch import (
     SketchLineExtractor, 
     ProfileExtractor,
     SketchCircleExtractor,
+    SketchArcExtractor,
+    SketchEllipseExtractor,
+    SketchEllipticalArcExtractor,
+    SketchFittedSplineExtractor,
+    SketchFixedSplineExtractor,
 ) 
 from .sketch.dimension import (
     SketchDimensionExtractor,
@@ -92,6 +97,11 @@ EXTRACTORS = {
     'adsk::fusion::SketchPoint': SketchPointExtractor,
     'adsk::fusion::SketchCurve': SketchCurveExtractor,
     'adsk::fusion::SketchCircle': SketchCircleExtractor,
+    'adsk::fusion::SketchArc': SketchArcExtractor,
+    'adsk::fusion::SketchEllipse': SketchEllipseExtractor,
+    'adsk::fusion::SketchEllipticalArc': SketchEllipticalArcExtractor,
+    'adsk::fusion::SketchFittedSpline': SketchFittedSplineExtractor,
+    'adsk::fusion::SketchFixedSpline': SketchFixedSplineExtractor,
     'adsk::fusion::SketchLine': SketchLineExtractor,
     'adsk::fusion::SketchDimension': SketchDimensionExtractor,
     'adsk::fusion::SketchAngularDimension': SketchAngularDimensionExtractor,

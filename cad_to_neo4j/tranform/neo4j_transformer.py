@@ -236,12 +236,20 @@ class Neo4jTransformer(Neo4jTransactionManager):
             RETURN sc, sp1, sp2
             """,
             'circle_center': r"""
-            MATCH (circle:SketchCircle)
+            MATCH (circle)
             WHERE circle.centerPoint IS NOT NULL
             MATCH (center {id_token: circle.centerPoint})
             MERGE (circle)-[:CENTERED_ON]->(center)
             REMOVE circle.centerPoint
             RETURN circle, center
+            """,
+            'projection': r"""
+            MATCH (se:SketchEntity)
+            WHERE se.referencedEntity IS NOT NULL
+            MATCH (re:SketchEntity)
+            WHERE re.id_token = se.referencedEntity
+            MERGE (re)-[:PROJECTED_TO]->(se)
+            RETURN se,re
             """,
         }
         result = []

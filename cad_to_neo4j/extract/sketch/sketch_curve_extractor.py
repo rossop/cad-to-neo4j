@@ -9,7 +9,7 @@ Classes:
 from typing import Dict, Any
 from adsk.fusion import SketchCurve
 from ..base_extractor import BaseExtractor
-from .sketch_element_extractor import SketchEntityExtractor
+from .sketch_entity_extractor import SketchEntityExtractor
 
 __all__ = ['SketchCurveExtractor']
 

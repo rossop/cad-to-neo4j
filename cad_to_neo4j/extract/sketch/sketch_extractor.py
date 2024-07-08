@@ -11,7 +11,7 @@ from typing import Optional, Dict, List, Any
 from adsk.fusion import Sketch
 from ..base_extractor import BaseExtractor
 from ...utils.general_utils import nested_getattr
-from .sketch_element_extractor import SketchEntityExtractor
+from .sketch_entity_extractor import SketchEntityExtractor
 import adsk.core, traceback
 
 __all__ = ['SketchExtractor']

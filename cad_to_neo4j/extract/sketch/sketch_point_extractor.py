@@ -8,7 +8,7 @@ Classes:
 """
 from typing import Optional, Dict, List, Any
 from adsk.fusion import SketchPoint
-from .sketch_element_extractor import SketchEntityExtractor
+from .sketch_entity_extractor import SketchEntityExtractor
 from ..base_extractor import BaseExtractor
 from ...utils.general_utils import nested_getattr
 
