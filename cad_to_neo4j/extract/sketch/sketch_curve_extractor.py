@@ -9,11 +9,11 @@ Classes:
 from typing import Dict, Any
 from adsk.fusion import SketchCurve
 from ..base_extractor import BaseExtractor
-from .sketch_element_extractor import SketchElementExtractor
+from .sketch_element_extractor import SketchEntityExtractor
 
 __all__ = ['SketchCurveExtractor']
 
-class SketchCurveExtractor(SketchElementExtractor):
+class SketchCurveExtractor(SketchEntityExtractor):
     """Extractor for extracting detailed information from SketchCurve objects."""
     
     def __init__(self, obj: SketchCurve) -> None:

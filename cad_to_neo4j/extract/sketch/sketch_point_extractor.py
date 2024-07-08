@@ -8,13 +8,13 @@ Classes:
 """
 from typing import Optional, Dict, List, Any
 from adsk.fusion import SketchPoint
-from .sketch_element_extractor import SketchElementExtractor
+from .sketch_element_extractor import SketchEntityExtractor
 from ..base_extractor import BaseExtractor
 from ...utils.general_utils import nested_getattr
 
 __all__ = ['SketchPointExtractor']
 
-class SketchPointExtractor(SketchElementExtractor):
+class SketchPointExtractor(SketchEntityExtractor):
     """Extractor for extracting detailed information from Sketch Point objects."""
 
     def __init__(self, obj: SketchPoint) -> None:

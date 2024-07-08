@@ -12,9 +12,9 @@ from typing import Optional, List, Dict, Any
 from adsk.fusion import SketchEntity, SketchDimension
 from ..base_extractor import BaseExtractor
 
-__all__ = ['SketchElementExtractor']
+__all__ = ['SketchEntityExtractor']
 
-class SketchElementExtractor(BaseExtractor):
+class SketchEntityExtractor(BaseExtractor):
     """Parent Class for other Sketch Entities"""
 
     def __init__(self, obj: SketchEntity):

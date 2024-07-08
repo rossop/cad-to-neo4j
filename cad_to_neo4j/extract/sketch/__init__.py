@@ -20,10 +20,10 @@ Modules:
       specific to sketch circle objects in CAD models.
     - sketch_arc_extractor.py: Provides the SketchArcExtractor class for extracting properties 
       specific to sketch arc objects in CAD models.
-    - sketch_dimension_extractor.py: Provides the SketchDimensionExtractor class for extracting 
-      properties specific to sketch dimension objects in CAD models.
     - profile_extractor.py: Provides the ProfileExtractor class for extracting properties 
       specific to profile objects in CAD models.
+    - dimension/: Provides the different SketchDimensionExtractors. Classes for extracting 
+      properties specific to sketch dimension objects in CAD models.
 """
 
 from .sketch_extractor import SketchExtractor
@@ -34,6 +34,7 @@ from .sketch_circle_extractor import SketchCircleExtractor
 from .sketch_arc_extractor import SketchArcExtractor
 from .profile_extractor import ProfileExtractor
 from . import dimension
+from . import constraint
 
 __all__ =  [
     
@@ -45,4 +46,4 @@ __all__ =  [
     'SketchArcExtractor',
     'SketchDimensionExtractor',
     'ProfileExtractor',
-] + dimension.__all__
+] + dimension.__all__ + constraint.__all__
