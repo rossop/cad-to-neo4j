@@ -8,7 +8,19 @@ Classes:
 """
 from typing import Optional, Dict, List, Any
 import adsk.core
-from adsk.fusion import ConstructionPlane, ConstructionPlaneDefinition, ConstructionPlaneAtAngleDefinition, ConstructionPlaneByPlaneDefinition, ConstructionPlaneDistanceOnPathDefinition, ConstructionPlaneMidplaneDefinition, ConstructionPlaneOffsetDefinition, ConstructionPlaneTangentAtPointDefinition, ConstructionPlaneTangentDefinition, ConstructionPlaneThreePointsDefinition, ConstructionPlaneTwoEdgesDefinition
+from adsk.fusion import (
+    ConstructionPlane, 
+    ConstructionPlaneDefinition, 
+    ConstructionPlaneAtAngleDefinition, 
+    ConstructionPlaneByPlaneDefinition, 
+    ConstructionPlaneDistanceOnPathDefinition, 
+    ConstructionPlaneMidplaneDefinition, 
+    ConstructionPlaneOffsetDefinition, 
+    ConstructionPlaneTangentAtPointDefinition, 
+    ConstructionPlaneTangentDefinition, 
+    ConstructionPlaneThreePointsDefinition, 
+    ConstructionPlaneTwoEdgesDefinition,
+    )
 from ..base_extractor import BaseExtractor
 import traceback
 from ...utils.general_utils import nested_getattr
@@ -185,66 +197,147 @@ class ConstructionPlaneExtractor(BaseExtractor):
             dict: A dictionary containing the extracted definition information.
         """
         try:
+            self.logger.info(f'Extracting definition info for type: {type(definition)}')
             if isinstance(definition, ConstructionPlaneAtAngleDefinition):
+                try:
+                    linear_entity = definition.linearEntity
+                except RuntimeError:
+                    linear_entity = None
+                try:
+                    # TODO fix issues with getting planar identity when plan at an angle has no plane
+                    # This should be done without the need for try and except
+                    planar_entity = definition.planarEntity
+                except RuntimeError:
+                    planar_entity = None
+                
+                
                 return {
                     'definition_type': 'AtAngle',
                     'angle': definition.angle.value,
-                    'linear_entity': definition.linearEntity.entityToken,
-                    'planar_entity': definition.planarEntity.entityToken
+                    'linear_entity': linear_entity.entityToken if linear_entity is not None else None,
+                    'planar_entity': planar_entity.entityToken if planar_entity is not None else None
                 }
+                
             elif isinstance(definition, ConstructionPlaneByPlaneDefinition):
-                return {
-                    'definition_type': 'ByPlane',
-                    'plane': definition.plane.geometry
-                }
+                plane = getattr(definition, 'plane', None)
+                if plane is not None:
+                    return {
+                        'definition_type': 'ByPlane',
+                        'plane_normal': [
+                                plane.normal.x,
+                                plane.normal.y,
+                                plane.normal.z,
+                        ],
+                        'plane_origin': [
+                                plane.origin.x,
+                                plane.origin.y,
+                                plane.origin.z,
+                        ],
+                    }
+                else:
+                    self.logger.error(f'Missing plane in ConstructionPlaneByPlaneDefinition: plane={plane}')
+                    return None
+                
             elif isinstance(definition, ConstructionPlaneDistanceOnPathDefinition):
-                return {
-                    'definition_type': 'DistanceOnPath',
-                    'path_entity': definition.pathEntity.entityToken,
-                    'distance': definition.distance.value
-                }
+                path_entity = getattr(definition, 'pathEntity', None)
+                if path_entity is not None:
+                    return {
+                        'definition_type': 'DistanceOnPath',
+                        'path_entity': path_entity.entityToken,
+                        'distance': definition.distance.value
+                    }
+                else:
+                    self.logger.error(f'Missing pathEntity in ConstructionPlaneDistanceOnPathDefinition: path_entity={path_entity}')
+                    return None
+                
             elif isinstance(definition, ConstructionPlaneMidplaneDefinition):
-                return {
-                    'definition_type': 'Midplane',
-                    'planar_entity_one': definition.planarEntityOne.entityToken,
-                    'planar_entity_two': definition.planarEntityTwo.entityToken
-                }
+                planar_entity_one = getattr(definition, 'planarEntityOne', None)
+                planar_entity_two = getattr(definition, 'planarEntityTwo', None)
+                if planar_entity_one is not None and planar_entity_two is not None:
+                    return {
+                        'definition_type': 'Midplane',
+                        'planar_entity_one': planar_entity_one.entityToken,
+                        'planar_entity_two': planar_entity_two.entityToken
+                    }
+                else:
+                    self.logger.error(f'Missing entities in ConstructionPlaneMidplaneDefinition: '
+                                    f'planar_entity_one={planar_entity_one}, planar_entity_two={planar_entity_two}')
+                    return None
+                
             elif isinstance(definition, ConstructionPlaneOffsetDefinition):
-                return {
-                    'definition_type': 'Offset',
-                    'offset': definition.offset.value,
-                    'planar_entity': definition.planarEntity.entityToken
-                }
+                planar_entity = getattr(definition, 'planarEntity', None)
+                if planar_entity is not None:
+                    return {
+                        'definition_type': 'Offset',
+                        'offset': definition.offset.value,
+                        'planar_entity': planar_entity.entityToken
+                    }
+                else:
+                    self.logger.error(f'Missing planarEntity in ConstructionPlaneOffsetDefinition: planar_entity={planar_entity}')
+                    return None
+                
             elif isinstance(definition, ConstructionPlaneTangentAtPointDefinition):
-                return {
-                    'definition_type': 'TangentAtPoint',
-                    'tangent_face': definition.tangentFace.entityToken,
-                    'point_entity': definition.pointEntity.entityToken
-                }
+                tangent_face = getattr(definition, 'tangentFace', None)
+                point_entity = getattr(definition, 'pointEntity', None)
+                if tangent_face is not None and point_entity is not None:
+                    return {
+                        'definition_type': 'TangentAtPoint',
+                        'tangent_face': tangent_face.entityToken,
+                        'point_entity': point_entity.entityToken
+                    }
+                else:
+                    self.logger.error(f'Missing entities in ConstructionPlaneTangentAtPointDefinition: '
+                                    f'tangent_face={tangent_face}, point_entity={point_entity}')
+                    return None
             elif isinstance(definition, ConstructionPlaneTangentDefinition):
-                return {
-                    'definition_type': 'Tangent',
-                    'angle': definition.angle.value,
-                    'tangent_face': definition.tangentFace.entityToken,
-                    'planar_entity': definition.planarEntity.entityToken
-                }
+                tangent_face = getattr(definition, 'tangentFace', None)
+                planar_entity = getattr(definition, 'planarEntity', None)
+                if tangent_face is not None and planar_entity is not None:
+                    return {
+                        'definition_type': 'Tangent',
+                        'angle': definition.angle.value,
+                        'tangent_face': tangent_face.entityToken,
+                        'planar_entity': planar_entity.entityToken
+                    }
+                else:
+                    self.logger.error(f'Missing entities in ConstructionPlaneTangentDefinition: '
+                                    f'tangent_face={tangent_face}, planar_entity={planar_entity}')
+                    return None
+                
             elif isinstance(definition, ConstructionPlaneThreePointsDefinition):
-                return {
-                    'definition_type': 'ThreePoints',
-                    'point_entity_one': definition.pointEntityOne.entityToken,
-                    'point_entity_two': definition.pointEntityTwo.entityToken,
-                    'point_entity_three': definition.pointEntityThree.entityToken
-                }
+                point_entity_one = getattr(definition, 'pointEntityOne', None)
+                point_entity_two = getattr(definition, 'pointEntityTwo', None)
+                point_entity_three = getattr(definition, 'pointEntityThree', None)
+                if point_entity_one is not None and point_entity_two is not None and point_entity_three is not None:
+                    return {
+                        'definition_type': 'ThreePoints',
+                        'point_entity_one': point_entity_one.entityToken,
+                        'point_entity_two': point_entity_two.entityToken,
+                        'point_entity_three': point_entity_three.entityToken
+                    }
+                else:
+                    self.logger.error(f'Missing entities in ConstructionPlaneThreePointsDefinition: '
+                                    f'point_entity_one={point_entity_one}, point_entity_two={point_entity_two}, point_entity_three={point_entity_three}')
+                    return None
+                
             elif isinstance(definition, ConstructionPlaneTwoEdgesDefinition):
-                return {
-                    'definition_type': 'TwoEdges',
-                    'linear_entity_one': definition.linearEntityOne.entityToken,
-                    'linear_entity_two': definition.linearEntityTwo.entityToken
-                }
-            return None
+                linear_entity_one = getattr(definition, 'linearEntityOne', None)
+                linear_entity_two = getattr(definition, 'linearEntityTwo', None)
+                if linear_entity_one is not None and linear_entity_two is not None:
+                    return {
+                        'definition_type': 'TwoEdges',
+                        'linear_entity_one': linear_entity_one.entityToken,
+                        'linear_entity_two': linear_entity_two.entityToken
+                    }
+                else:
+                    self.logger.error(f'Missing entities in ConstructionPlaneTwoEdgesDefinition: '
+                                    f'linear_entity_one={linear_entity_one}, linear_entity_two={linear_entity_two}')
+                    return None
+            else:
+                self.logger.error(f'Unhandled definition type: {definition}')
+                return None
         except AttributeError:
-            # TODO add logger
-            # TODO understand which definition type the origin planes fit under
+            self.logger.error(f'Failed to extract definition info:\n{traceback.format_exc()}')
             return None
 
     @property
