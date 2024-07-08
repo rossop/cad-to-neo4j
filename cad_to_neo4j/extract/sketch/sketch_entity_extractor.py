@@ -40,6 +40,7 @@ class SketchEntityExtractor(BaseExtractor):
             'isDeletable': self.isDeletable,
             'isFullyConstrained': self.isFullyConstrained,
             'isLinked': self.isLinked,
+            'parentSketch': self.parentSketch,
         }
         return {**basic_info, **sketch_entity_info}
     
@@ -164,5 +165,15 @@ class SketchEntityExtractor(BaseExtractor):
         """
         try:
             return getattr(self._obj, 'isLinked', None)
+        except AttributeError:
+            return None
+        
+    @property
+    def parentSketch(self) -> Optional[str]:
+        """
+        Returns the parent sketch.
+        """
+        try:
+            return nested_getattr(self._obj, 'parentSketch.entityToken', None)
         except AttributeError:
             return None

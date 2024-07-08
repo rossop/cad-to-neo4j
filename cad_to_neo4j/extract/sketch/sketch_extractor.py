@@ -44,7 +44,6 @@ class SketchExtractor(SketchEntityExtractor):
             'timeline_index': self.timeline_index,
             'reference_plane_entity_token': self.reference_plane_entity_token,
             'name': self.name,
-            # 'transform': self.transform, # AttributeError: 'Matrix3D' object has no attribute 'getAsArray'
             'is_parametric': self.is_parametric,
             'is_visible': self.is_visible,
             'are_dimensions_shown': self.are_dimensions_shown,
@@ -52,18 +51,20 @@ class SketchExtractor(SketchEntityExtractor):
             'origin': self.origin,
             'x_direction': self.x_direction,
             'y_direction': self.y_direction,
-            # 'bounding_box': self.bounding_box, # change to vector or use update
             'origin_point': self.origin_point,
             'is_fully_constrained': self.is_fully_constrained,
             'base_or_form_feature': self.base_or_form_feature,
             'health_state': self.health_state,
             'error_or_warning_message': self.error_or_warning_message,
-            # 'sketch_points': self.sketch_points,
-            # 'sketch_curves': self.sketch_curves,
-            # 'sketch_dimensions': self.sketch_dimensions,
-            # 'geometric_constraints': self.geometric_constraints,
-            # 'profiles': self.profiles,
+            # 'transform': self.transform, # AttributeError: 'Matrix3D' object has no attribute 'getAsArray'
         }
+
+        # Add bounding box information if available
+        bbbox = self.bounding_box
+        if bbbox is not None:
+            sketch_info.update(bbbox)
+
+        
         return {**basic_info, **sketch_info}
     
     @property
@@ -218,17 +219,17 @@ class SketchExtractor(SketchEntityExtractor):
         Returns:
             Dict[str, float]: The bounding box of the Sketch object.
         """
-        bounding_box = nested_getattr(self._obj, 'boundingBox', None)
-        if bounding_box:
-            return {
-                'min_x': bounding_box.minPoint.x,
-                'min_y': bounding_box.minPoint.y,
-                'min_z': bounding_box.minPoint.z,
-                'max_x': bounding_box.maxPoint.x,
-                'max_y': bounding_box.maxPoint.y,
-                'max_z': bounding_box.maxPoint.z
-            }
-        return None
+        try:
+            bbox = getattr(self._obj, 'boundingBox', None)
+            if bbox:
+                return {
+                    'bb_min_point': [bbox.minPoint.x, bbox.minPoint.y, bbox.minPoint.z],
+                    'bb_max_point': [bbox.maxPoint.x, bbox.maxPoint.y, bbox.maxPoint.z]
+                }
+            return None
+        except Exception as e:
+            self.logger.error(f"Error extracting bounding box: {e}")
+            return None
     
     @property
     def origin_point(self) -> Optional[str]:
