@@ -64,7 +64,7 @@ class Neo4jTransformer(Neo4jTransactionManager):
             self.link_feature_to_extents_and_faces,
             self.link_feature_to_axes_bodies_extents,
             self.create_sketch_axis_and_origin_for_all_sketches,
-            self.link_geometric_constraints,
+            self.create_sketch_geometric_constraints,
         ]
         
         results = {}
@@ -289,7 +289,7 @@ class Neo4jTransformer(Neo4jTransactionManager):
             MATCH (b {id_token: d.entity_two})
             MERGE (a)-[:DIMENSIONED]->(d)
             MERGE (d)-[:DIMENSIONED]->(b)
-            // REMOVE d.entity_one, d.entity_two
+            REMOVE d.entity_one, d.entity_two
             """,
             """
             MATCH (d)
@@ -300,7 +300,7 @@ class Neo4jTransformer(Neo4jTransactionManager):
             MATCH (b {id_token: d.line_two})
             MERGE (a)-[:DIMENSIONED]->(d)
             MERGE (d)-[:DIMENSIONED]->(b)
-            // REMOVE d.line_one, d.line_two
+            REMOVE d.line_one, d.line_two
             """,   
             """
             MATCH (d)
@@ -311,7 +311,7 @@ class Neo4jTransformer(Neo4jTransactionManager):
             MATCH (b {id_token: d.circle_two})
             MERGE (a)-[:DIMENSIONED]->(d)
             MERGE (d)-[:DIMENSIONED]->(b)
-            // REMOVE d.circle_one, d.circle_two
+            REMOVE d.circle_one, d.circle_two
             """,   
             """
             MATCH (d)
@@ -320,7 +320,7 @@ class Neo4jTransformer(Neo4jTransactionManager):
             MATCH (a {id_token: d.entity})
             MERGE (a)-[:DIMENSIONED]->(d)
             MERGE (d)-[:DIMENSIONED]->(a)
-            // REMOVE d.entity
+            REMOVE d.entity
             """,
             """
             MATCH (d)
@@ -331,7 +331,7 @@ class Neo4jTransformer(Neo4jTransactionManager):
             MATCH (b {id_token: d.planar_surface})
             MERGE (a)-[:DIMENSIONED]->(d)
             MERGE (d)-[:DIMENSIONED]->(b)
-            // REMOVE d.line, d.planar_surface
+            REMOVE d.line, d.planar_surface
             """,   
             """
             MATCH (d)
@@ -342,7 +342,7 @@ class Neo4jTransformer(Neo4jTransactionManager):
             MATCH (b {id_token: d.surface})
             MERGE (a)-[:DIMENSIONED]->(d)
             MERGE (d)-[:DIMENSIONED]->(b)
-            // REMOVE d.point, d.surface
+            REMOVE d.point, d.surface
             """,   
             """
             MATCH (d)
@@ -353,7 +353,7 @@ class Neo4jTransformer(Neo4jTransactionManager):
             MATCH (b {id_token: d.entity_two})
             MERGE (a)-[:DIMENSIONED]->(d)
             MERGE (d)-[:DIMENSIONED]->(b)
-            // REMOVE d.line, d.entity_two
+            REMOVE d.line, d.entity_two
             """,   
             """
             MATCH (d)
@@ -362,7 +362,7 @@ class Neo4jTransformer(Neo4jTransactionManager):
             MATCH (c {id_token: d.offset_constraint})
             MERGE (c)-[:DIMENSIONED]->(d)
             MERGE (d)-[:DIMENSIONED]->(c)
-            // REMOVE d.offset_constraint
+            REMOVE d.offset_constraint
             """,   
             """
             MATCH (d)
@@ -371,7 +371,7 @@ class Neo4jTransformer(Neo4jTransactionManager):
             MATCH (c {id_token: d.offset_constraint})
             MERGE (c)-[:DIMENSIONED]->(d)
             MERGE (d)-[:DIMENSIONED]->(c)
-            // REMOVE d.offset_constraint
+            REMOVE d.offset_constraint
             """,   
             """
             MATCH (d)
@@ -382,7 +382,7 @@ class Neo4jTransformer(Neo4jTransactionManager):
             MATCH (c {id_token: d.entity_two})
             MERGE (a)-[:DIMENSIONED]->(d)
             MERGE (d)-[:DIMENSIONED]->(c)
-            // REMOVE d.line, d.entity_two
+            REMOVE d.line, d.entity_two
             """,   
         ]
         
@@ -593,138 +593,138 @@ class Neo4jTransformer(Neo4jTransactionManager):
 
         return results
 
-    def link_geometric_constraints(self):
+    def create_sketch_geometric_constraints(self):
         """
         Creates relationships between entities and their geometric constraints based on various properties.
 
         Returns:
             dict: A dictionary containing the results of all transformations.
         """
-        queries = [
+        queries = [ 
+            # Creates relationships for CircularPatternConstraint entities.
             """
-            MATCH (gc:GeometricConstraint)
-            WHERE gc.point IS NOT NULL
-            MATCH (e) WHERE e.id_token = gc.point
-            MERGE (e)-[:HAS_CONSTRAINT]->(gc)
+            MATCH (c:CircularPatternConstraint)
+            WHERE c.entities IS NOT NULL AND c.created_entities IS NOT NULL AND c.center_point IS NOT NULL
+            UNWIND c.entities AS entity_token
+            MATCH (se {id_token: entity_token}) // Source Entities
+            WITH c, se
+            UNWIND c.created_entities AS created_entity_token
+            MATCH (te {id_token: created_entity_token}) // Target Entities
+            WITH c, se, te
+            MATCH (ce {id_token: c.center_point}) // Center Point
+            MERGE (se)-[:CONSTRAINED]->(c)
+            MERGE (c)-[:CONSTRAINED]->(te)
+            MERGE (ce)-[:CONSTRAINED]->(c)
+            REMOVE c.entities, c.created_entities, c.center_point
+            RETURN c, se, te, ce
             """,
-            """
-            MATCH (gc:GeometricConstraint)
-            WHERE gc.point_one IS NOT NULL
-            MATCH (e) WHERE e.id_token = gc.point_one
-            MERGE (e)-[:HAS_CONSTRAINT]->(gc)
+            # Creates relationships for VerticalConstraint entities with yAxis.
+            """   
+            MATCH (vc:VerticalConstraint)
+            WHERE vc.line IS NOT NULL
+            UNWIND vc.line AS entity_token
+            MATCH (se {id_token: entity_token}) // Source Entities
+            MATCH (sa:SketchAxis {name: 'y'}) // Target SketchAxis
+            WITH vc, se, sa
+            MATCH (vc)<-[:CONTAINS]-(s:Sketch)-[:CONTAINS]->(sa)
+            MERGE (se)-[:CONSTRAINED]->(vc)
+            MERGE (vc)-[:CONSTRAINED]->(sa)
+            REMOVE vc.line
+            RETURN vc, se, sa
             """,
+            # Creates relationships for HorizontalConstraint entities with xAxis.
             """
-            MATCH (gc:GeometricConstraint)
-            WHERE gc.point_two IS NOT NULL
-            MATCH (e) WHERE e.id_token = gc.point_two
-            MERGE (e)-[:HAS_CONSTRAINT]->(gc)
+            MATCH (hc:HorizontalConstraint)
+            WHERE hc.line IS NOT NULL
+            UNWIND hc.line AS entity_token
+            MATCH (se {id_token: entity_token}) // Source Entities
+            MATCH (sa:SketchAxis {name: 'x'}) // Target SketchAxis
+            WITH hc, se, sa
+            MATCH (hc)<-[:CONTAINS]-(s:Sketch)-[:CONTAINS]->(sa)
+            MERGE (se)-[:CONSTRAINED]->(hc)
+            MERGE (hc)-[:CONSTRAINED]->(sa)
+            // REMOVE hc.line
+            RETURN hc, se, sa
             """,
+            # Creates relationships for PerpendicularConstraint entities linking line_one and line_two.
             """
-            MATCH (gc:GeometricConstraint)
-            WHERE gc.line IS NOT NULL
-            MATCH (e) WHERE e.id_token = gc.line
-            MERGE (e)-[:HAS_CONSTRAINT]->(gc)
+            MATCH (pc:PerpendicularConstraint)
+            WHERE pc.line_one IS NOT NULL AND pc.line_two IS NOT NULL
+            MATCH (source {id_token: pc.line_one}) // Source Entity
+            MATCH (target {id_token: pc.line_two}) // Target Entity
+            MERGE (source)-[:CONSTRAINED]->(pc)
+            MERGE (pc)-[:CONSTRAINED]->(target)
+            REMOVE pc.line_one, pc.line_two
+            RETURN pc, source, target
             """,
+            # Creates relationships for CoincidentConstraint entities linking point and entity.
             """
-            MATCH (gc:GeometricConstraint)
-            WHERE gc.curve_one IS NOT NULL
-            MATCH (e) WHERE e.id_token = gc.curve_one
-            MERGE (e)-[:HAS_CONSTRAINT]->(gc)
+            MATCH (cc:CoincidentConstraint)
+            WHERE cc.point IS NOT NULL AND cc.entity IS NOT NULL
+            MATCH (source {id_token: cc.point}) // Source Entity
+            MATCH (target {id_token: cc.entity}) // Target Entity
+            MERGE (source)-[:CONSTRAINED]->(cc)
+            MERGE (cc)-[:CONSTRAINED]->(target)
+            REMOVE cc.point, cc.entity
+            RETURN cc, source, target
             """,
+            # Creates relationships for CollinearConstraint entities linking line_one and line_two.
             """
-            MATCH (gc:GeometricConstraint)
-            WHERE gc.curve_two IS NOT NULL
-            MATCH (e) WHERE e.id_token = gc.curve_two
-            MERGE (e)-[:HAS_CONSTRAINT]->(gc)
+            MATCH (cc:CollinearConstraint)
+            WHERE cc.line_one IS NOT NULL AND cc.line_two IS NOT NULL
+            MATCH (source {id_token: cc.line_one}) // Source Entity
+            MATCH (target {id_token: cc.line_two}) // Target Entity
+            MERGE (source)-[:CONSTRAINED]->(cc)
+            MERGE (cc)-[:CONSTRAINED]->(target)
+            REMOVE cc.line_one, cc.line_two
+            RETURN cc, source, target
             """,
+            # Creates relationships for EqualConstraint entities linking curve_one and curve_two.
             """
-            MATCH (gc:GeometricConstraint)
-            WHERE gc.line_one IS NOT NULL
-            MATCH (e) WHERE e.id_token = gc.line_one
-            MERGE (e)-[:HAS_CONSTRAINT]->(gc)
+            MATCH (ec:EqualConstraint)
+            WHERE ec.curve_one IS NOT NULL AND ec.curve_two IS NOT NULL
+            MATCH (source {id_token: ec.curve_one}) // Source Entity
+            MATCH (target {id_token: ec.curve_two}) // Target Entity
+            MERGE (source)-[:CONSTRAINED]->(ec)
+            MERGE (ec)-[:CONSTRAINED]->(target)
+            REMOVE ec.curve_one, ec.curve_two
+            RETURN ec, source, target
             """,
+            # Creates relationships for ParallelConstraint entities linking line_one and line_two.
             """
-            MATCH (gc:GeometricConstraint)
-            WHERE gc.line_two IS NOT NULL
-            MATCH (e) WHERE e.id_token = gc.line_two
-            MERGE (e)-[:HAS_CONSTRAINT]->(gc)
+            MATCH (pc:ParallelConstraint)
+            WHERE pc.line_one IS NOT NULL AND pc.line_two IS NOT NULL
+            MATCH (source {id_token: pc.line_one}) // Source Entity
+            MATCH (target {id_token: pc.line_two}) // Target Entity
+            MERGE (source)-[:CONSTRAINED]->(pc)
+            MERGE (pc)-[:CONSTRAINED]->(target)
+            REMOVE pc.line_one, pc.line_two
+            RETURN pc, source, target
             """,
+            # reates relationships for SymmetryConstraint entities linking entity_one, entity_two, and symmetry_line.
             """
-            MATCH (gc:GeometricConstraint)
-            WHERE gc.entities IS NOT NULL
-            UNWIND gc.entities AS entity_token
-            MATCH (e) WHERE e.id_token = entity_token
-            MERGE (e)-[:HAS_CONSTRAINT]->(gc)
+            MATCH (sc:SymmetryConstraint)
+            WHERE sc.entity_one IS NOT NULL AND sc.entity_two IS NOT NULL AND sc.symmetry_line IS NOT NULL
+            MATCH (source {id_token: sc.entity_one}) // Source Entity
+            MATCH (target {id_token: sc.entity_two}) // Target Entity
+            MATCH (symmetry_line {id_token: sc.symmetry_line}) // Symmetry Line
+            MERGE (source)-[:CONSTRAINED]->(sc)
+            MERGE (sc)-[:CONSTRAINED]->(target)
+            MERGE (symmetry_line)-[:CONSTRAINED]->(sc)
+            REMOVE sc.entity_one, sc.entity_two, sc.symmetry_line
+            RETURN sc, source, target, symmetry_line
             """,
+            # Creates relationships for TangentConstraint entities linking curve_one and curve_two.
             """
-            MATCH (gc:GeometricConstraint)
-            WHERE gc.entity IS NOT NULL
-            MATCH (e) WHERE e.id_token = gc.entity
-            MERGE (e)-[:HAS_CONSTRAINT]->(gc)
+            MATCH (tc:TangentConstraint)
+            WHERE tc.curve_one IS NOT NULL AND tc.curve_two IS NOT NULL
+            MATCH (source {id_token: tc.curve_one}) // Source Entity
+            MATCH (target {id_token: tc.curve_two}) // Target Entity
+            MERGE (source)-[:CONSTRAINED]->(tc)
+            MERGE (tc)-[:CONSTRAINED]->(target)
+            REMOVE tc.curve_one, tc.curve_two
+            RETURN tc, source, target
             """,
-            """
-            MATCH (gc:GeometricConstraint)
-            WHERE gc.entity_one IS NOT NULL
-            MATCH (e) WHERE e.id_token = gc.entity_one
-            MERGE (e)-[:HAS_CONSTRAINT]->(gc)
-            """,
-            """
-            MATCH (gc:GeometricConstraint)
-            WHERE gc.entity_two IS NOT NULL
-            MATCH (e) WHERE e.id_token = gc.entity_two
-            MERGE (e)-[:HAS_CONSTRAINT]->(gc)
-            """,
-            """
-            MATCH (gc:GeometricConstraint)
-            WHERE gc.created_entities IS NOT NULL
-            UNWIND gc.created_entities AS entity_token
-            MATCH (e) WHERE e.id_token = entity_token
-            MERGE (e)-[:HAS_CONSTRAINT]->(gc)
-            """,
-            """
-            MATCH (gc:GeometricConstraint)
-            WHERE gc.center_point IS NOT NULL
-            MATCH (e) WHERE e.id_token = gc.center_point
-            MERGE (e)-[:HAS_CONSTRAINT]->(gc)
-            """,
-            """
-            MATCH (gc:GeometricConstraint)
-            WHERE gc.planar_surface IS NOT NULL
-            MATCH (e) WHERE e.id_token = gc.planar_surface
-            MERGE (e)-[:HAS_CONSTRAINT]->(gc)
-            """,
-            """
-            MATCH (gc:GeometricConstraint)
-            WHERE gc.mid_point_curve IS NOT NULL
-            MATCH (e) WHERE e.id_token = gc.mid_point_curve
-            MERGE (e)-[:HAS_CONSTRAINT]->(gc)
-            """,
-            """
-            MATCH (gc:GeometricConstraint)
-            WHERE gc.surface IS NOT NULL
-            MATCH (e) WHERE e.id_token = gc.surface
-            MERGE (e)-[:HAS_CONSTRAINT]->(gc)
-            """,
-            """
-            MATCH (gc:GeometricConstraint)
-            WHERE gc.child_curves IS NOT NULL
-            UNWIND gc.child_curves AS entity_token
-            MATCH (e) WHERE e.id_token = entity_token
-            MERGE (e)-[:HAS_CONSTRAINT]->(gc)
-            """,
-            """
-            MATCH (gc:GeometricConstraint)
-            WHERE gc.dimension IS NOT NULL
-            MATCH (e) WHERE e.id_token = gc.dimension
-            MERGE (e)-[:HAS_CONSTRAINT]->(gc)
-            """,
-            """
-            MATCH (gc:GeometricConstraint)
-            WHERE gc.parent_curves IS NOT NULL
-            UNWIND gc.parent_curves AS entity_token
-            MATCH (e) WHERE e.id_token = entity_token
-            MERGE (e)-[:HAS_CONSTRAINT]->(gc)
-            """
         ]
         
         results = []

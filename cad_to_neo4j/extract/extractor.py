@@ -63,6 +63,9 @@ from .sketch.constraint import (
     LineOnPlanarSurfaceConstraintExtractor,
     LineParallelToPlanarSurfaceConstraintExtractor,
     CircularPatternConstraintExtractor,
+    ParallelConstraintExtractor,
+    SymmetryConstraintExtractor,
+    TangentConstraintExtractor,
     )
     
 from .feature import ExtrudeFeatureExtractor, RevolveFeatureExtractor, FeatureExtractor
@@ -110,6 +113,9 @@ EXTRACTORS = {
     'adsk::fusion::HorizontalConstraint' : HorizontalConstraintExtractor,
     'adsk::fusion::MidPointConstraint' : MidPointConstraintExtractor,
     'adsk::fusion::PerpendicularConstraint' : PerpendicularConstraintExtractor,
+    'adsk::fusion::ParallelConstraint' : ParallelConstraintExtractor,
+    'adsk::fusion::SymmetryConstraint' : SymmetryConstraintExtractor,
+    'adsk::fusion::TangentConstraint' : TangentConstraintExtractor,
     'adsk::fusion::CoincidentConstraint' : CoincidentConstraintExtractor,
     'adsk::fusion::OffsetConstraint' : OffsetConstraintExtractor,
     'adsk::fusion::LineOnPlanarSurfaceConstraint': LineOnPlanarSurfaceConstraintExtractor,

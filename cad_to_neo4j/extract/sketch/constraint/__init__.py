@@ -19,6 +19,9 @@ Modules:
     - mid_point_constraint_extractor.py contains MidPointConstraintExtractor
     - offset_constraint_extractor.py contains OffsetConstraintExtractor
     - perpendicular_constraint_extractor.py contains PerpendicularConstraintExtractor
+    - parallel_constraint_extractor.py contains ParallelConstraintExtractor
+    - symmetry_constraint_extractor.py contains SymmetryConstraintExtractor
+    - tangent_constraint_extractor.py contains TangentConstraintExtractor
 """
 
 from .geometric_constraint_extractor import GeometricConstraintExtractor
@@ -36,6 +39,9 @@ from .horizontal_points_constraint_extractor import HorizontalPointsConstraintEx
 from .circular_pattern_constraint_extractor import CircularPatternConstraintExtractor
 from .line_on_planar_surface_constraint_extractor import LineOnPlanarSurfaceConstraintExtractor
 from .line_parallel_to_planar_surface_constraint_extractor import LineParallelToPlanarSurfaceConstraintExtractor
+from .parallel_constraint_extractor import ParallelConstraintExtractor
+from .symmetry_constraint_extractor import SymmetryConstraintExtractor
+from .tangent_constraint_extractor import TangentConstraintExtractor
 
 __all__ = [
     'GeometricConstraintExtractor',
@@ -53,4 +59,7 @@ __all__ = [
     'ConcentricConstraintExtractor',
     'CollinearConstraintExtractor',
     'CoincidentToSurfaceConstraintExtractor',
+    'ParallelConstraintExtractor',
+    'SymmetryConstraintExtractor',
+    'TangentConstraintExtractor',
 ]
