@@ -30,16 +30,19 @@ from adsk.fusion import Design, Component,  Feature, Sketch, BRepBody
 import traceback
 
 from .base_extractor import BaseExtractor
-from .feature import (
-    FeatureExtractor,
-    ExtrudeFeatureExtractor, 
-    RevolveFeatureExtractor, 
-    HoleFeatureExtractor,
-    FilletFeatureExtractor,
-    ChamferFeatureExtractor,
-    BoxFeatureExtractor,
-)
-from .sketch import SketchExtractor, SketchPointExtractor, SketchCurveExtractor, SketchLineExtractor, ProfileExtractor 
+from .sketch import (
+    SketchExtractor, 
+    SketchPointExtractor, 
+    SketchCurveExtractor, 
+    SketchLineExtractor, 
+    ProfileExtractor,
+    SketchCircleExtractor,
+    SketchArcExtractor,
+    SketchEllipseExtractor,
+    SketchEllipticalArcExtractor,
+    SketchFittedSplineExtractor,
+    SketchFixedSplineExtractor,
+) 
 from .sketch.dimension import (
     SketchDimensionExtractor,
     SketchAngularDimensionExtractor,
@@ -72,9 +75,19 @@ from .sketch.constraint import (
     LineOnPlanarSurfaceConstraintExtractor,
     LineParallelToPlanarSurfaceConstraintExtractor,
     CircularPatternConstraintExtractor,
+    ParallelConstraintExtractor,
+    SymmetryConstraintExtractor,
+    TangentConstraintExtractor,
     )
-    
-from .feature import ExtrudeFeatureExtractor, RevolveFeatureExtractor, FeatureExtractor
+from .feature import (
+    FeatureExtractor,
+    ExtrudeFeatureExtractor, 
+    RevolveFeatureExtractor, 
+    HoleFeatureExtractor,
+    FilletFeatureExtractor,
+    ChamferFeatureExtractor,
+    BoxFeatureExtractor,
+)
 from .construction_geometry import ConstructionPlaneExtractor, ConstructionAxisExtractor, ConstructionPointExtractor
 from .brep import BRepExtractor, BRepFaceExtractor, BRepEdgeExtractor
 
@@ -90,6 +103,12 @@ EXTRACTORS = {
     'adsk::fusion::Sketch': SketchExtractor,
     'adsk::fusion::SketchPoint': SketchPointExtractor,
     'adsk::fusion::SketchCurve': SketchCurveExtractor,
+    'adsk::fusion::SketchCircle': SketchCircleExtractor,
+    'adsk::fusion::SketchArc': SketchArcExtractor,
+    'adsk::fusion::SketchEllipse': SketchEllipseExtractor,
+    'adsk::fusion::SketchEllipticalArc': SketchEllipticalArcExtractor,
+    'adsk::fusion::SketchFittedSpline': SketchFittedSplineExtractor,
+    'adsk::fusion::SketchFixedSpline': SketchFixedSplineExtractor,
     'adsk::fusion::SketchLine': SketchLineExtractor,
     'adsk::fusion::SketchDimension': SketchDimensionExtractor,
     'adsk::fusion::SketchAngularDimension': SketchAngularDimensionExtractor,
@@ -123,6 +142,9 @@ EXTRACTORS = {
     'adsk::fusion::HorizontalConstraint' : HorizontalConstraintExtractor,
     'adsk::fusion::MidPointConstraint' : MidPointConstraintExtractor,
     'adsk::fusion::PerpendicularConstraint' : PerpendicularConstraintExtractor,
+    'adsk::fusion::ParallelConstraint' : ParallelConstraintExtractor,
+    'adsk::fusion::SymmetryConstraint' : SymmetryConstraintExtractor,
+    'adsk::fusion::TangentConstraint' : TangentConstraintExtractor,
     'adsk::fusion::CoincidentConstraint' : CoincidentConstraintExtractor,
     'adsk::fusion::OffsetConstraint' : OffsetConstraintExtractor,
     'adsk::fusion::LineOnPlanarSurfaceConstraint': LineOnPlanarSurfaceConstraintExtractor,
