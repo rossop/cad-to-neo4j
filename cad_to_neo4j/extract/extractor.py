@@ -30,7 +30,14 @@ from adsk.fusion import Design, Component,  Feature, Sketch, BRepBody
 import traceback
 
 from .base_extractor import BaseExtractor
-from .sketch import SketchExtractor, SketchPointExtractor, SketchCurveExtractor, SketchLineExtractor, ProfileExtractor 
+from .sketch import (
+    SketchExtractor, 
+    SketchPointExtractor, 
+    SketchCurveExtractor, 
+    SketchLineExtractor, 
+    ProfileExtractor,
+    SketchCircleExtractor,
+) 
 from .sketch.dimension import (
     SketchDimensionExtractor,
     SketchAngularDimensionExtractor,
@@ -84,6 +91,7 @@ EXTRACTORS = {
     'adsk::fusion::Sketch': SketchExtractor,
     'adsk::fusion::SketchPoint': SketchPointExtractor,
     'adsk::fusion::SketchCurve': SketchCurveExtractor,
+    'adsk::fusion::SketchCircle': SketchCircleExtractor,
     'adsk::fusion::SketchLine': SketchLineExtractor,
     'adsk::fusion::SketchDimension': SketchDimensionExtractor,
     'adsk::fusion::SketchAngularDimension': SketchAngularDimensionExtractor,

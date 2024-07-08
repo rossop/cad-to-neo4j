@@ -75,7 +75,7 @@ class Neo4jTransformer(Neo4jTransactionManager):
             method_name = method.__name__
             try:
                 results[method_name] = method()
-                self.logger.info(f'Successfully completed {method_name}')
+                # self.logger.debug(f'Successfully completed {method_name}')
             except Exception as e:
                 self.logger.error(f'Exception in {method_name}: {e}\n{traceback.format_exc()}')
         
@@ -234,11 +234,18 @@ class Neo4jTransformer(Neo4jTransactionManager):
             MERGE (sc)-[:ENDS_AT]->(sp2)
 
             RETURN sc, sp1, sp2
-            """
+            """,
+            'circle_center': r"""
+            MATCH (circle:SketchCircle)
+            WHERE circle.centerPoint IS NOT NULL
+            MATCH (center {id_token: circle.centerPoint})
+            MERGE (circle)-[:CENTERED_ON]->(center)
+            REMOVE circle.centerPoint
+            RETURN circle, center
+            """,
         }
         result = []
         for name, query in queries.items():
-            self.logger.info(f'Creating relationships for {name}')
             try:
                 res = self.execute_query(query)
                 result.extend(res)
@@ -383,7 +390,29 @@ class Neo4jTransformer(Neo4jTransactionManager):
             MERGE (a)-[:DIMENSIONED]->(d)
             MERGE (d)-[:DIMENSIONED]->(c)
             REMOVE d.line, d.entity_two
-            """,   
+            """,
+            #  Redundancy check for Circle entities dimensions
+            """
+            // Query to create DIMENSIONED relationships using the dimensions property of SketchCircle
+
+            // Unwind dimensions and create DIMENSIONED relationships from dimension to circle
+            MATCH (circle:SketchCircle)
+            UNWIND circle.dimensions AS dimension_id
+            MATCH (dim:SketchDimension {id_token: dimension_id})
+            WHERE NOT (dim)-[:DIMENSIONED]->(circle)
+            MERGE (dim)-[:DIMENSIONED]->(circle)
+            RETURN circle, dim;
+            """,
+            """
+            // Unwind dimensions and create DIMENSIONED relationships from circle to dimension
+            MATCH (circle:SketchCircle)
+            UNWIND circle.dimensions AS dimension_id
+            MATCH (dim:SketchDimension {id_token: dimension_id})
+            WHERE NOT (circle)-[:DIMENSIONED]->(dim)
+            MERGE (circle)-[:DIMENSIONED]->(dim)
+            REMOVE circle.dimensions
+            RETURN circle, dim;
+            """
         ]
         
         result = []
