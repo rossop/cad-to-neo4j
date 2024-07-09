@@ -40,7 +40,7 @@ class FeatureExtractor(BaseExtractor):
             return None
     
     @property
-    def is_parametric(self) -> Optional[bool]:
+    def isParametric(self) -> Optional[bool]:
         """Extracts whether the feature is parametric."""
         try:
             return self._obj.isParametric
@@ -49,7 +49,7 @@ class FeatureExtractor(BaseExtractor):
             return None
     
     @property
-    def parent_component(self) -> Optional[str]:
+    def parentComponent(self) -> Optional[str]:
         """Extracts the ID of the parent component."""
         try:
             return self._obj.parentComponent.entityToken
@@ -85,7 +85,7 @@ class FeatureExtractor(BaseExtractor):
             return None
 
     @property
-    def health_state(self) -> Optional[str]:
+    def healthState(self) -> Optional[str]:
         """Extracts the current health state of the feature."""
         try:
             return self._obj.healthState
@@ -94,7 +94,7 @@ class FeatureExtractor(BaseExtractor):
             return None
         
     @property
-    def error_or_warning_message(self) -> Optional[str]:
+    def errorOrWarningMessage(self) -> Optional[str]:
         """Extracts the error or warning message if the feature has health issues."""
         try:
             return self._obj.errorOrWarningMessage
@@ -133,12 +133,13 @@ class FeatureExtractor(BaseExtractor):
         feature_info = {
             'faces': self.faces,
             'is_suppressed': self.is_suppressed,
-            'is_parametric': self.is_parametric,
-            'parent_component': self.parent_component,
+            'isParametric': self.isParametric,
+            'parentComponent': self.parentComponent,
             'linked_features': self.linked_features,
             'bodies': self.bodies,
             'base_feature': self.base_feature,
-            'health_state': self.health_state,
-            'error_or_warning_message': self.error_or_warning_message,
+            'healthState': self.healthState,
+            'errorOrWarningMessage': self.errorOrWarningMessage,
         }
         return {**basic_info, **feature_info}
+

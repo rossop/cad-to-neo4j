@@ -52,12 +52,14 @@ class Neo4jTransformer(Neo4jTransactionManager):
         
         self.logger.info('Running all transformations...')
         
+        # The order matters
         transformation_methods = [
             self.create_timeline_relationships, # REVIEWED
+            self.create_sketch_relationships,
             self.create_profile_relationships,
+            self.component_relationships,
             self.create_adjacent_face_relationships,
             self.create_adjacent_edge_relationships,
-            self.create_sketch_relationships,
             self.link_sketches_to_planes,
             self.create_sketch_dimensions_relationships,
             self.link_construction_planes,
@@ -115,19 +117,46 @@ class Neo4jTransformer(Neo4jTransactionManager):
 
     def create_profile_relationships(self):
         """
-        Creates 'USES_PROFILE' relationships between extrusions and profiles based on the profile_tokens list.
+        Creates 'USES_PROFILE' relationships between feature and profiles based on the profile_tokens list.
 
         Returns:
             list: The result values from the query execution.
         """
         cypher_query = r"""
-        // Find extrusions with profile_tokens property and match them to profiles with the same id_token
-        MATCH (f:`ExtrudeFeature`)
+        // Find features with profile_tokens property and match them to profiles with the same id_token
+        MATCH (f:`Feature`)
         WHERE f.profile_tokens IS NOT NULL
         UNWIND f.profile_tokens AS profile_token
         MATCH (p:`Profile` {id_token: profile_token})
         MERGE (f)-[:USES_PROFILE]->(p)
         RETURN f.id_token AS feature_id, collect(p.id_token) AS profile_ids
+        """
+        result = []
+        self.logger.info('Creating profile/feature relationships')
+        try:
+            result = self.execute_query(cypher_query)
+        except Exception as e:
+            self.logger.error(f'Exception: {e}\n{traceback.format_exc()}')
+        return result
+
+    def component_relationships(self):
+        """
+        Creates 'CONTAINS' relationships between features, sketches or other timeline entities
+        and components containing them.
+
+        Returns:
+            list: The result values from the query execution.
+        """
+        cypher_query = r"""
+        // Match existing Entities nodes with a non-null parentComponent
+        MATCH (e)
+        WHERE ('Sketch' IN labels(e) 
+            OR 'Feature' IN labels(e)) 
+            AND e.parentComponent IS NOT NULL
+        WITH e.parentComponent AS component_token, e
+        MATCH (c:Component {id_token: component_token})
+        MERGE (c)-[:CONTAINS]->(e)
+        RETURN c, e
         """
         result = []
         self.logger.info('Creating profile/feature relationships')
@@ -197,6 +226,24 @@ class Neo4jTransformer(Neo4jTransactionManager):
             list: The result values from the query execution.
         """
         queries = {
+            # TODO some dimension and constraints relationships depend on 
+            #   CONTAONS being already defined, resolve it.
+            # TODO remove the parentSketch relationship 
+            'sketch associated entities': r"""
+            // Match existing SketchEntity nodes with a non-null parentSketch
+            MATCH (se)
+            WHERE ('SketchEntity' IN labels(se) 
+                OR 'SketchDimension' IN labels(se) 
+                OR 'GeometricConstraint' IN labels(se) 
+                OR 'Profile' IN labels(se)) 
+                AND se.parentSketch IS NOT NULL 
+
+            // Match existing Sketch node where id_token matches parentSketch of SketchEntity
+            MATCH (s:Sketch {id_token: se.parentSketch})
+
+            // Create the relationship from Sketch to SketchEntity
+            MERGE (s)-[:CONTAINS]->(se)
+            """,
             'connected_entities': r"""
             MATCH (sp:`SketchPoint`)
             WHERE sp.connectedEntities IS NOT NULL
@@ -440,6 +487,20 @@ class Neo4jTransformer(Neo4jTransactionManager):
             list: The result values from the query execution.
         """
         cypher_queries = {
+            'parent': """
+                // Match existing ConstructionEntities nodes with a non-null parentComponent
+                MATCH (se)
+                WHERE ('ConstructionPlane' IN labels(se) 
+                    OR 'ConstructionAxis' IN labels(se) 
+                    OR 'ConstructionPoint' IN labels(se)) 
+                    AND se.parent IS NOT NULL 
+
+                // Match existing Component node where id_token matches parent of ConstructionEntities
+                MATCH (s:Component {id_token: se.parent})
+
+                // Create the relationship from Componenet to ConstructionEntities
+                MERGE (s)-[:CONTAINS]->(se)
+            """,
             'at_angle': """
                 MATCH (cp:`ConstructionPlane` {definition_type: 'AtAngle'})
                 MATCH (linearEntity {id_token: cp.linear_entity}), (planarEntity {id_token: cp.planar_entity})

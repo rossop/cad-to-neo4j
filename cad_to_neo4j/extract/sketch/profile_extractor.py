@@ -43,7 +43,8 @@ class ProfileExtractor(BaseExtractor):
         basic_info = super().extract_info()
         profile_info = {
             'profile_curves': self.profile_curves,
-            'profile_loops': self.profile_loops
+            'profile_loops': self.profile_loops,
+            'parentSketch': self.parentSketch,
         }
 
         # Add plane information if available
@@ -164,8 +165,8 @@ class ProfileExtractor(BaseExtractor):
             Optional[str]: Entity token of the parent sketch.
         """
         try:
-            parent_sketch = getattr(self._obj, 'parentSketch', None)
-            return getattr(parent_sketch, 'entityToken', None)
+            parentSketch = getattr(self._obj, 'parentSketch', None)
+            return getattr(parentSketch, 'entityToken', None)
         except Exception as e:
             self.logger.error(f"Error extracting parent sketch: {e}")
             return None

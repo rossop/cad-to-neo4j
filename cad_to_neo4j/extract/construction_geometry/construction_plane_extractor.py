@@ -76,7 +76,7 @@ class ConstructionPlaneExtractor(BaseExtractor):
             return None
         
     @property
-    def timeline_object(self) -> Optional[str]:
+    def timelineObject(self) -> Optional[str]:
         """Extracts the timeline object associated with this construction plane.
 
         Returns:
@@ -89,7 +89,7 @@ class ConstructionPlaneExtractor(BaseExtractor):
             return None
 
     @property
-    def is_parametric(self) -> Optional[bool]:
+    def isParametric(self) -> Optional[bool]:
         """Extracts the parametric state of the construction plane.
 
         Returns:
@@ -102,7 +102,7 @@ class ConstructionPlaneExtractor(BaseExtractor):
             return None
         
     @property
-    def is_visible(self) -> Optional[bool]:
+    def isVisible(self) -> Optional[bool]:
         """Indicates if the construction plane is visible.
 
         Returns:
@@ -115,7 +115,7 @@ class ConstructionPlaneExtractor(BaseExtractor):
             return None
     
     @property
-    def health_state(self) -> Optional[str]:
+    def healthState(self) -> Optional[str]:
         """Extracts the current health state of this plane.
 
         Returns:
@@ -128,7 +128,7 @@ class ConstructionPlaneExtractor(BaseExtractor):
             return None
         
     @property
-    def error_or_warning_message(self) -> Optional[str]:
+    def errorOrWarningMessage(self) -> Optional[str]:
         """Extracts the error or warning message, if any, associated with the health state of this plane.
 
         Returns:
@@ -345,6 +345,15 @@ class ConstructionPlaneExtractor(BaseExtractor):
         """Extracts the definition information used by the construction plane."""
         definition_root = getattr(self._obj, 'definition', None)
         return self.extract_definition_info(definition_root)
+    
+    @property
+    def parent(self) -> Optional[str]:
+        """Extracts the parent of the ConstructionPoint object.
+
+        Returns:
+            str: The parent of the ConstructionPoint object.
+        """
+        return nested_getattr(self._obj, 'parent.entityToken', None)
 
     def extract_info(self) -> Dict[str, Optional[Any]]:
         """Extract all information from the ConstructionPlane element.
@@ -354,12 +363,13 @@ class ConstructionPlaneExtractor(BaseExtractor):
         """
         base_info = super().extract_info()
         construction_plane_info = {
-            'is_parametric': self.is_parametric,
-            'is_visible': self.is_visible,
-            'timeline_object': self.timeline_object,
+            'parent': self.parent,
+            'isParametric': self.isParametric,
+            'isVisible': self.isVisible,
+            'timelineObject': self.timelineObject,
             'base_feature': self.base_feature,
-            'health_state': self.health_state,
-            'error_or_warning_message': self.error_or_warning_message,
+            'healthState': self.healthState,
+            'errorOrWarningMessage': self.errorOrWarningMessage,
             'transform': self.transform,
         }
         

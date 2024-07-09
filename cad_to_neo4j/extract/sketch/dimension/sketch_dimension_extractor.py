@@ -9,6 +9,7 @@ Classes:
 from typing import Optional, Dict, Any
 from adsk.fusion import SketchDimension
 from ...base_extractor import BaseExtractor
+from ....utils.general_utils import nested_getattr
 
 __all__ = ['SketchDimensionExtractor']
 
@@ -26,6 +27,16 @@ class SketchDimensionExtractor(BaseExtractor):
             return getattr(self._obj, 'value', None)
         except AttributeError:
             return None
+    
+    @property
+    def parentSketch(self) -> Optional[str]:
+        """
+        Returns the parent sketch.
+        """
+        try:
+            return nested_getattr(self._obj, 'parentSketch.entityToken', None)
+        except AttributeError:
+            return None
 
     def extract_info(self) -> Dict[str, Any]:
         """Extract all information from the SketchDimension element.
@@ -36,6 +47,7 @@ class SketchDimensionExtractor(BaseExtractor):
         basic_info = super().extract_info()
         dimension_info = {
             'dimension' : self.dimension_value,
+            'parentSketch' : self.parentSketch,
         }
 
         return {**basic_info, **dimension_info}

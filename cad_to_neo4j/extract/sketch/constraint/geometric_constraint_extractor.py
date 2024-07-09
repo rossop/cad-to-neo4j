@@ -36,7 +36,7 @@ class GeometricConstraintExtractor(BaseExtractor):
             return None
 
     @property
-    def parent_sketch(self) -> Optional[str]:
+    def parentSketch(self) -> Optional[str]:
         """Extracts the ID of the parent sketch.
 
         Returns:
@@ -47,6 +47,8 @@ class GeometricConstraintExtractor(BaseExtractor):
         except AttributeError as e:
             self.logger.error(f'Error extracting parentSketch: {e}\n{traceback.format_exc()}')
             return None
+        
+
 
     # @property
     # def assembly_context(self) -> Optional[str]:
@@ -86,7 +88,7 @@ class GeometricConstraintExtractor(BaseExtractor):
         base_info = super().extract_info()
         constraint_info = {
             'is_deletable': self.is_deletable,
-            'parent_sketch': self.parent_sketch,
+            'parentSketch': self.parentSketch,
             # 'assembly_context': self.assembly_context,
         }
         return {**base_info, **constraint_info}

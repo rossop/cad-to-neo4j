@@ -18,6 +18,7 @@ __all__ = ['SketchExtractor']
 class SketchExtractor(SketchEntityExtractor):
     """Extractor for extracting detailed information from Sketch objects."""
     '''
+    TODO
     REFACTOR: should the following be extracted here instead? 
         - sketchPoints
         - sketchCurves 
@@ -44,8 +45,8 @@ class SketchExtractor(SketchEntityExtractor):
             'timeline_index': self.timeline_index,
             'reference_plane_entity_token': self.reference_plane_entity_token,
             'name': self.name,
-            'is_parametric': self.is_parametric,
-            'is_visible': self.is_visible,
+            'isParametric': self.isParametric,
+            'isVisible': self.isVisible,
             'are_dimensions_shown': self.are_dimensions_shown,
             'are_profiles_shown': self.are_profiles_shown,
             'origin': self.origin,
@@ -54,8 +55,9 @@ class SketchExtractor(SketchEntityExtractor):
             'origin_point': self.origin_point,
             'is_fully_constrained': self.is_fully_constrained,
             'base_or_form_feature': self.base_or_form_feature,
-            'health_state': self.health_state,
-            'error_or_warning_message': self.error_or_warning_message,
+            'healthState': self.healthState,
+            'errorOrWarningMessage': self.errorOrWarningMessage,
+            'parentComponent': self.parentComponent,
             # 'transform': self.transform, # AttributeError: 'Matrix3D' object has no attribute 'getAsArray'
         }
 
@@ -129,7 +131,7 @@ class SketchExtractor(SketchEntityExtractor):
             return None
     
     @property
-    def is_parametric(self) -> Optional[bool]:
+    def isParametric(self) -> Optional[bool]:
         """Extracts the parametric status of the Sketch object.
 
         Returns:
@@ -138,7 +140,7 @@ class SketchExtractor(SketchEntityExtractor):
         return getattr(self._obj, 'isParametric', None)  
     
     @property
-    def is_visible(self) -> Optional[bool]:
+    def isVisible(self) -> Optional[bool]:
         """Extracts the visibility status of the Sketch object.
 
         Returns:
@@ -259,7 +261,7 @@ class SketchExtractor(SketchEntityExtractor):
         return nested_getattr(self._obj, 'baseOrFormFeature.entityToken', None)
     
     @property
-    def health_state(self) -> Optional[str]:
+    def healthState(self) -> Optional[str]:
         """Extracts the health state of the Sketch object.
 
         Returns:
@@ -268,10 +270,20 @@ class SketchExtractor(SketchEntityExtractor):
         return nested_getattr(self._obj, 'healthState', None)
 
     @property
-    def error_or_warning_message(self) -> Optional[str]:
+    def errorOrWarningMessage(self) -> Optional[str]:
         """Extracts the error or warning message of the Sketch object.
 
         Returns:
             str: The error or warning message of the Sketch object.
         """
         return getattr(self._obj, 'errorOrWarningMessage', None)
+    
+    @property
+    def parentComponent(self) -> Optional[str]:
+        """
+        Returns the parent component.
+        """
+        try:
+            return nested_getattr(self._obj, 'parentComponent.entityToken', None)
+        except AttributeError:
+            return None
