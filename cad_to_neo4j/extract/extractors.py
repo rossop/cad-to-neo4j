@@ -64,7 +64,13 @@ from .feature import (
     BoxFeatureExtractor,
 )
 from .construction_geometry import ConstructionPlaneExtractor, ConstructionAxisExtractor, ConstructionPointExtractor
-from .brep import BRepExtractor, BRepFaceExtractor, BRepEdgeExtractor
+from .brep import (
+    BRepEntityExtractor,
+    BRepBodyExtractor, 
+    BRepFaceExtractor, 
+    BRepEdgeExtractor,
+    BRepVertexExtractor,
+)
 
 __all__ = ['EXTRACTORS', 'ENTITY_MAP']
 
@@ -100,9 +106,12 @@ EXTRACTORS = {
     'adsk::fusion::FilletFeature': FilletFeatureExtractor, 
     'adsk::fusion::ChamferFeature': ChamferFeatureExtractor, 
     'adsk::fusion::BoxFeature': BoxFeatureExtractor, 
-    'adsk::fusion::BRepBody': BRepExtractor, 
+    'adsk::fusion::BRepBody': BRepBodyExtractor, 
+    'adsk::fusion::BRepShell': BRepEntityExtractor, # TODO change to ShellExtractor
+    'adsk::fusion::BRepLump': BRepEntityExtractor, # TODO change to LumpExtractor
     'adsk::fusion::BRepFace': BRepFaceExtractor,
     'adsk::fusion::BRepEdge': BRepEdgeExtractor,
+    'adsk::fusion::BRepVertex': BRepVertexExtractor,
     'adsk::fusion::ConstructionPlane': ConstructionPlaneExtractor,
     'adsk::fusion::ConstructionAxis': ConstructionAxisExtractor,
     'adsk::fusion::ConstructionPoint': ConstructionPointExtractor,
@@ -127,7 +136,9 @@ EXTRACTORS = {
 }
 
 ENTITY_MAP = {
+    'shell': ('shells', BRepEntityExtractor), # TODO change to ShellExtractor
+    'lump': ('lumps', BRepEntityExtractor), # TODO change to LumpExtractor
     'face': ('faces', BRepFaceExtractor),
     'edge': ('edges', BRepEdgeExtractor),
-    'vertex': ('vertices', BRepEdgeExtractor)
+    'vertex': ('vertices', BRepVertexExtractor), 
 }

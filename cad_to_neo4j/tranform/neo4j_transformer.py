@@ -58,6 +58,7 @@ class Neo4jTransformer(Neo4jTransactionManager):
             self.create_sketch_relationships,
             self.create_profile_relationships,
             self.component_relationships,
+            self.brep_relationships,
             self.create_adjacent_face_relationships,
             self.create_adjacent_edge_relationships,
             self.link_sketches_to_planes,
@@ -165,6 +166,73 @@ class Neo4jTransformer(Neo4jTransactionManager):
         except Exception as e:
             self.logger.error(f'Exception: {e}\n{traceback.format_exc()}')
         return result
+    
+    def brep_relationships(self):
+        """
+        Executes a list of Cypher queries to create relationships between brep entities in the graph database.
+        
+        Returns:
+            list: The result values from the query execution.
+        """
+        queries = [
+            # Create relationships for bodies with entities
+            """
+            // Match existing Entities nodes with a non-null body property
+            MATCH (e)
+            WHERE e.body IS NOT NULL
+            WITH e.body AS body_id_token, e
+            MATCH (b:BRepBody {id_token: body_id_token})
+            MERGE (b)-[:CONTAINS]->(e)
+            RETURN b, e
+            """,
+            # Query to connect BRepEdge nodes to BRepFace nodes based on the faces property
+            """
+            // Match existing BRepEdge nodes with a non-null faces property
+            MATCH (e:BRepEdge)
+            WHERE e.faces IS NOT NULL
+            UNWIND e.faces AS face_id_token
+            MATCH (f:BRepFace {id_token: face_id_token})
+            MERGE (f)-[:CONTAINS]->(e)
+            RETURN e, f
+            """,
+            # Query to connect BRepFace nodes to BRepEdge nodes based on the edges property
+            """
+            // Match existing BRepFace nodes with a non-null faces property
+            MATCH (f:BRepFace)
+            WHERE f.edges IS NOT NULL
+            UNWIND f.edges AS edge_id_token
+            MATCH (e:BRepEdge {id_token: edge_id_token})
+            MERGE (f)-[:CONTAINS]->(e)
+            RETURN e, f
+            """,
+            # Query to create STARTS_WITH and ENDS_WITH relationships for BRepEdge
+            """
+            // Match existing BRepEdge nodes with startVertex and endVertex properties
+            MATCH (e:BRepEdge)
+            WHERE e.startVertex IS NOT NULL AND e.endVertex IS NOT NULL
+            WITH e, e.startVertex AS start_vertex_id, e.endVertex AS end_vertex_id
+            // Match the startVertex node
+            MATCH (sv:BRepVertex {id_token: start_vertex_id})
+            MERGE (e)-[:STARTS_WITH]->(sv)
+            // Use WITH to separate the MATCH for endVertex
+            WITH e, start_vertex_id, end_vertex_id
+            // Match the endVertex node
+            MATCH (ev:BRepVertex {id_token: end_vertex_id})
+            MERGE (e)-[:ENDS_WITH]->(ev)
+            RETURN e
+            """,
+        ]
+
+        results = []
+        self.logger.info('Executing BRep queries')
+        for query in queries:
+            try:
+                result = self.execute_query(query)
+                results.append(result)
+            except Exception as e:
+                self.logger.error(f'Exception executing query: {query}\n{e}\n{traceback.format_exc()}')
+        
+        return results
 
     def create_adjacent_face_relationships(self):
         """
@@ -686,8 +754,6 @@ class Neo4jTransformer(Neo4jTransactionManager):
                 self.logger.info(f'Successfully completed {name}')
             except Exception as e:
                 self.logger.error(f'Exception in {name}: {e}\n{traceback.format_exc()}')
-
-                self.logger.error(f'Exception in {name}: {e}')
 
         return results
 

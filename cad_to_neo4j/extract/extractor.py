@@ -28,6 +28,7 @@ from typing import Optional, Tuple, Any, List, Dict, Set
 from adsk.core import Base
 from adsk.fusion import Design, Component,  Feature, Sketch, BRepBody
 import traceback
+import copy
 
 from .base_extractor import BaseExtractor
 from .extractors import EXTRACTORS, ENTITY_MAP
@@ -59,7 +60,7 @@ class ExtractorOrchestrator(object):
             element (Base): The CAD element.
 
         Returns:
-            BaseExtractor: The appropriate extractor for the element.
+            Extractor (BaseExtractor): The appropriate extractor for the element.
         """
         extractor_class = EXTRACTORS.get(element.objectType, BaseExtractor)
         return extractor_class(element)
@@ -82,32 +83,26 @@ class ExtractorOrchestrator(object):
                 entity_id = extracted_info['id_token']
                 if entity_id not in self.nodes:
                     self.nodes[entity_id] = extracted_info
+                else:
+                    self.add_or_update(self.nodes[entity_id],extracted_info)
+                    
         except Exception as e:
             self.logger.error(f"""
                               Error in extract_data: {str(e)}\n
                               Failed:\n{traceback.format_exc()}
                             """)
-    
-    # def extract_brep_entity_data(self, brep_entity: Base) -> None:
-    #     """
-    #     Helper function to extract and append BRep entities.
-
-    #     Args:
-    #         brep_entity (Base): The BRep entity to extract data from.
-    #         parent_id (str): The ID of the parent node.
-    #         timeline_index (int, optional): The index of the timeline. Defaults to None.
-    #     """
-    #     # TODO add try and catch 
-    #     self.extract_data(brep_entity)
-
-    #     for face in brep_entity.faces:
-    #         self.extract_data(face)
-
-    #     for edge in brep_entity.edges:
-    #         self.extract_data(edge)
-
-    #     for vertex in brep_entity.vertices:
-    #         self.extract_data(vertex)
+            
+    def add_or_update(self, stored_dict: Dict, other_dict: Dict):
+        for key, value in other_dict.items():
+            if key not in stored_dict:
+                stored_dict[key] = value
+            else:
+                if stored_dict[key] != value:
+                    # Combining the values into a List
+                    if isinstance(stored_dict[key],list):
+                        stored_dict[key] = stored_dict[key].append(value)
+                    else:
+                        stored_dict[key] = [stored_dict[key], value]
 
     def extract_sketch_entities(self, sketch: Sketch) -> None:
         """
@@ -231,14 +226,14 @@ class ExtractorOrchestrator(object):
         for body in comp.bRepBodies:
             self.extract_data(body)
 
-        for face in comp.faces:
-            self.extract_data(face)
+            for face in body.faces:
+                self.extract_data(face)
 
-        for edge in comp.edges:
-            self.extract_data(edge)
+            for edge in body.edges:
+                self.extract_data(edge)
 
-        for vertex in comp.bRepBodies:
-            self.extract_data(vertex)
+            for vertex in body.vertices:
+                self.extract_data(vertex)
 
 
     def _extract_other_entity(self, entity: Base) -> None:
@@ -295,6 +290,7 @@ class ExtractorOrchestrator(object):
         for index in range(timeline.count):
             timelineObject = timeline.item(index)
             entity = timelineObject.entity
+            self.timeline_index = index
 
             # Roll to current timeline
             self.logger.info(f'Rolling to timeline index {index}')
@@ -315,5 +311,7 @@ class ExtractorOrchestrator(object):
                 self.previous_faces = self.current_faces.copy()
                 self.previous_edges = self.current_edges.copy()
                 self.previous_vertices = self.current_vertices.copy()
+
+        self.extract_brep_entities(comp)
 
         return list(self.nodes.values())
