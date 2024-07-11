@@ -128,7 +128,8 @@ class BaseExtractor(object):
             collection = getattr(self._obj, attribute, [])
             if hasattr(collection, "__iter__"):
                 ids = [getattr(item, id_attr, None) for item in collection]
-            return ids 
+                return ids 
+            return []
         except AttributeError as e:
             self.logger.error(f'Error extracting IDs from {attribute}: {e}\n{traceback.format_exc()}')
             return []

@@ -53,7 +53,7 @@ class ExtractorOrchestrator(object):
         self.processed_relationships = set()
         self.timeline_index: str = 0
 
-    def get_extractor(self, element: Base) -> BaseExtractor:
+    def get_extractor(self, element) -> BaseExtractor:
         """Get the appropriate extractor for the given CAD element.
 
         Args:
@@ -65,7 +65,7 @@ class ExtractorOrchestrator(object):
         extractor_class = EXTRACTORS.get(element.objectType, BaseExtractor)
         return extractor_class(element)
 
-    def extract_data(self, element: Base) -> Optional[dict]:
+    def extract_data(self, element) -> Optional[dict]:
         """
         Extracts data from the given element using the appropriate extractor 
         and stores it.
@@ -178,7 +178,7 @@ class ExtractorOrchestrator(object):
             entity = next((e for body in comp.bRepBodies for e in getattr(body, entity_attr) if e.entityToken == token), None)
             self.extract_data(entity)
 
-    def _extract_feature(self, entity: Feature, comp: Component):
+    def _extract_feature(self, entity, comp: Component):
         """
         Extract data from a feature entity and process its BRep entities.
 
@@ -270,6 +270,46 @@ class ExtractorOrchestrator(object):
 
         self.extract_data(origin)
 
+    def _extract_feature_face_relationship(self, comp: Component) -> None:
+        """
+        Extract data from a feature entity and process its BRep entities for startFaces, endFaces, and sideFaces.
+
+        Args:
+            comp (Component): The Fusion 360 component.
+            
+        This method iterates over all features in the given component, extracts the startFaces, endFaces,
+        and sideFaces for each feature, and updates the `self.nodes` dictionary with the union of the new
+        and existing faces for each feature.
+        """
+        for feature in comp.features:
+            self._extract_faces(feature, 'faces', self.nodes)
+            self._extract_faces(feature, 'startFaces', self.nodes)
+            self._extract_faces(feature, 'endFaces', self.nodes)
+            self._extract_faces(feature, 'sideFaces', self.nodes)
+
+    def _extract_faces(self, feature, face_attr, nodes):
+        """
+        Extract and update the face entities for a given feature and face attribute.
+
+        Args:
+            feature (Feature): The Fusion 360 feature object from which to extract faces.
+            face_attr (str): The attribute name of the faces to be extracted (e.g., 'startFaces', 'endFaces', 'sideFaces').
+            nodes (dict): The dictionary to be updated with the face entities.
+
+        This method retrieves the face entities associated with the given feature and face attribute,
+        performs a union operation with any existing faces in the `nodes` dictionary, and updates the
+        `nodes` dictionary with the result.
+        """
+        id_token = getattr(feature, 'entityToken', None)
+        if id_token is not None:
+            faces = [getattr(face, 'entityToken', None) for face in getattr(feature, face_attr, [])]
+            if id_token in nodes and face_attr in nodes[id_token]:
+                existing_faces = nodes[id_token][face_attr]
+                faces_union = list(set(existing_faces) | set(faces))
+            else:
+                faces_union = faces
+            nodes[id_token][face_attr] = faces_union
+
     def extract_timeline_based_data(self) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
         """
         Extract data based on the timeline order.
@@ -283,6 +323,9 @@ class ExtractorOrchestrator(object):
         self.previous_faces: Set[str] = set()
         self.previous_edges: Set[str] = set()
         self.previous_vertices: Set[str] = set()
+        self.current_faces: Set[str] = set()
+        self.current_edges: Set[str] = set()
+        self.current_vertices: Set[str] = set()
 
         self.extract_data(comp)
         self._extract_origin_construction_geometry(comp)
@@ -313,5 +356,6 @@ class ExtractorOrchestrator(object):
                 self.previous_vertices = self.current_vertices.copy()
 
         self.extract_brep_entities(comp)
+        self._extract_feature_face_relationship(comp)
 
         return list(self.nodes.values())

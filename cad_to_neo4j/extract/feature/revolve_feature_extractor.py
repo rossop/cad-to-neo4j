@@ -22,7 +22,7 @@ class RevolveFeatureExtractor(FeatureExtractor):
         super().__init__(obj)
 
     @property
-    def profile_tokens(self):
+    def profileTokens(self):
         """Extracts the tokens of profiles used by the RevolveFeature.
 
         Returns:
@@ -84,12 +84,12 @@ class RevolveFeatureExtractor(FeatureExtractor):
             return None
 
     @property
-    def participant_bodies(self) -> Optional[List[str]]:
+    def participantBodies(self) -> Optional[List[str]]:
         """Extracts the list of bodies that will participate in the feature when the operation is a cut or intersection."""
         try:
             self.roll_timeline_to_before_feature()
-            participant_bodies = getattr(self._obj, 'participantBodies', [])
-            ids = [body.entityToken for body in participant_bodies]
+            participantBodies = getattr(self._obj, 'participantBodies', [])
+            ids = [body.entityToken for body in participantBodies]
             self.roll_timeline_to_after_feature()
             return ids
         except AttributeError as e:
@@ -145,11 +145,11 @@ class RevolveFeatureExtractor(FeatureExtractor):
         """
         feature_info = super().extract_info()
         revolve_info = {
-            'profile_tokens': self.profile_tokens,
+            'profileTokens': self.profileTokens,
             'axis_token': self.axis_token,
             'is_solid': self.is_solid,
             'operation': self.operation,
-            'participant_bodies': self.participant_bodies,
+            'participantBodies': self.participantBodies,
         }
 
         # Add extent one information

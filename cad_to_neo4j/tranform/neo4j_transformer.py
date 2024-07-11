@@ -68,6 +68,7 @@ class Neo4jTransformer(Neo4jTransactionManager):
             self.link_feature_to_axes_bodies_extents,
             self.create_sketch_axis_and_origin_for_all_sketches,
             self.create_sketch_geometric_constraints,
+            self.create_brep_face_relationships
         ]
         
         results = {}
@@ -118,16 +119,16 @@ class Neo4jTransformer(Neo4jTransactionManager):
 
     def create_profile_relationships(self):
         """
-        Creates 'USES_PROFILE' relationships between feature and profiles based on the profile_tokens list.
+        Creates 'USES_PROFILE' relationships between feature and profiles based on the profileTokens list.
 
         Returns:
             list: The result values from the query execution.
         """
         cypher_query = r"""
-        // Find features with profile_tokens property and match them to profiles with the same id_token
+        // Find features with profileTokens property and match them to profiles with the same id_token
         MATCH (f:`Feature`)
-        WHERE f.profile_tokens IS NOT NULL
-        UNWIND f.profile_tokens AS profile_token
+        WHERE f.profileTokens IS NOT NULL
+        UNWIND f.profileTokens AS profile_token
         MATCH (p:`Profile` {id_token: profile_token})
         MERGE (f)-[:USES_PROFILE]->(p)
         RETURN f.id_token AS feature_id, collect(p.id_token) AS profile_ids
@@ -234,6 +235,68 @@ class Neo4jTransformer(Neo4jTransactionManager):
         
         return results
 
+    def create_brep_face_relationships(self):
+        """
+        Creates relationships between BRepEdge nodes and their vertices.
+
+        This method creates 'BOUNDED_BY' relationships between BRepEdge nodes and their start and end vertices.
+        The 'BOUNDED_BY' relationship will have a type property indicating whether it is a 'START_WITH' or 'ENDS_WITH' relationship.
+
+        Returns:
+            list: The result values from the query execution.
+        """
+        queries = [
+            """
+            MATCH (feature:Feature)
+            WHERE feature.startFaces IS NOT NULL
+            UNWIND feature.startFaces AS face_id_token
+            MERGE (face:BRepFace {id_token: face_id_token})
+            MERGE (feature)-[:BOUNDED_BY {type: 'startFaces'}]->(face)
+            """,
+            """
+            MATCH (feature:Feature)
+            WHERE feature.endFaces IS NOT NULL
+            UNWIND feature.endFaces AS face_id_token
+            MERGE (face:BRepFace {id_token: face_id_token})
+            MERGE (feature)-[:BOUNDED_BY {type: 'endFaces'}]->(face)
+            """,
+            """
+            MATCH (feature:Feature)
+            WHERE feature.sideFaces IS NOT NULL
+            UNWIND feature.sideFaces AS face_id_token
+            MERGE (face:BRepFace {id_token: face_id_token})
+            MERGE (feature)-[:BOUNDED_BY {type: 'sideFaces'}]->(face)
+            """,
+            """
+            MATCH (f:BRepFace)
+            WHERE f.edges IS NOT NULL
+            UNWIND f.edges AS edge_id_token
+            MERGE (e:BRepEdge {id_token: edge_id_token})
+            MERGE (f)-[:BOUNDED_BY]->(e)
+            """,
+            """
+            MATCH (f:BRepFace)
+            WHERE NOT (f)-[:BOUNDED_BY]->()
+            WITH f
+            OPTIONAL MATCH (e:BRepEdge)-[:SURROUNDED_BY]->(f)
+            OPTIONAL MATCH (sv:BRepVertex)<-[:STARTS_WITH]-(e)
+            OPTIONAL MATCH (ev:BRepVertex)<-[:ENDS_WITH]-(e)
+            WITH f, collect(e) AS edges, collect(sv) AS start_vertices, collect(ev) AS end_vertices
+            UNWIND edges + start_vertices + end_vertices AS entity
+            WITH f, entity WHERE entity IS NOT NULL
+            MERGE (f)-[:BOUNDED_BY]->(entity)
+            """
+        ]
+        results = []
+        self.logger.info('Creating BRep face relationships')
+        for query in queries:
+            try:
+                result = self.execute_query(query)
+                results.extend(result)
+            except Exception as e:
+                self.logger.error(f'Exception executing query: {query}\n{e}\n{traceback.format_exc()}')
+        return results
+    
     def create_adjacent_face_relationships(self):
         """
         Creates 'ADJACENT' relationships between faces sharing the same edge.
@@ -666,27 +729,27 @@ class Neo4jTransformer(Neo4jTransactionManager):
         
         // Link to faces
         WITH f
-        OPTIONAL MATCH (sf {id_token: f.start_faces})
-        OPTIONAL MATCH (ef {id_token: f.end_faces})
-        OPTIONAL MATCH (sif {id_token: f.side_faces})
+        OPTIONAL MATCH (sf {id_token: f.startFaces})
+        OPTIONAL MATCH (ef {id_token: f.endFaces})
+        OPTIONAL MATCH (sif {id_token: f.sideFaces})
         
         // Create relationships to faces
-        FOREACH (ignore IN CASE WHEN f.start_faces IS NOT NULL THEN [1] ELSE [] END |
+        FOREACH (ignore IN CASE WHEN f.startFaces IS NOT NULL THEN [1] ELSE [] END |
             MERGE (f)-[:HAS_START_FACE]->(sf)
         )
-        FOREACH (ignore IN CASE WHEN f.end_faces IS NOT NULL THEN [1] ELSE [] END |
+        FOREACH (ignore IN CASE WHEN f.endFaces IS NOT NULL THEN [1] ELSE [] END |
             MERGE (f)-[:HAS_END_FACE]->(ef)
         )
-        FOREACH (ignore IN CASE WHEN f.side_faces IS NOT NULL THEN [1] ELSE [] END |
+        FOREACH (ignore IN CASE WHEN f.sideFaces IS NOT NULL THEN [1] ELSE [] END |
             MERGE (f)-[:HAS_SIDE_FACE]->(sif)
         )
         
         RETURN f.id_token AS feature_id, 
                f.extentOne_object_id AS extent_one_id, 
                f.extentTwo_object_id AS extent_two_id,
-               f.start_faces AS start_faces,
-               f.end_faces AS end_faces,
-               f.side_faces AS side_faces
+               f.startFaces AS startFaces,
+               f.endFaces AS endFaces,
+               f.sideFaces AS sideFaces
         """
         
         result = []
@@ -716,8 +779,8 @@ class Neo4jTransformer(Neo4jTransactionManager):
             """,
             "participant_body_relationships": r"""
             MATCH (f)
-            WHERE f.participant_bodies IS NOT NULL
-            UNWIND f.participant_bodies AS body_token
+            WHERE f.participantBodies IS NOT NULL
+            UNWIND f.participantBodies AS body_token
             OPTIONAL MATCH (b {id_token: body_token})
             WITH f, b, body_token WHERE b IS NOT NULL
             FOREACH (ignore IN CASE WHEN body_token IS NOT NULL THEN [1] ELSE [] END |
