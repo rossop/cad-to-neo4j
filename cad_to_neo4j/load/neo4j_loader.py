@@ -98,7 +98,7 @@ class Neo4jLoader(Neo4jTransactionManager):
         try:
             query = """
             UNWIND $relationships AS rel
-            MATCH (a {id_token: rel.from_id}), (b {id_token: rel.to_id})
+            MATCH (a {entityToken: rel.from_id}), (b {entityToken: rel.to_id})
             CALL apoc.create.relationship(a, rel.rel_type, {}, b) YIELD rel as created_rel
             RETURN created_rel
             """
@@ -154,8 +154,8 @@ if __name__ == "__main__":
     
     # Example data to load
     data = [
-        {'type': 'Sketch', 'id_token': 'id1', 'name': 'Sketch1'},
-        {'type': 'Feature', 'id_token': 'id2', 'name': 'Extrude1'},
+        {'type': 'Sketch', 'entityToken': 'id1', 'name': 'Sketch1'},
+        {'type': 'Feature', 'entityToken': 'id2', 'name': 'Extrude1'},
         # Add more data as needed
     ]
     Loader.load_data(data)

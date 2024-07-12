@@ -9,14 +9,24 @@ Classes:
 """
 from typing import Optional, Dict, Any
 import traceback
+from adsk.fusion import PerpendicularConstraint
 from .geometric_constraint_extractor import GeometricConstraintExtractor
 from ....utils.general_utils import nested_getattr
 
 class PerpendicularConstraintExtractor(GeometricConstraintExtractor):
     """Extractor for PerpendicularConstraint objects."""
 
+    def __init__(self, obj: PerpendicularConstraint):
+        """
+        Initialise the extractor with the PerpendicularConstraint element.
+
+        Args:
+            obj (PerpendicularConstraint): The PerpendicularConstraint object to extract information from.
+        """
+        super().__init__(obj)
+
     @property
-    def line_one(self) -> Optional[str]:
+    def lineOne(self) -> Optional[str]:
         """Extracts the first line of the perpendicular constraint.
 
         Returns:
@@ -29,7 +39,7 @@ class PerpendicularConstraintExtractor(GeometricConstraintExtractor):
             return None
 
     @property
-    def line_two(self) -> Optional[str]:
+    def lineTwo(self) -> Optional[str]:
         """Extracts the second line of the perpendicular constraint.
 
         Returns:
@@ -49,7 +59,7 @@ class PerpendicularConstraintExtractor(GeometricConstraintExtractor):
         """
         base_info = super().extract_info()
         constraint_info = {
-            'line_one': self.line_one,
-            'line_two': self.line_two,
+            'lineOne': self.lineOne,
+            'lineTwo': self.lineTwo,
         }
         return {**base_info, **constraint_info}

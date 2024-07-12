@@ -14,10 +14,10 @@ Modules:
     - equal_constraint_extractor.py contains EqualConstraintExtractor
     - horizontal_constraint_extractor.py contains HorizontalConstraintExtractor
     - horizontal_points_constraint_extractor.py contains HorizontalPointsConstraintExtractor
-    - line_on_planar_surface_constraint_extractor.py contains LineOnPlanarSurfaceConstraintExtractor
-    - line_parallel_to_planar_surface_constraint_extractor.py contains LineParallelToPlanarSurfaceConstraintExtractor
+    - line_on_planarSurface_constraint_extractor.py contains LineOnPlanarSurfaceConstraintExtractor
+    - line_parallel_to_planarSurface_constraint_extractor.py contains LineParallelToPlanarSurfaceConstraintExtractor
     - mid_point_constraint_extractor.py contains MidPointConstraintExtractor
-    - offset_constraint_extractor.py contains OffsetConstraintExtractor
+    - offsetConstraint_extractor.py contains OffsetConstraintExtractor
     - perpendicular_constraint_extractor.py contains PerpendicularConstraintExtractor
     - parallel_constraint_extractor.py contains ParallelConstraintExtractor
     - symmetry_constraint_extractor.py contains SymmetryConstraintExtractor

@@ -40,7 +40,7 @@ class SketchLinearDiameterDimensionExtractor(SketchDimensionExtractor):
             return None
 
     @property
-    def entity_two(self) -> Optional[str]:
+    def entityTwo(self) -> Optional[str]:
         """
         Extract the second entity being constrained.
 
@@ -62,7 +62,7 @@ class SketchLinearDiameterDimensionExtractor(SketchDimensionExtractor):
         basic_info = super().extract_info()
         dimension_info = {
             'line': self.line,
-            'entity_two': self.entity_two,
+            'entityTwo': self.entityTwo,
         }
 
         return {**basic_info, **dimension_info}

@@ -42,7 +42,7 @@ class SketchExtractor(SketchEntityExtractor):
         """
         basic_info = super().extract_info()
         sketch_info = {
-            'timeline_index': self.timeline_index,
+            'timelineIndex': self.timelineIndex,
             'reference_plane_entity_token': self.reference_plane_entity_token,
             'name': self.name,
             'isParametric': self.isParametric,
@@ -70,7 +70,7 @@ class SketchExtractor(SketchEntityExtractor):
         return {**basic_info, **sketch_info}
     
     @property
-    def timeline_index(self) -> Optional[int]:
+    def timelineIndex(self) -> Optional[int]:
         """Extracts the timeline index of the Sketch object.
         
         Returns:
@@ -225,8 +225,8 @@ class SketchExtractor(SketchEntityExtractor):
             bbox = getattr(self._obj, 'boundingBox', None)
             if bbox:
                 return {
-                    'bb_min_point': [bbox.minPoint.x, bbox.minPoint.y, bbox.minPoint.z],
-                    'bb_max_point': [bbox.maxPoint.x, bbox.maxPoint.y, bbox.maxPoint.z]
+                    'bbMinPoint': [bbox.minPoint.x, bbox.minPoint.y, bbox.minPoint.z],
+                    'bbMaxPoint': [bbox.maxPoint.x, bbox.maxPoint.y, bbox.maxPoint.z]
                 }
             return None
         except Exception as e:

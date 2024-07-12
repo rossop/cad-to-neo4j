@@ -21,15 +21,6 @@ class EqualDistanceEdgeSetExtractor(BaseEdgeSetExtractor):
         """Initialize the extractor with the EqualDistanceChamferEdgeSet element."""
         super().__init__(obj)
 
-    @property
-    def distance(self) -> Optional[float]:
-        """Extracts the distance of the chamfer."""
-        try:
-            return self._obj.distance.value
-        except AttributeError as e:
-            self.logger.error(f'Error extracting distance: {e}\n{traceback.format_exc()}')
-            return None
-
     def extract_info(self) -> dict:
         """Extract all information from the EqualDistanceChamferEdgeSet element.
 
@@ -41,3 +32,12 @@ class EqualDistanceEdgeSetExtractor(BaseEdgeSetExtractor):
             'distance': self.distance,
         }
         return {**edge_set_info, **chamfer_info}
+
+    @property
+    def distance(self) -> Optional[float]:
+        """Extracts the distance of the chamfer."""
+        try:
+            return self._obj.distance.value
+        except AttributeError as e:
+            self.logger.error(f'Error extracting distance: {e}\n{traceback.format_exc()}')
+            return None

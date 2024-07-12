@@ -20,6 +20,19 @@ class SketchLineExtractor(SketchCurveExtractor):
         """Initialize the extractor with the SketchLine element."""
         super().__init__(obj)
 
+    def extract_info(self) -> Dict[str,Any]:
+        """Extract all information from the SketchLine element.
+
+        Returns:
+            dict: A dictionary containing the extracted information.
+        """
+        basic_info = super().extract_info()
+        line_info = {
+            'startPoint': self.startSketchPoint,
+            'endPoint': self.endSketchPoint,
+        }
+        return {**basic_info, **line_info}
+    
     @property
     def startSketchPoint(self) -> Optional[str]:
         """Extract the starting sketch point entity token."""
@@ -35,16 +48,3 @@ class SketchLineExtractor(SketchCurveExtractor):
             return nested_getattr(self._obj, 'endSketchPoint.entityToken', None)
         except AttributeError:
             return None
-    
-    def extract_info(self) -> Dict[str,Any]:
-        """Extract all information from the SketchLine element.
-
-        Returns:
-            dict: A dictionary containing the extracted information.
-        """
-        basic_info = super().extract_info()
-        line_info = {
-            'startPoint': self.startSketchPoint,
-            'endPoint': self.endSketchPoint,
-        }
-        return {**basic_info, **line_info}

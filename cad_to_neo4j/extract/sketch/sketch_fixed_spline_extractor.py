@@ -21,6 +21,22 @@ class SketchFixedSplineExtractor(SketchEntityExtractor):
     def __init__(self, obj: SketchFixedSpline) -> None:
         """Initialize the extractor with the SketchFixedSpline element."""
         super().__init__(obj)
+    
+    def extract_info(self) -> Dict[str,Any]:
+        """Extract all information from the SketchFixedSpline element.
+
+        Returns:
+            dict: A dictionary containing the extracted information.
+        """
+        basic_info = super().extract_info()
+        fixed_spline_info = {
+            'startPoint': self.startSketchPoint,
+            'endPoint': self.endSketchPoint,
+            'geometry': self.geometry,
+            'worldGeometry': self.worldGeometry,
+            'evaluator': self.evaluator,
+        }
+        return {**basic_info, **fixed_spline_info}
 
     @property
     def startSketchPoint(self) -> Optional[str]:
@@ -61,19 +77,3 @@ class SketchFixedSplineExtractor(SketchEntityExtractor):
             return nested_getattr(self._obj, "evaluator", None)
         except AttributeError:
             return None
-    
-    def extract_info(self) -> Dict[str,Any]:
-        """Extract all information from the SketchFixedSpline element.
-
-        Returns:
-            dict: A dictionary containing the extracted information.
-        """
-        basic_info = super().extract_info()
-        fixed_spline_info = {
-            'startPoint': self.startSketchPoint,
-            'endPoint': self.endSketchPoint,
-            'geometry': self.geometry,
-            'worldGeometry': self.worldGeometry,
-            'evaluator': self.evaluator,
-        }
-        return {**basic_info, **fixed_spline_info}

@@ -144,8 +144,8 @@ class BRepEntityExtractor(BaseExtractor):
             Optional[str]: Entity token of the assembly context.
         """
         try:
-            assembly_context = getattr(self._obj, 'assemblyContext', None)
-            return getattr(assembly_context, 'entityToken', None)
+            assemblyContext = getattr(self._obj, 'assemblyContext', None)
+            return getattr(assemblyContext, 'entityToken', None)
         except Exception as e:
             self.logger.error(f"Error extracting assemblyContext: {e}")
             return None
@@ -159,8 +159,8 @@ class BRepEntityExtractor(BaseExtractor):
             Optional[str]: Entity token of the native object.
         """
         try:
-            native_object = getattr(self._obj, 'nativeObject', None)
-            return getattr(native_object, 'entityToken', None)
+            nativeObject = getattr(self._obj, 'nativeObject', None)
+            return getattr(nativeObject, 'entityToken', None)
         except Exception as e:
             self.logger.error(f"Error extracting nativeObject: {e}")
             return None

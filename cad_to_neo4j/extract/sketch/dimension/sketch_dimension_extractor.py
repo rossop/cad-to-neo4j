@@ -20,8 +20,22 @@ class SketchDimensionExtractor(BaseExtractor):
         """Initialize the extractor with the SketchDimension element."""
         super().__init__(obj)
 
+    def extract_info(self) -> Dict[str, Any]:
+        """Extract all information from the SketchDimension element.
+
+        Returns:
+            dict: A dictionary containing the extracted information.
+        """
+        basic_info = super().extract_info()
+        dimension_info = {
+            'dimension' : self.dimensionValue,
+            'parentSketch' : self.parentSketch,
+        }
+
+        return {**basic_info, **dimension_info}
+
     @property
-    def dimension_value(self) -> Optional[float]:
+    def dimensionValue(self) -> Optional[float]:
         """Extract the value of the sketch dimension."""
         try:
             return getattr(self._obj, 'value', None)
@@ -37,17 +51,3 @@ class SketchDimensionExtractor(BaseExtractor):
             return nested_getattr(self._obj, 'parentSketch.entityToken', None)
         except AttributeError:
             return None
-
-    def extract_info(self) -> Dict[str, Any]:
-        """Extract all information from the SketchDimension element.
-
-        Returns:
-            dict: A dictionary containing the extracted information.
-        """
-        basic_info = super().extract_info()
-        dimension_info = {
-            'dimension' : self.dimension_value,
-            'parentSketch' : self.parentSketch,
-        }
-
-        return {**basic_info, **dimension_info}

@@ -21,6 +21,19 @@ class DistanceAndAngleEdgeSetExtractor(BaseEdgeSetExtractor):
         """Initialize the extractor with the DistanceAndAngleChamferEdgeSet element."""
         super().__init__(obj)
 
+    def extract_info(self) -> dict:
+        """Extract all information from the DistanceAndAngleChamferEdgeSet element.
+
+        Returns:
+            dict: A dictionary containing the extracted information.
+        """
+        edge_set_info = super().extract_info()
+        chamfer_info = {
+            'distance': self.distance,
+            'angle': self.angle,
+        }
+        return {**edge_set_info, **chamfer_info}
+
     @property
     def distance(self) -> Optional[float]:
         """Extracts the distance of the chamfer."""
@@ -38,16 +51,3 @@ class DistanceAndAngleEdgeSetExtractor(BaseEdgeSetExtractor):
         except AttributeError as e:
             self.logger.error(f'Error extracting angle: {e}\n{traceback.format_exc()}')
             return None
-
-    def extract_info(self) -> dict:
-        """Extract all information from the DistanceAndAngleChamferEdgeSet element.
-
-        Returns:
-            dict: A dictionary containing the extracted information.
-        """
-        edge_set_info = super().extract_info()
-        chamfer_info = {
-            'distance': self.distance,
-            'angle': self.angle,
-        }
-        return {**edge_set_info, **chamfer_info}

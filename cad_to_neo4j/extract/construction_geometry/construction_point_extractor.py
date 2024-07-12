@@ -31,15 +31,15 @@ class ConstructionPointExtractor(BaseExtractor):
         basic_info = super().extract_info()
         construction_point_info = {
             # 'geometry': self.geometry,
-            'is_deletable': self.is_deletable,
+            'isDeletable': self.isDeletable,
             'is_light_bulb_on': self.is_light_bulb_on,
             'isVisible': self.isVisible,
             'parent': self.parent,
             'isParametric': self.isParametric,
             'timelineObject': self.timelineObject,
-            'assembly_context': self.assembly_context,
-            'native_object': self.native_object,
-            'base_feature': self.base_feature,
+            'assemblyContext': self.assemblyContext,
+            'nativeObject': self.nativeObject,
+            'baseFeature': self.baseFeature,
             'healthState': self.healthState,
             'errorOrWarningMessage': self.errorOrWarningMessage
         }
@@ -112,7 +112,7 @@ class ConstructionPointExtractor(BaseExtractor):
         except AttributeError as e:
             return None
     @property
-    def is_deletable(self) -> Optional[bool]:
+    def isDeletable(self) -> Optional[bool]:
         """Extracts the deletable status of the ConstructionPoint object.
 
         Returns:
@@ -166,7 +166,7 @@ class ConstructionPointExtractor(BaseExtractor):
         return nested_getattr(self._obj, 'timelineObject.entityToken', None)
 
     @property
-    def assembly_context(self) -> Optional[str]:
+    def assemblyContext(self) -> Optional[str]:
         """Extracts the assembly context of the ConstructionPoint object.
 
         Returns:
@@ -175,7 +175,7 @@ class ConstructionPointExtractor(BaseExtractor):
         return nested_getattr(self._obj, 'assemblyContext.entityToken', None)
 
     @property
-    def native_object(self) -> Optional[str]:
+    def nativeObject(self) -> Optional[str]:
         """Extracts the native object of the ConstructionPoint object.
 
         Returns:
@@ -184,7 +184,7 @@ class ConstructionPointExtractor(BaseExtractor):
         return nested_getattr(self._obj, 'nativeObject.entityToken', None)
 
     @property
-    def base_feature(self) -> Optional[str]:
+    def baseFeature(self) -> Optional[str]:
         """Extracts the base feature of the ConstructionPoint object.
 
         Returns:

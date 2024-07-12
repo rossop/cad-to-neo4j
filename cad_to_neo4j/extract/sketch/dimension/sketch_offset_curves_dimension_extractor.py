@@ -26,8 +26,22 @@ class SketchOffsetCurvesDimensionExtractor(SketchDimensionExtractor):
         """
         super().__init__(obj)
 
+    def extract_info(self) -> Dict[str, Any]:
+        """
+        Extract all information from the SketchOffsetCurvesDimension element.
+
+        Returns:
+            dict: A dictionary containing the extracted information.
+        """
+        basic_info = super().extract_info()
+        dimension_info = {
+            'offsetConstraint': self.offsetConstraint,
+        }
+
+        return {**basic_info, **dimension_info}
+
     @property
-    def offset_constraint(self) -> Optional[str]:
+    def offsetConstraint(self) -> Optional[str]:
         """
         Extract the OffsetConstraint object that defines the curve offset.
 
@@ -38,17 +52,3 @@ class SketchOffsetCurvesDimensionExtractor(SketchDimensionExtractor):
             return nested_getattr(self._obj,'offsetConstraint.entityToken', None)
         except AttributeError:
             return None
-
-    def extract_info(self) -> Dict[str, Any]:
-        """
-        Extract all information from the SketchOffsetCurvesDimension element.
-
-        Returns:
-            dict: A dictionary containing the extracted information.
-        """
-        basic_info = super().extract_info()
-        dimension_info = {
-            'offset_constraint': self.offset_constraint,
-        }
-
-        return {**basic_info, **dimension_info}

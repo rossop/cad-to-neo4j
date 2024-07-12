@@ -26,19 +26,6 @@ class SketchEllipseMinorRadiusDimensionExtractor(SketchDimensionExtractor):
         """
         super().__init__(obj)
 
-    @property
-    def ellipse(self) -> Optional[str]:
-        """
-        Extract the ellipse or elliptical arc being constrained.
-
-        Returns:
-            str: The entity token of the ellipse or elliptical arc, or None if not available.
-        """
-        try:
-            return nested_getattr(self._obj,'ellipse.entityToken', None)
-        except AttributeError:
-            return None
-
     def extract_info(self) -> Dict[str, Any]:
         """
         Extract all information from the SketchEllipseMinorRadiusDimension element.
@@ -52,3 +39,16 @@ class SketchEllipseMinorRadiusDimensionExtractor(SketchDimensionExtractor):
         }
 
         return {**basic_info, **dimension_info}
+
+    @property
+    def ellipse(self) -> Optional[str]:
+        """
+        Extract the ellipse or elliptical arc being constrained.
+
+        Returns:
+            str: The entity token of the ellipse or elliptical arc, or None if not available.
+        """
+        try:
+            return nested_getattr(self._obj,'ellipse.entityToken', None)
+        except AttributeError:
+            return None

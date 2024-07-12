@@ -26,6 +26,21 @@ class SketchDistanceBetweenPointAndSurfaceDimensionExtractor(SketchDimensionExtr
         """
         super().__init__(obj)
 
+    def extract_info(self) -> Dict[str, Any]:
+        """
+        Extract all information from the SketchDistanceBetweenPointAndSurfaceDimension element.
+
+        Returns:
+            dict: A dictionary containing the extracted information.
+        """
+        basic_info = super().extract_info()
+        dimension_info = {
+            'point': self.point,
+            'surface': self.surface,
+        }
+
+        return {**basic_info, **dimension_info}
+
     @property
     def point(self) -> Optional[str]:
         """
@@ -51,18 +66,3 @@ class SketchDistanceBetweenPointAndSurfaceDimensionExtractor(SketchDimensionExtr
             return nested_getattr(self._obj, 'surface.entityToken', None)
         except AttributeError:
             return None
-
-    def extract_info(self) -> Dict[str, Any]:
-        """
-        Extract all information from the SketchDistanceBetweenPointAndSurfaceDimension element.
-
-        Returns:
-            dict: A dictionary containing the extracted information.
-        """
-        basic_info = super().extract_info()
-        dimension_info = {
-            'point': self.point,
-            'surface': self.surface,
-        }
-
-        return {**basic_info, **dimension_info}

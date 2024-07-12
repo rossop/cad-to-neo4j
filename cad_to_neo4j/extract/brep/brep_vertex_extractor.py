@@ -1,4 +1,5 @@
-import adsk.fusion # TODO standardise this import for 
+from adsk.fusion import BRepVertex
+from typing import Optional, Any, Dict
 from .brep_entity_extractor import BRepEntityExtractor
 
 __all__ = ['BRepVertexExtractor']
@@ -7,7 +8,7 @@ class BRepVertexExtractor(BRepEntityExtractor):
     """
     Extractor for BRepVertex data.
     """
-    def __init__(self, obj: adsk.fusion.BRepVertex):
+    def __init__(self, obj: BRepVertex):
         """
         Initialize the BRepVertexExtractor with a BRepVertex object.
 
@@ -16,7 +17,7 @@ class BRepVertexExtractor(BRepEntityExtractor):
         """
         super().__init__(obj)
 
-    def extract_info(self) -> dict:
+    def extract_info(self) -> Dict[str,Any]:
         """
         Extract information from the BRepVertex object.
 
@@ -76,7 +77,7 @@ class BRepVertexExtractor(BRepEntityExtractor):
             return None
 
     @property
-    def shell(self):
+    def shell(self) -> Optional[str]:
         """
         Extract the shell associated with the vertex.
 

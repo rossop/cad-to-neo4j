@@ -20,6 +20,18 @@ class SketchPointExtractor(SketchEntityExtractor):
     def __init__(self, obj: SketchPoint) -> None:
         """Initialize the extractor with the SketchPoint element."""
         super().__init__(obj)
+    
+    def extract_info(self) -> Dict[str,Any]:
+        """Extract all information from the SketchPoint element.
+
+        Returns:
+            dict: A dictionary containing the extracted information.
+        """
+        basic_info = super().extract_info()
+        point_info = {
+            'connectedEntities': self.connectedEntities,
+        }
+        return {**basic_info, **point_info}
 
     @property
     def coordinates(self) -> Optional[List[float]]:
@@ -36,23 +48,11 @@ class SketchPointExtractor(SketchEntityExtractor):
             connectedEntities = getattr(self._obj, 'connectedEntities', [])
             if connectedEntities is None:
                 connectedEntities = []
-            id_tokens = []
+            entityTokens = []
             for e in connectedEntities:
                 token = getattr(e,'entityToken', None) 
                 if token is not None:
-                    id_tokens.append(token)
-            return id_tokens
+                    entityTokens.append(token)
+            return entityTokens
         except AttributeError:
             return None
-    
-    def extract_info(self) -> Dict[str,Any]:
-        """Extract all information from the SketchPoint element.
-
-        Returns:
-            dict: A dictionary containing the extracted information.
-        """
-        basic_info = super().extract_info()
-        point_info = {
-            'connectedEntities': self.connectedEntities,
-        }
-        return {**basic_info, **point_info}

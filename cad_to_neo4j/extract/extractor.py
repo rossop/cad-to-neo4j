@@ -51,7 +51,7 @@ class ExtractorOrchestrator(object):
         self.logger = logger
         self.nodes: Dict[str, Dict[str, Any]] = {}
         self.processed_relationships = set()
-        self.timeline_index: str = 0
+        self.timelineIndex: str = 0
 
     def get_extractor(self, element) -> BaseExtractor:
         """Get the appropriate extractor for the given CAD element.
@@ -80,7 +80,7 @@ class ExtractorOrchestrator(object):
             Extractor = self.get_extractor(element)
             extracted_info = Extractor.extract_info()
             if extracted_info:
-                entity_id = extracted_info['id_token']
+                entity_id = extracted_info['entityToken']
                 if entity_id not in self.nodes:
                     self.nodes[entity_id] = extracted_info
                 else:
@@ -191,7 +191,7 @@ class ExtractorOrchestrator(object):
             self.previous_edges (Set[str]): Set of previous edge tokens.
             self.previous_vertices (Set[str]): Set of previous vertex tokens.
         """
-        self.logger.info(f'Extracting feature at timeline index {self.timeline_index}: {entity.name}')
+        self.logger.info(f'Extracting feature at timeline index {self.timelineIndex}: {entity.name}')
         self.extract_data(entity)
         if True:
             self._get_current_brep_entities(comp)
@@ -210,7 +210,7 @@ class ExtractorOrchestrator(object):
         Args:
             sketchEntity (Sketch): The Fusion 360 sketch entity.
         """
-        self.logger.info(f'Extracting sketch at timeline index {self.timeline_index}: {sketchEntity.name}')
+        self.logger.info(f'Extracting sketch at timeline index {self.timelineIndex}: {sketchEntity.name}')
         self.extract_data(sketchEntity)
         self.extract_sketch_entities(sketchEntity)
 
@@ -300,15 +300,15 @@ class ExtractorOrchestrator(object):
         performs a union operation with any existing faces in the `nodes` dictionary, and updates the
         `nodes` dictionary with the result.
         """
-        id_token = getattr(feature, 'entityToken', None)
-        if id_token is not None:
+        entityToken = getattr(feature, 'entityToken', None)
+        if entityToken is not None:
             faces = [getattr(face, 'entityToken', None) for face in getattr(feature, face_attr, [])]
-            if id_token in nodes and face_attr in nodes[id_token]:
-                existing_faces = nodes[id_token][face_attr]
+            if entityToken in nodes and face_attr in nodes[entityToken]:
+                existing_faces = nodes[entityToken][face_attr]
                 faces_union = list(set(existing_faces) | set(faces))
             else:
                 faces_union = faces
-            nodes[id_token][face_attr] = faces_union
+            nodes[entityToken][face_attr] = faces_union
 
     def extract_timeline_based_data(self) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
         """
@@ -333,7 +333,7 @@ class ExtractorOrchestrator(object):
         for index in range(timeline.count):
             timelineObject = timeline.item(index)
             entity = timelineObject.entity
-            self.timeline_index = index
+            self.timelineIndex = index
 
             # Roll to current timeline
             self.logger.info(f'Rolling to timeline index {index}')

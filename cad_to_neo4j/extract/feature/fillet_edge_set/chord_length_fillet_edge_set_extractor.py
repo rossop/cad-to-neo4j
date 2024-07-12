@@ -20,15 +20,6 @@ class ChordLengthFilletEdgeSetExtractor(BaseEdgeSetExtractor):
         """Initialize the extractor with the ChordLengthFilletEdgeSet element."""
         super().__init__(element)
 
-    @property
-    def chord_length(self) -> Optional[str]:
-        """Extracts the chord length of the fillet edge set."""
-        try:
-            return getattr(self._obj, 'chordLength', None)
-        except AttributeError as e:
-            self.logger.error(f'Error extracting chord length: {e}\n{traceback.format_exc()}')
-            return None
-
     def extract_info(self) -> dict:
         """Extract all information from the ChordLengthFilletEdgeSet element.
 
@@ -36,7 +27,16 @@ class ChordLengthFilletEdgeSetExtractor(BaseEdgeSetExtractor):
             dict: A dictionary containing the extracted information.
         """
         edge_set_info = super().extract_info()
-        chord_length_info = {
-            'chord_length': self.chord_length,
+        chordLength_info = {
+            'chordLength': self.chordLength,
         }
-        return {**edge_set_info, **chord_length_info}
+        return {**edge_set_info, **chordLength_info}
+
+    @property
+    def chordLength(self) -> Optional[str]:
+        """Extracts the chord length of the fillet edge set."""
+        try:
+            return getattr(self._obj, 'chordLength', None)
+        except AttributeError as e:
+            self.logger.error(f'Error extracting chord length: {e}\n{traceback.format_exc()}')
+            return None

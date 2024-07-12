@@ -179,14 +179,14 @@ class ConstructionAxisExtractor(BaseExtractor):
             elif isinstance(definition, ConstructionAxisTwoPlaneDefinition):
                 return {
                     'definition_type': 'TwoPlane',
-                    'planar_entity_one': definition.planarEntityOne.entityToken,
-                    'planar_entity_two': definition.planarEntityTwo.entityToken
+                    'planar_entityOne': definition.planarEntityOne.entityToken,
+                    'planar_entityTwo': definition.planarEntityTwo.entityToken
                 }
             elif isinstance(definition, ConstructionAxisTwoPointDefinition):
                 return {
                     'definition_type': 'TwoPoint',
-                    'point_entity_one': definition.pointEntityOne.entityToken,
-                    'point_entity_two': definition.pointEntityTwo.entityToken
+                    'point_entityOne': definition.pointEntityOne.entityToken,
+                    'point_entityTwo': definition.pointEntityTwo.entityToken
                 }
             return None
         except AttributeError as e:

@@ -20,7 +20,27 @@ class FeatureExtractor(BaseExtractor):
     def __init__(self, obj: Feature):
         """Initialize the extractor with the Feature element."""
         super().__init__(obj)
-        
+       
+    def extract_info(self) -> dict:
+        """Extract all information from the Feature element.
+
+        Returns:
+            dict: A dictionary containing the extracted information.
+        """
+        basic_info = super().extract_info()
+        feature_info = {
+            'faces': self.faces,
+            'isSuppressed': self.isSuppressed,
+            'isParametric': self.isParametric,
+            'parentComponent': self.parentComponent,
+            'linkedFeatures': self.linkedFeatures,
+            'bodies': self.bodies,
+            'baseFeature': self.baseFeature,
+            'healthState': self.healthState,
+            'errorOrWarningMessage': self.errorOrWarningMessage,
+        }
+        return {**basic_info, **feature_info}   
+      
     @property
     def faces(self) -> Optional[List[str]]:
         """Extracts the IDs of side faces created by the feature."""
@@ -31,7 +51,7 @@ class FeatureExtractor(BaseExtractor):
             return None
 
     @property
-    def is_suppressed(self) -> Optional[bool]:
+    def isSuppressed(self) -> Optional[bool]:
         """Extracts whether the feature is suppressed."""
         try:
             return self._obj.isSuppressed
@@ -58,7 +78,7 @@ class FeatureExtractor(BaseExtractor):
             return None
     
     @property
-    def linked_features(self) -> Optional[List[str]]:
+    def linkedFeatures(self) -> Optional[List[str]]:
         """Extracts the IDs of linked features."""
         try:
             return self.extract_ids('linkedFeatures', 'entityToken')
@@ -76,7 +96,7 @@ class FeatureExtractor(BaseExtractor):
             return None
         
     @property
-    def base_feature(self) -> Optional[str]:
+    def baseFeature(self) -> Optional[str]:
         """Extracts the ID of the associated base feature, if any."""
         try:
             return self._obj.baseFeature.entityToken if self._obj.baseFeature else None
@@ -122,24 +142,3 @@ class FeatureExtractor(BaseExtractor):
         ids = self.extract_ids(attribute, id_attribute)
         self.roll_timeline_to_after_feature()
         return ids
-    
-    def extract_info(self) -> dict:
-        """Extract all information from the Feature element.
-
-        Returns:
-            dict: A dictionary containing the extracted information.
-        """
-        basic_info = super().extract_info()
-        feature_info = {
-            'faces': self.faces,
-            'is_suppressed': self.is_suppressed,
-            'isParametric': self.isParametric,
-            'parentComponent': self.parentComponent,
-            'linked_features': self.linked_features,
-            'bodies': self.bodies,
-            'base_feature': self.base_feature,
-            'healthState': self.healthState,
-            'errorOrWarningMessage': self.errorOrWarningMessage,
-        }
-        return {**basic_info, **feature_info}
-

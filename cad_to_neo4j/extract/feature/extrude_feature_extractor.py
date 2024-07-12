@@ -136,7 +136,7 @@ class ExtrudeFeatureExtractor(FeatureExtractor):
                 extent_info = {
                     f'{prefix}_type': type(extent_root).__name__,
                     f'{prefix}_taper_angle': nested_getattr(extent_root, 'taperAngle.value', None),
-                    f'{prefix}_is_positive_direction': getattr(extent_root, 'isPositiveDirection', None),
+                    f'{prefix}IsPositiveDirection': getattr(extent_root, 'isPositiveDirection', None),
                 }
                 if isinstance(extent_root, adsk.fusion.DistanceExtentDefinition):
                     extent_info[f'{prefix}_distance'] = nested_getattr(extent_root, 'distance.value', None)
@@ -154,16 +154,16 @@ class ExtrudeFeatureExtractor(FeatureExtractor):
             return None
 
     @property
-    def extent_one(self) -> Optional[Dict[str, Any]]:
+    def extentOne(self) -> Optional[Dict[str, Any]]:
         """Extracts the extent one definition used by the feature."""
-        extent_one_root = getattr(self._obj, 'extentOne', None)
-        return self.extract_extent_info(extent_one_root, 'extentOne')
+        extentOne_root = getattr(self._obj, 'extentOne', None)
+        return self.extract_extent_info(extentOne_root, 'extentOne')
 
     @property
-    def extent_two(self) -> Optional[Dict[str, Any]]:
+    def extentTwo(self) -> Optional[Dict[str, Any]]:
         """Extracts the extent two definition used by the feature."""
-        extent_two_root = getattr(self._obj, 'extentTwo', None)
-        return self.extract_extent_info(extent_two_root, 'extentTwo')
+        extentTwo_root = getattr(self._obj, 'extentTwo', None)
+        return self.extract_extent_info(extentTwo_root, 'extentTwo')
     
     @property
     def operation(self) -> Optional[str]:
@@ -214,14 +214,14 @@ class ExtrudeFeatureExtractor(FeatureExtractor):
             'participantBodies': self.participantBodies,
         }
         # Add extent one information
-        extent_one_info = self.extent_one
-        if extent_one_info is not None:
-            extrude_info.update(extent_one_info)
+        extentOne_info = self.extentOne
+        if extentOne_info is not None:
+            extrude_info.update(extentOne_info)
         
         # Add extent two information if available
-        extent_two_info = self.extent_two
-        if extent_two_info is not None:
-            extrude_info.update(extent_two_info)
+        extentTwo_info = self.extentTwo
+        if extentTwo_info is not None:
+            extrude_info.update(extentTwo_info)
 
         extrude_info.update(self.start_extent)
         return {**feature_info, **extrude_info}

@@ -7,8 +7,9 @@ Classes:
     - RevolveFeatureExtractor: Extractor for RevolveFeature objects.
 """
 from typing import Optional, Any, Dict, List
-import adsk.fusion
-import adsk.core, traceback
+from adsk.core import ObjectCollection
+from adsk.fusion import RevolveFeature, DistanceExtentDefinition, ToEntityExtentDefinition
+import traceback
 from .feature_extractor import FeatureExtractor
 from ...utils.general_utils import nested_getattr
 
@@ -17,9 +18,36 @@ __all__ = ['RevolveFeatureExtractor']
 class RevolveFeatureExtractor(FeatureExtractor):
     """Extractor for extracting detailed information from RevolveFeature objects."""
 
-    def __init__(self, obj: adsk.fusion.RevolveFeature):
+    def __init__(self, obj: RevolveFeature):
         """Initialize the extractor with the RevolveFeature element."""
         super().__init__(obj)
+
+    def extract_info(self) -> dict:
+        """Extract all information from the RevolveFeature element.
+
+        Returns:
+            dict: A dictionary containing the extracted information.
+        """
+        feature_info = super().extract_info()
+        revolve_info = {
+            'profileTokens': self.profileTokens,
+            'axisToken': self.axisToken,
+            'isSolid': self.isSolid,
+            'operation': self.operation,
+            'participantBodies': self.participantBodies,
+        }
+
+        # Add extent one information
+        extentOne_info = self.extentOne
+        if extentOne_info is not None:
+            revolve_info.update(extentOne_info)
+
+        # Add extent two information if available
+        extentTwo_info = self.extentTwo
+        if extentTwo_info is not None:
+            revolve_info.update(extentTwo_info)
+
+        return {**feature_info, **revolve_info}
 
     @property
     def profileTokens(self):
@@ -30,34 +58,33 @@ class RevolveFeatureExtractor(FeatureExtractor):
         """
         try:
             profiles = self._obj.profile
-            if isinstance(profiles, adsk.core.ObjectCollection):
+            if isinstance(profiles, ObjectCollection):
                 return [profile.entityToken for profile in profiles]
             return [profiles.entityToken]
         except AttributeError:
             return []
 
     @property
-    def axis_token(self):
+    def axisToken(self):
         """Extracts the token of the axis used by the RevolveFeature.
 
         Returns:
             str: The token of the axis used by the RevolveFeature.
         """
         try:
-            axis = self._obj.axis
-            return axis.entityToken if axis else None
+            return nested_getattr(self._obj, 'axis.entityToken', None)
         except AttributeError:
             return None
 
     @property
-    def is_solid(self) -> bool:
+    def isSolid(self) -> bool:
         """Extracts whether the revolve feature is a solid.
 
         Returns:
             bool: True if the revolve feature is solid, False otherwise.
         """
         try:
-            return self._obj.isSolid
+            return nested_getattr(self._obj, 'isSolid.entityToken', None)
         except AttributeError:
             return False
 
@@ -111,11 +138,11 @@ class RevolveFeatureExtractor(FeatureExtractor):
                 extent_info = {
                     f'{prefix}_type': type(extent_root).__name__,
                     f'{prefix}_angle': nested_getattr(extent_root, 'angle.value', None),
-                    f'{prefix}_is_symmetric': nested_getattr(extent_root, 'isSymmetric', None)
+                    f'{prefix}_isSymmetric': nested_getattr(extent_root, 'isSymmetric', None)
                 }
-                if isinstance(extent_root, adsk.fusion.DistanceExtentDefinition):
+                if isinstance(extent_root, DistanceExtentDefinition):
                     extent_info[f'{prefix}_distance'] = nested_getattr(extent_root, 'distance.value', None)
-                elif isinstance(extent_root, adsk.fusion.ToEntityExtentDefinition):
+                elif isinstance(extent_root, ToEntityExtentDefinition):
                     extent_info[f'{prefix}_object_id'] = nested_getattr(extent_root, 'entity.entityToken', None)
 
                 return extent_info
@@ -126,40 +153,13 @@ class RevolveFeatureExtractor(FeatureExtractor):
             return None
 
     @property
-    def extent_one(self) -> Optional[Dict[str, Any]]:
+    def extentOne(self) -> Optional[Dict[str, Any]]:
         """Extracts the extent one definition used by the feature."""
-        extent_one_root = getattr(self._obj, 'extentOne', None)
-        return self.extract_extent_info(extent_one_root, 'extentOne')
+        extentOne_root = getattr(self._obj, 'extentOne', None)
+        return self.extract_extent_info(extentOne_root, 'extentOne')
 
     @property
-    def extent_two(self) -> Optional[Dict[str, Any]]:
+    def extentTwo(self) -> Optional[Dict[str, Any]]:
         """Extracts the extent two definition used by the feature."""
-        extent_two_root = getattr(self._obj, 'extentTwo', None)
-        return self.extract_extent_info(extent_two_root, 'extentTwo')
-
-    def extract_info(self) -> dict:
-        """Extract all information from the RevolveFeature element.
-
-        Returns:
-            dict: A dictionary containing the extracted information.
-        """
-        feature_info = super().extract_info()
-        revolve_info = {
-            'profileTokens': self.profileTokens,
-            'axis_token': self.axis_token,
-            'is_solid': self.is_solid,
-            'operation': self.operation,
-            'participantBodies': self.participantBodies,
-        }
-
-        # Add extent one information
-        extent_one_info = self.extent_one
-        if extent_one_info is not None:
-            revolve_info.update(extent_one_info)
-
-        # Add extent two information if available
-        extent_two_info = self.extent_two
-        if extent_two_info is not None:
-            revolve_info.update(extent_two_info)
-
-        return {**feature_info, **revolve_info}
+        extentTwo_root = getattr(self._obj, 'extentTwo', None)
+        return self.extract_extent_info(extentTwo_root, 'extentTwo')

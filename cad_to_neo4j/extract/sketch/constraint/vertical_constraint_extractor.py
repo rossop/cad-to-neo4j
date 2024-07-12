@@ -8,11 +8,22 @@ Classes:
 
 from typing import Optional, Dict, Any
 import traceback
+from adsk.fusion import VerticalConstraint
 from .geometric_constraint_extractor import GeometricConstraintExtractor
 from ....utils.general_utils import nested_getattr
 
 class VerticalConstraintExtractor(GeometricConstraintExtractor):
     """Extractor for VerticalConstraint objects."""
+
+    def __init__(self, obj: VerticalConstraint):
+        """
+        Initialise the extractor with the VerticalConstraint element.
+
+        Args:
+            obj (VerticalConstraint): The VerticalConstraint object to extract information from.
+        """
+        super().__init__(obj)
+
     @property
     def line(self) -> Optional[str]:
         """Extracts the line of the vertical constraint.

@@ -42,8 +42,8 @@ class ProfileExtractor(BaseExtractor):
         """
         basic_info = super().extract_info()
         profile_info = {
-            'profile_curves': self.profile_curves,
-            'profile_loops': self.profile_loops,
+            'profileCurves': self.profileCurves,
+            'profileLoops': self.profileLoops,
             'parentSketch': self.parentSketch,
         }
 
@@ -65,7 +65,7 @@ class ProfileExtractor(BaseExtractor):
         return {**basic_info, **profile_info}
 
     @property
-    def profile_loops(self) -> Optional[List[str]]:
+    def profileLoops(self) -> Optional[List[str]]:
         """
         Extracts the loops or closed areas within this profile, including their identity tokens if available.
 
@@ -79,7 +79,7 @@ class ProfileExtractor(BaseExtractor):
             return None
         
     @property
-    def profile_curves(self) -> Optional[List[str]]:
+    def profileCurves(self) -> Optional[List[str]]:
         """
         Extracts the curves within this profile.
 
@@ -87,13 +87,13 @@ class ProfileExtractor(BaseExtractor):
             Optional[List[str]]: List of entity tokens for the profile curves.
         """
         try:
-            id_tokens = []
-            for profile_loop in self._profile_loops:
+            entityTokens = []
+            for profile_loop in self._profileLoops:
                 for profile_curve in getattr(profile_loop, 'profileCurves', []):
                     token = nested_getattr(profile_curve, 'sketchEntity.entityToken', None)  
                     if token is not None:                     
-                        id_tokens.append(token)
-            return id_tokens
+                        entityTokens.append(token)
+            return entityTokens
         except AttributeError:
             return None
         
@@ -109,8 +109,8 @@ class ProfileExtractor(BaseExtractor):
             bbox = getattr(self._obj, 'boundingBox', None)
             if bbox:
                 return {
-                    'bb_min_point': [bbox.minPoint.x, bbox.minPoint.y, bbox.minPoint.z],
-                    'bb_max_point': [bbox.maxPoint.x, bbox.maxPoint.y, bbox.maxPoint.z]
+                    'bbMinPoint': [bbox.minPoint.x, bbox.minPoint.y, bbox.minPoint.z],
+                    'bbMaxPoint': [bbox.maxPoint.x, bbox.maxPoint.y, bbox.maxPoint.z]
                 }
             return None
         except Exception as e:

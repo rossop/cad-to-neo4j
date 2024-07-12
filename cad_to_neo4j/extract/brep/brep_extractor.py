@@ -28,7 +28,7 @@ class BRepBodyExtractor(BaseExtractor):
         
         brep_body_info = {
             'parent_component': self.parent_component,
-            'is_solid': self.is_solid,
+            'isSolid': self.isSolid,
             'area': self.area,
             'volume': self.volume,
             'is_visible': self.is_visible,
@@ -62,7 +62,7 @@ class BRepBodyExtractor(BaseExtractor):
             return None
 
     @property
-    def is_solid(self) -> bool:
+    def isSolid(self) -> bool:
         """Indicates if the BRepBody is solid."""
         try:
             return getattr(self._obj,'isSolid', None)

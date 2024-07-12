@@ -7,7 +7,7 @@ Classes:
     - BaseEdgeSetExtractor: Base extractor for FilletEdgeSet objects.
 """
 from typing import Optional, List, Dict
-import adsk.fusion
+from adsk.fusion import FilletEdgeSet
 import traceback
 from ...base_extractor import BaseExtractor
 
@@ -16,7 +16,7 @@ __all__ = ['BaseEdgeSetExtractor']
 class BaseEdgeSetExtractor(BaseExtractor):
     """Base extractor for extracting detailed information from FilletEdgeSet objects."""
 
-    def __init__(self, element: adsk.fusion.FilletEdgeSet):
+    def __init__(self, element: FilletEdgeSet):
         """Initialize the extractor with the FilletEdgeSet element."""
         super().__init__(element)
 
@@ -40,4 +40,4 @@ class BaseEdgeSetExtractor(BaseExtractor):
         edge_set_info = {
             'edges': self.edges,
         }
-        return edge_set_info
+        return {**edge_set_info, **base_info}

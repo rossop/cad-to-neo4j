@@ -26,8 +26,23 @@ class SketchConcentricCircleDimensionExtractor(SketchDimensionExtractor):
         """
         super().__init__(obj)
 
+    def extract_info(self) -> Dict[str, Any]:
+        """
+        Extract all information from the SketchConcentricCircleDimension element.
+
+        Returns:
+            dict: A dictionary containing the extracted information.
+        """
+        basic_info = super().extract_info()
+        dimension_info = {
+            'circleOne': self.circleOne,
+            'circleTwo': self.circleTwo,
+        }
+
+        return {**basic_info, **dimension_info}
+
     @property
-    def circle_one(self) -> Optional[str]:
+    def circleOne(self) -> Optional[str]:
         """
         Extract the first concentric circle or arc.
 
@@ -40,7 +55,7 @@ class SketchConcentricCircleDimensionExtractor(SketchDimensionExtractor):
             return None
 
     @property
-    def circle_two(self) -> Optional[str]:
+    def circleTwo(self) -> Optional[str]:
         """
         Extract the second concentric circle or arc.
 
@@ -51,18 +66,3 @@ class SketchConcentricCircleDimensionExtractor(SketchDimensionExtractor):
             return nested_getattr(self._obj,'circleTwo.entityToken', None)
         except AttributeError:
             return None
-
-    def extract_info(self) -> Dict[str, Any]:
-        """
-        Extract all information from the SketchConcentricCircleDimension element.
-
-        Returns:
-            dict: A dictionary containing the extracted information.
-        """
-        basic_info = super().extract_info()
-        dimension_info = {
-            'circle_one': self.circle_one,
-            'circle_two': self.circle_two,
-        }
-
-        return {**basic_info, **dimension_info}

@@ -27,7 +27,7 @@ class SketchLinearDimensionExtractor(SketchDimensionExtractor):
         super().__init__(obj)
 
     @property
-    def entity_one(self) -> Optional[str]:
+    def entityOne(self) -> Optional[str]:
         """
         Extract the first entity being constrained.
 
@@ -36,19 +36,6 @@ class SketchLinearDimensionExtractor(SketchDimensionExtractor):
         """
         try:
             return nested_getattr(self._obj,'entityOne.entityToken', None)
-        except AttributeError:
-            return None
-
-    @property
-    def entity_two(self) -> Optional[str]:
-        """
-        Extract the second entity being constrained.
-
-        Returns:
-            str: The entity token of the second entity, or None if not available.
-        """
-        try:
-            return nested_getattr(self._obj,'entityTwo.entityToken', None)
         except AttributeError:
             return None
 
@@ -61,8 +48,21 @@ class SketchLinearDimensionExtractor(SketchDimensionExtractor):
         """
         basic_info = super().extract_info()
         dimension_info = {
-            'entity_one': self.entity_one,
-            'entity_two': self.entity_two,
+            'entityOne': self.entityOne,
+            'entityTwo': self.entityTwo,
         }
 
         return {**basic_info, **dimension_info}
+
+    @property
+    def entityTwo(self) -> Optional[str]:
+        """
+        Extract the second entity being constrained.
+
+        Returns:
+            str: The entity token of the second entity, or None if not available.
+        """
+        try:
+            return nested_getattr(self._obj,'entityTwo.entityToken', None)
+        except AttributeError:
+            return None

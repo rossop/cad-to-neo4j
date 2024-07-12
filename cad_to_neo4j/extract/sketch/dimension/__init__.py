@@ -7,7 +7,7 @@ Modules:
     - sketch_angular_dimension_extractor: Extractor for SketchAngularDimension objects.
     - sketch_concentric_circle_dimension_extractor: Extractor for SketchConcentricCircleDimension objects.
     - sketch_diameter_dimension_extractor: Extractor for SketchDiameterDimension objects.
-    - sketch_distance_between_line_and_planar_surface_dimension_extractor: Extractor for SketchDistanceBetweenLineAndPlanarSurfaceDimension objects.
+    - sketch_distance_between_line_and_planarSurface_dimension_extractor: Extractor for SketchDistanceBetweenLineAndPlanarSurfaceDimension objects.
     - sketch_distance_between_point_and_surface_dimension_extractor: Extractor for SketchDistanceBetweenPointAndSurfaceDimension objects.
     - sketch_ellipse_major_radius_dimension_extractor: Extractor for SketchEllipseMajorRadiusDimension objects.
     - sketch_ellipse_minor_radius_dimension_extractor: Extractor for SketchEllipseMinorRadiusDimension objects.

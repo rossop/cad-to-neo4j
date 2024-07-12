@@ -9,11 +9,39 @@ Classes:
 
 from typing import Optional, Dict, Any
 import traceback
+from adsk.fusion import CircularPatternConstraint
 from .geometric_constraint_extractor import GeometricConstraintExtractor
 from ....utils.general_utils import nested_getattr
 
 class CircularPatternConstraintExtractor(GeometricConstraintExtractor):
     """Extractor for CircularPatternConstraint objects."""
+
+    def __init__(self, obj: CircularPatternConstraint):
+        """
+        Initialise the extractor with the CircularPatternConstraint element.
+
+        Args:
+            obj (CircularPatternConstraint): The CircularPatternConstraint object to extract information from.
+        """
+        super().__init__(obj)
+
+    def extract_info(self) -> Dict[str, Optional[Any]]:
+        """Extract all information from the CircularPatternConstraint element.
+
+        Returns:
+            dict: A dictionary containing the extracted information.
+        """
+        base_info = super().extract_info()
+        constraint_info = {
+            'entities': self.entities,
+            'createdEntities': self.createdEntities,
+            'centerPoint': self.centerPoint,
+            'quantity': self.quantity,
+            'totalAngle': self.totalAngle,
+            'isSymmetric': self.isSymmetric,
+            'isSuppressed': self.isSuppressed,
+        }
+        return {**base_info, **constraint_info}
 
     @property
     def entities(self) -> Optional[list]:
@@ -29,7 +57,7 @@ class CircularPatternConstraintExtractor(GeometricConstraintExtractor):
             return None
 
     @property
-    def created_entities(self) -> Optional[list]:
+    def createdEntities(self) -> Optional[list]:
         """Extracts the created entities of the pattern.
 
         Returns:
@@ -42,7 +70,7 @@ class CircularPatternConstraintExtractor(GeometricConstraintExtractor):
             return None
 
     @property
-    def center_point(self) -> Optional[str]:
+    def centerPoint(self) -> Optional[str]:
         """Extracts the center point of the pattern.
 
         Returns:
@@ -68,7 +96,7 @@ class CircularPatternConstraintExtractor(GeometricConstraintExtractor):
             return None
 
     @property
-    def total_angle(self) -> Optional[str]:
+    def totalAngle(self) -> Optional[str]:
         """Extracts the total angle parameter of the pattern.
 
         Returns:
@@ -81,7 +109,7 @@ class CircularPatternConstraintExtractor(GeometricConstraintExtractor):
             return None
 
     @property
-    def is_symmetric(self) -> Optional[bool]:
+    def isSymmetric(self) -> Optional[bool]:
         """Extracts the symmetry status of the pattern.
 
         Returns:
@@ -94,7 +122,7 @@ class CircularPatternConstraintExtractor(GeometricConstraintExtractor):
             return None
 
     @property
-    def is_suppressed(self) -> Optional[list]:
+    def isSuppressed(self) -> Optional[list]:
         """Extracts the suppression status of the pattern instances.
 
         Returns:
@@ -105,21 +133,3 @@ class CircularPatternConstraintExtractor(GeometricConstraintExtractor):
         except AttributeError as e:
             self.logger.error(f'Error extracting isSuppressed: {e}\n{traceback.format_exc()}')
             return None
-
-    def extract_info(self) -> Dict[str, Optional[Any]]:
-        """Extract all information from the CircularPatternConstraint element.
-
-        Returns:
-            dict: A dictionary containing the extracted information.
-        """
-        base_info = super().extract_info()
-        constraint_info = {
-            'entities': self.entities,
-            'created_entities': self.created_entities,
-            'center_point': self.center_point,
-            'quantity': self.quantity,
-            'total_angle': self.total_angle,
-            'is_symmetric': self.is_symmetric,
-            'is_suppressed': self.is_suppressed,
-        }
-        return {**base_info, **constraint_info}
