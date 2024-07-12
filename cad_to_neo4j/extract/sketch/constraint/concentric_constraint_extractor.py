@@ -9,14 +9,37 @@ Classes:
 
 from typing import Optional, Dict, Any
 import traceback
+from adsk.fusion import ConcentricConstraint
 from .geometric_constraint_extractor import GeometricConstraintExtractor
 from ....utils.general_utils import nested_getattr
 
 class ConcentricConstraintExtractor(GeometricConstraintExtractor):
     """Extractor for ConcentricConstraint objects."""
 
+    def __init__(self, obj: ConcentricConstraint):
+        """
+        Initialise the extractor with the ConcentricConstraint element.
+
+        Args:
+            obj (ConcentricConstraint): The ConcentricConstraint object to extract information from.
+        """
+        super().__init__(obj)
+
+    def extract_info(self) -> Dict[str, Optional[Any]]:
+        """Extract all information from the ConcentricConstraint element.
+
+        Returns:
+            dict: A dictionary containing the extracted information.
+        """
+        base_info = super().extract_info()
+        constraint_info = {
+            'entityOne': self.entityOne,
+            'entityTwo': self.entityTwo,
+        }
+        return {**base_info, **constraint_info}
+
     @property
-    def entity_one(self) -> Optional[str]:
+    def entityOne(self) -> Optional[str]:
         """Extracts the first entity of the constraint.
 
         Returns:
@@ -29,7 +52,7 @@ class ConcentricConstraintExtractor(GeometricConstraintExtractor):
             return None
 
     @property
-    def entity_two(self) -> Optional[str]:
+    def entityTwo(self) -> Optional[str]:
         """Extracts the second entity of the constraint.
 
         Returns:
@@ -40,16 +63,3 @@ class ConcentricConstraintExtractor(GeometricConstraintExtractor):
         except AttributeError as e:
             self.logger.error(f'Error extracting entityTwo: {e}\n{traceback.format_exc()}')
             return None
-
-    def extract_info(self) -> Dict[str, Optional[Any]]:
-        """Extract all information from the ConcentricConstraint element.
-
-        Returns:
-            dict: A dictionary containing the extracted information.
-        """
-        base_info = super().extract_info()
-        constraint_info = {
-            'entity_one': self.entity_one,
-            'entity_two': self.entity_two,
-        }
-        return {**base_info, **constraint_info}

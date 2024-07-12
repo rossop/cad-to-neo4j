@@ -29,7 +29,7 @@ class LineParallelToPlanarSurfaceConstraintExtractor(GeometricConstraintExtracto
             return None
 
     @property
-    def planar_surface(self) -> Optional[str]:
+    def planarSurface(self) -> Optional[str]:
         """Extracts the planar surface of the constraint.
 
         Returns:
@@ -50,6 +50,6 @@ class LineParallelToPlanarSurfaceConstraintExtractor(GeometricConstraintExtracto
         base_info = super().extract_info()
         constraint_info = {
             'line': self.line,
-            'planar_surface': self.planar_surface,
+            'planarSurface': self.planarSurface,
         }
         return {**base_info, **constraint_info}

@@ -26,19 +26,6 @@ class SketchRadialDimensionExtractor(SketchDimensionExtractor):
         """
         super().__init__(obj)
 
-    @property
-    def entity(self) -> Optional[str]:
-        """
-        Extract the arc or circle being constrained.
-
-        Returns:
-            str: The entity token of the arc or circle, or None if not available.
-        """
-        try:
-            return nested_getattr(self._obj,'entity.entityToken', None)
-        except AttributeError:
-            return None
-
     def extract_info(self) -> Dict[str, Any]:
         """
         Extract all information from the SketchRadialDimension element.
@@ -52,3 +39,16 @@ class SketchRadialDimensionExtractor(SketchDimensionExtractor):
         }
 
         return {**basic_info, **dimension_info}
+
+    @property
+    def entity(self) -> Optional[str]:
+        """
+        Extract the arc or circle being constrained.
+
+        Returns:
+            str: The entity token of the arc or circle, or None if not available.
+        """
+        try:
+            return nested_getattr(self._obj,'entity.entityToken', None)
+        except AttributeError:
+            return None

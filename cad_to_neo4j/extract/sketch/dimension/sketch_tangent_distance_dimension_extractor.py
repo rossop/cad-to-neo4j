@@ -26,8 +26,23 @@ class SketchTangentDistanceDimensionExtractor(SketchDimensionExtractor):
         """
         super().__init__(obj)
 
+    def extract_info(self) -> Dict[str, Any]:
+        """
+        Extract all information from the SketchTangentDistanceDimension element.
+
+        Returns:
+            dict: A dictionary containing the extracted information.
+        """
+        basic_info = super().extract_info()
+        dimension_info = {
+            'entityOne': self.entityOne,
+            'circleOrArc': self.circleOrArc,
+        }
+
+        return {**basic_info, **dimension_info}
+    
     @property
-    def entity_one(self) -> Optional[str]:
+    def entityOne(self) -> Optional[str]:
         """
         Extract the first entity being constrained.
 
@@ -40,7 +55,7 @@ class SketchTangentDistanceDimensionExtractor(SketchDimensionExtractor):
             return None
 
     @property
-    def circle_or_arc(self) -> Optional[str]:
+    def circleOrArc(self) -> Optional[str]:
         """
         Extract the second entity being constrained.
 
@@ -51,18 +66,3 @@ class SketchTangentDistanceDimensionExtractor(SketchDimensionExtractor):
             return nested_getattr(self._obj, 'circleOrArc.entityToken', None)
         except AttributeError:
             return None
-
-    def extract_info(self) -> Dict[str, Any]:
-        """
-        Extract all information from the SketchTangentDistanceDimension element.
-
-        Returns:
-            dict: A dictionary containing the extracted information.
-        """
-        basic_info = super().extract_info()
-        dimension_info = {
-            'entity_one': self.entity_one,
-            'circle_or_arc': self.circle_or_arc,
-        }
-
-        return {**basic_info, **dimension_info}

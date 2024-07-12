@@ -27,7 +27,7 @@ class MidPointConstraintExtractor(GeometricConstraintExtractor):
             return None
 
     @property
-    def mid_point_curve(self) -> Optional[str]:
+    def midPointCurve(self) -> Optional[str]:
         """Extracts the mid point curve of the mid point constraint.
 
         Returns:
@@ -48,6 +48,6 @@ class MidPointConstraintExtractor(GeometricConstraintExtractor):
         base_info = super().extract_info()
         constraint_info = {
             'point': self.point,
-            'mid_point_curve': self.mid_point_curve,
+            'midPointCurve': self.midPointCurve,
         }
         return {**base_info, **constraint_info}

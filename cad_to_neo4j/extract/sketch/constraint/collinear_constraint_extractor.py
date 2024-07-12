@@ -9,14 +9,37 @@ Classes:
 
 from typing import Optional, Dict, Any
 import traceback
+from adsk.fusion import CollinearConstraint
 from .geometric_constraint_extractor import GeometricConstraintExtractor
 from ....utils.general_utils import nested_getattr
 
 class CollinearConstraintExtractor(GeometricConstraintExtractor):
     """Extractor for CollinearConstraint objects."""
 
+    def __init__(self, obj: CollinearConstraint):
+        """
+        Initialise the extractor with the CollinearConstraint element.
+
+        Args:
+            obj (CollinearConstraint): The CollinearConstraint object to extract information from.
+        """
+        super().__init__(obj)
+
+    def extract_info(self) -> Dict[str, Optional[Any]]:
+        """Extract all information from the CollinearConstraint element.
+
+        Returns:
+            dict: A dictionary containing the extracted information.
+        """
+        base_info = super().extract_info()
+        constraint_info = {
+            'lineOne': self.lineOne,
+            'lineTwo': self.lineTwo,
+        }
+        return {**base_info, **constraint_info}
+
     @property
-    def line_one(self) -> Optional[str]:
+    def lineOne(self) -> Optional[str]:
         """Extracts the first line of the constraint.
 
         Returns:
@@ -29,7 +52,7 @@ class CollinearConstraintExtractor(GeometricConstraintExtractor):
             return None
 
     @property
-    def line_two(self) -> Optional[str]:
+    def lineTwo(self) -> Optional[str]:
         """Extracts the second line of the constraint.
 
         Returns:
@@ -40,16 +63,3 @@ class CollinearConstraintExtractor(GeometricConstraintExtractor):
         except AttributeError as e:
             self.logger.error(f'Error extracting lineTwo: {e}\n{traceback.format_exc()}')
             return None
-
-    def extract_info(self) -> Dict[str, Optional[Any]]:
-        """Extract all information from the CollinearConstraint element.
-
-        Returns:
-            dict: A dictionary containing the extracted information.
-        """
-        base_info = super().extract_info()
-        constraint_info = {
-            'line_one': self.line_one,
-            'line_two': self.line_two,
-        }
-        return {**base_info, **constraint_info}

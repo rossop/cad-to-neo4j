@@ -9,11 +9,34 @@ Classes:
 
 from typing import Optional, Dict, Any
 import traceback
+from adsk.fusion import LineOnPlanarSurfaceConstraint
 from .geometric_constraint_extractor import GeometricConstraintExtractor
 from ....utils.general_utils import nested_getattr
 
 class LineOnPlanarSurfaceConstraintExtractor(GeometricConstraintExtractor):
     """Extractor for LineOnPlanarSurfaceConstraint objects."""
+
+    def __init__(self, obj: LineOnPlanarSurfaceConstraint):
+        """
+        Initialise the extractor with the LineOnPlanarSurfaceConstraint element.
+
+        Args:
+            obj (LineOnPlanarSurfaceConstraint): The LineOnPlanarSurfaceConstraint object to extract information from.
+        """
+        super().__init__(obj)
+
+    def extract_info(self) -> Dict[str, Optional[Any]]:
+        """Extract all information from the LineOnPlanarSurfaceConstraint element.
+
+        Returns:
+            dict: A dictionary containing the extracted information.
+        """
+        base_info = super().extract_info()
+        constraint_info = {
+            'line': self.line,
+            'planarSurface': self.planarSurface,
+        }
+        return {**base_info, **constraint_info}
 
     @property
     def line(self) -> Optional[str]:
@@ -29,7 +52,7 @@ class LineOnPlanarSurfaceConstraintExtractor(GeometricConstraintExtractor):
             return None
 
     @property
-    def planar_surface(self) -> Optional[str]:
+    def planarSurface(self) -> Optional[str]:
         """Extracts the planar surface of the constraint.
 
         Returns:
@@ -40,16 +63,3 @@ class LineOnPlanarSurfaceConstraintExtractor(GeometricConstraintExtractor):
         except AttributeError as e:
             self.logger.error(f'Error extracting planarSurface: {e}\n{traceback.format_exc()}')
             return None
-
-    def extract_info(self) -> Dict[str, Optional[Any]]:
-        """Extract all information from the LineOnPlanarSurfaceConstraint element.
-
-        Returns:
-            dict: A dictionary containing the extracted information.
-        """
-        base_info = super().extract_info()
-        constraint_info = {
-            'line': self.line,
-            'planar_surface': self.planar_surface,
-        }
-        return {**base_info, **constraint_info}

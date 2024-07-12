@@ -8,11 +8,21 @@ Classes:
 """
 from typing import Optional, Dict, Any
 import traceback
+from adsk.fusion import OffsetConstraint
 from .geometric_constraint_extractor import GeometricConstraintExtractor
 from ....utils.general_utils import nested_getattr
 
 class OffsetConstraintExtractor(GeometricConstraintExtractor):
     """Extractor for OffsetConstraint objects."""
+
+    def __init__(self, obj: OffsetConstraint):
+        """
+        Initialise the extractor with the OffsetConstraint element.
+
+        Args:
+            obj (OffsetConstraint): The OffsetConstraint object to extract information from.
+        """
+        super().__init__(obj)
 
     @property
     def parent_curves(self) -> Optional[list]:

@@ -26,8 +26,23 @@ class SketchAngularDimensionExtractor(SketchDimensionExtractor):
         """
         super().__init__(obj)
 
+    def extract_info(self) -> Dict[str, Any]:
+        """
+        Extract all information from the SketchAngularDimension element.
+
+        Returns:
+            dict: A dictionary containing the extracted information.
+        """
+        basic_info = super().extract_info()
+        dimension_info = {
+            'lineOne': self.lineOne,
+            'lineTwo': self.lineTwo,
+        }
+
+        return {**basic_info, **dimension_info}
+
     @property
-    def line_one(self) -> Optional[str]:
+    def lineOne(self) -> Optional[str]:
         """
         Extract the first line being constrained.
 
@@ -40,7 +55,7 @@ class SketchAngularDimensionExtractor(SketchDimensionExtractor):
             return None
 
     @property
-    def line_two(self) -> Optional[str]:
+    def lineTwo(self) -> Optional[str]:
         """
         Extract the second line being constrained.
 
@@ -51,18 +66,3 @@ class SketchAngularDimensionExtractor(SketchDimensionExtractor):
             return nested_getattr(self._obj,'lineTwo.entityToken', None)
         except AttributeError:
             return None
-
-    def extract_info(self) -> Dict[str, Any]:
-        """
-        Extract all information from the SketchAngularDimension element.
-
-        Returns:
-            dict: A dictionary containing the extracted information.
-        """
-        basic_info = super().extract_info()
-        dimension_info = {
-            'line_one': self.line_one,
-            'line_two': self.line_two,
-        }
-
-        return {**basic_info, **dimension_info}

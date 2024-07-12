@@ -28,134 +28,13 @@ from typing import Optional, Tuple, Any, List, Dict, Set
 from adsk.core import Base
 from adsk.fusion import Design, Component,  Feature, Sketch, BRepBody
 import traceback
+import copy
 
 from .base_extractor import BaseExtractor
-from .sketch import (
-    SketchExtractor, 
-    SketchPointExtractor, 
-    SketchCurveExtractor, 
-    SketchLineExtractor, 
-    ProfileExtractor,
-    SketchCircleExtractor,
-    SketchArcExtractor,
-    SketchEllipseExtractor,
-    SketchEllipticalArcExtractor,
-    SketchFittedSplineExtractor,
-    SketchFixedSplineExtractor,
-) 
-from .sketch.dimension import (
-    SketchDimensionExtractor,
-    SketchAngularDimensionExtractor,
-    SketchConcentricCircleDimensionExtractor,
-    SketchDiameterDimensionExtractor,
-    SketchDistanceBetweenLineAndPlanarSurfaceDimensionExtractor,
-    SketchDistanceBetweenPointAndSurfaceDimensionExtractor,
-    SketchEllipseMajorRadiusDimensionExtractor,
-    SketchEllipseMinorRadiusDimensionExtractor,
-    SketchLinearDiameterDimensionExtractor,
-    SketchLinearDimensionExtractor,
-    SketchOffsetCurvesDimensionExtractor,
-    SketchOffsetDimensionExtractor,
-    SketchRadialDimensionExtractor,
-    SketchTangentDistanceDimensionExtractor
-)
-from .sketch.constraint import (
-    GeometricConstraintExtractor, 
-    VerticalConstraintExtractor, 
-    HorizontalConstraintExtractor, 
-    MidPointConstraintExtractor, 
-    PerpendicularConstraintExtractor, 
-    CoincidentConstraintExtractor, 
-    OffsetConstraintExtractor,
-    CoincidentToSurfaceConstraintExtractor,
-    CollinearConstraintExtractor,
-    ConcentricConstraintExtractor,
-    EqualConstraintExtractor,
-    HorizontalPointsConstraintExtractor,
-    LineOnPlanarSurfaceConstraintExtractor,
-    LineParallelToPlanarSurfaceConstraintExtractor,
-    CircularPatternConstraintExtractor,
-    ParallelConstraintExtractor,
-    SymmetryConstraintExtractor,
-    TangentConstraintExtractor,
-    )
-from .feature import (
-    FeatureExtractor,
-    ExtrudeFeatureExtractor, 
-    RevolveFeatureExtractor, 
-    HoleFeatureExtractor,
-    FilletFeatureExtractor,
-    ChamferFeatureExtractor,
-    BoxFeatureExtractor,
-)
-from .construction_geometry import ConstructionPlaneExtractor, ConstructionAxisExtractor, ConstructionPointExtractor
-from .brep import BRepExtractor, BRepFaceExtractor, BRepEdgeExtractor
-
-# adsk Debug
-import adsk.core, traceback
-app = adsk.core.Application.get()
-ui = app.userInterface
+from .extractors import EXTRACTORS, ENTITY_MAP
 
 
 __all__ = ['ExtractorOrchestrator']
-
-EXTRACTORS = {
-    'adsk::fusion::Sketch': SketchExtractor,
-    'adsk::fusion::SketchPoint': SketchPointExtractor,
-    'adsk::fusion::SketchCurve': SketchCurveExtractor,
-    'adsk::fusion::SketchCircle': SketchCircleExtractor,
-    'adsk::fusion::SketchArc': SketchArcExtractor,
-    'adsk::fusion::SketchEllipse': SketchEllipseExtractor,
-    'adsk::fusion::SketchEllipticalArc': SketchEllipticalArcExtractor,
-    'adsk::fusion::SketchFittedSpline': SketchFittedSplineExtractor,
-    'adsk::fusion::SketchFixedSpline': SketchFixedSplineExtractor,
-    'adsk::fusion::SketchLine': SketchLineExtractor,
-    'adsk::fusion::SketchDimension': SketchDimensionExtractor,
-    'adsk::fusion::SketchAngularDimension': SketchAngularDimensionExtractor,
-    'adsk::fusion::SketchConcentricCircleDimension': SketchConcentricCircleDimensionExtractor,
-    'adsk::fusion::SketchDiameterDimension': SketchDiameterDimensionExtractor,
-    'adsk::fusion::SketchDistanceBetweenLineAndPlanarSurfaceDimension': SketchDistanceBetweenLineAndPlanarSurfaceDimensionExtractor,
-    'adsk::fusion::SketchDistanceBetweenPointAndSurfaceDimension': SketchDistanceBetweenPointAndSurfaceDimensionExtractor,
-    'adsk::fusion::SketchEllipseMajorRadiusDimension': SketchEllipseMajorRadiusDimensionExtractor,
-    'adsk::fusion::SketchEllipseMinorRadiusDimension': SketchEllipseMinorRadiusDimensionExtractor,
-    'adsk::fusion::SketchLinearDiameterDimension': SketchLinearDiameterDimensionExtractor,
-    'adsk::fusion::SketchLinearDimension': SketchLinearDimensionExtractor,
-    'adsk::fusion::SketchOffsetCurvesDimension': SketchOffsetCurvesDimensionExtractor,
-    'adsk::fusion::SketchOffsetDimension': SketchOffsetDimensionExtractor,
-    'adsk::fusion::SketchRadialDimension': SketchRadialDimensionExtractor,
-    'adsk::fusion::SketchTangentDistanceDimension': SketchTangentDistanceDimensionExtractor,
-    'adsk::fusion::Profile': ProfileExtractor,
-    'adsk::fusion::ExtrudeFeature': ExtrudeFeatureExtractor, 
-    'adsk::fusion::RevolveFeature': RevolveFeatureExtractor, 
-    'adsk::fusion::HoleFeature': HoleFeatureExtractor, 
-    'adsk::fusion::FilletFeature': FilletFeatureExtractor, 
-    'adsk::fusion::ChamferFeature': ChamferFeatureExtractor, 
-    'adsk::fusion::BoxFeature': BoxFeatureExtractor, 
-    'adsk::fusion::BRepBody': BRepExtractor, 
-    'adsk::fusion::BRepFace': BRepFaceExtractor,
-    'adsk::fusion::BRepEdge': BRepEdgeExtractor,
-    'adsk::fusion::ConstructionPlane': ConstructionPlaneExtractor,
-    'adsk::fusion::ConstructionAxis': ConstructionAxisExtractor,
-    'adsk::fusion::ConstructionPoint': ConstructionPointExtractor,
-    'adsk::fusion::GeometricConstraint' : GeometricConstraintExtractor,
-    'adsk::fusion::VerticalConstraint' : VerticalConstraintExtractor,
-    'adsk::fusion::HorizontalConstraint' : HorizontalConstraintExtractor,
-    'adsk::fusion::MidPointConstraint' : MidPointConstraintExtractor,
-    'adsk::fusion::PerpendicularConstraint' : PerpendicularConstraintExtractor,
-    'adsk::fusion::ParallelConstraint' : ParallelConstraintExtractor,
-    'adsk::fusion::SymmetryConstraint' : SymmetryConstraintExtractor,
-    'adsk::fusion::TangentConstraint' : TangentConstraintExtractor,
-    'adsk::fusion::CoincidentConstraint' : CoincidentConstraintExtractor,
-    'adsk::fusion::OffsetConstraint' : OffsetConstraintExtractor,
-    'adsk::fusion::LineOnPlanarSurfaceConstraint': LineOnPlanarSurfaceConstraintExtractor,
-    'adsk::fusion::LineParallelToPlanarSurfaceConstraint': LineParallelToPlanarSurfaceConstraintExtractor,
-    'adsk::fusion::CircularPatternConstraint': CircularPatternConstraintExtractor,
-    'adsk::fusion::CoincidentToSurfaceConstraint': CoincidentToSurfaceConstraintExtractor,
-    'adsk::fusion::CollinearConstraint': CollinearConstraintExtractor,
-    'adsk::fusion::ConcentricConstraint': ConcentricConstraintExtractor,
-    'adsk::fusion::EqualConstraint': EqualConstraintExtractor,
-    'adsk::fusion::HorizontalPointsConstraint': HorizontalPointsConstraintExtractor,
-}
 
 class ExtractorOrchestrator(object):
     """
@@ -170,25 +49,26 @@ class ExtractorOrchestrator(object):
     def __init__(self, design: Design, logger: logging.Logger = None):
         self.design = design
         self.logger = logger
-        self.nodes = []
-        self.relationships = []
-        self.processed_ids = set()
+        self.nodes: Dict[str, Dict[str, Any]] = {}
         self.processed_relationships = set()
+        self.timelineIndex: str = 0
 
-    def get_extractor(self, element: Base) -> BaseExtractor:
+    def get_extractor(self, element) -> BaseExtractor:
         """Get the appropriate extractor for the given CAD element.
 
         Args:
             element (Base): The CAD element.
 
         Returns:
-            BaseExtractor: The appropriate extractor for the element.
+            Extractor (BaseExtractor): The appropriate extractor for the element.
         """
         extractor_class = EXTRACTORS.get(element.objectType, BaseExtractor)
         return extractor_class(element)
 
-    def extract_data(self, element: Base) -> Optional[dict]:
-        """Extracts data from the given element using the appropriate extractor.
+    def extract_data(self, element) -> Optional[dict]:
+        """
+        Extracts data from the given element using the appropriate extractor 
+        and stores it.
 
         Args:
             element (Base): The CAD element.
@@ -200,137 +80,54 @@ class ExtractorOrchestrator(object):
             Extractor = self.get_extractor(element)
             extracted_info = Extractor.extract_info()
             if extracted_info:
-                return extracted_info
-            return None
+                entity_id = extracted_info['entityToken']
+                if entity_id not in self.nodes:
+                    self.nodes[entity_id] = extracted_info
+                else:
+                    self.add_or_update(self.nodes[entity_id],extracted_info)
+                    
         except Exception as e:
-            self.logger.error(f"Error in extract_data: {str(e)}")
-            self.logger.error(f"Failed:\n{traceback.format_exc()}")
-            return None
-        
-    def add_relationship(self, from_id: str, to_id: str, rel_type: str) -> None:
-        """
-        Helper function to add a relationship and avoid duplication.
+            self.logger.error(f"""
+                              Error in extract_data: {str(e)}\n
+                              Failed:\n{traceback.format_exc()}
+                            """)
+            
+    def add_or_update(self, stored_dict: Dict, other_dict: Dict):
+        for key, value in other_dict.items():
+            if key not in stored_dict:
+                stored_dict[key] = value
+            else:
+                if stored_dict[key] != value:
+                    # Combining the values into a List
+                    if isinstance(stored_dict[key],list):
+                        stored_dict[key] = stored_dict[key].append(value)
+                    else:
+                        stored_dict[key] = [stored_dict[key], value]
 
-        Args:
-            from_id (str): The ID of the originating node.
-            to_id (str): The ID of the destination node.
-            rel_type (str): The type of the relationship.
-        """
-        if (from_id, to_id, rel_type) not in self.processed_relationships:
-            self.relationships.append({
-                "from_id": from_id,
-                "to_id": to_id,
-                "rel_type": rel_type
-            })
-            self.processed_relationships.add((from_id, to_id, rel_type))
-
-    def extract_and_append(self, entity: Base, parent_id: str, rel_type: str) -> Optional[str]:
-        """
-        Helper function to extract data and append nodes and relationships.
-
-        Args:
-            entity (Base): The CAD entity to extract data from.
-            parent_id (str): The ID of the parent node.
-            rel_type (str): The type of the relationship.
-
-        Returns:
-            str: The ID of the extracted entity, or None if extraction fails.
-        """
-        try:
-            extracted_info = self.extract_data(entity)
-            if extracted_info:
-                entity_id = extracted_info['id_token']
-                if entity_id not in self.processed_ids:
-                    self.nodes.append(extracted_info)
-                    self.processed_ids.add(entity_id)
-                self.add_relationship(parent_id, entity_id, rel_type)
-                return entity_id
-        except Exception as e:
-            self.logger.error(f"Error extracting and appending data for {entity}: {str(e)}")
-            self.logger.error(f"Failed:\n{traceback.format_exc()}")
-        return None
-    
-    def extract_brep_entity_data(self, brep_entity: Base, parent_id: str, timeline_index: Optional[int] = None) -> None:
-        """
-        Helper function to extract and append BRep entities.
-
-        Args:
-            brep_entity (Base): The BRep entity to extract data from.
-            parent_id (str): The ID of the parent node.
-            timeline_index (int, optional): The index of the timeline. Defaults to None.
-        """
-        entity_id = self.extract_and_append(brep_entity, parent_id, "CONTAINS")
-        if not entity_id:
-            return
-
-        for face in brep_entity.faces:
-            face_id = self.extract_and_append(face, entity_id, "CONTAINS")
-            if face_id:
-                self.add_timeline_tag(face_id, timeline_index)
-
-            for edge in face.edges:
-                edge_id = self.extract_and_append(edge, face_id, "CONTAINS")
-                if edge_id:
-                    self.add_timeline_tag(edge_id, timeline_index)
-
-                for vertex in [edge.startVertex, edge.endVertex]:
-                    vertex_id = self.extract_and_append(vertex, edge_id, "CONTAINS")
-                    if vertex_id:
-                        self.add_timeline_tag(vertex_id, timeline_index)
-
-    def add_timeline_tag(self, entity_id: str, timeline_index: Optional[int]) -> None:
-        """
-        Adds a timeline tag to an entity if the timeline index is not None.
-
-        Args:
-            entity_id (str): The ID of the entity.
-            timeline_index (Optional[int]): The index of the timeline. Defaults to None.
-        """
-        if timeline_index is not None:
-            self.add_relationship(entity_id, f'timeline_index_{timeline_index}', 'HAS_TIMELINE_INDEX')
-
-    def extract_sketch_profiles(self, sketch: Sketch, parent_id: str) -> Optional[str]:
-        """
-        Helper function to extract profiles from a sketch and link them.
-
-        Args:
-            sketch (Sketch): The sketch to extract profiles from.
-            parent_id (str): The ID of the parent node.
-
-        Returns:
-            str: The ID of the extracted sketch, or None if extraction fails.
-        """
-        sketch_id = self.extract_and_append(sketch, parent_id, "CONTAINS")
-        if not sketch_id:
-            return None
-        
-        for profile in sketch.profiles:
-            profile_id = self.extract_and_append(profile, sketch_id, "CONTAINS")
-            if profile_id:
-                self.add_relationship(sketch_id, profile_id, "CONTAINS")
-        return sketch_id
-
-    def extract_sketch(self, sketch: Sketch, sketch_id: str) -> None:
+    def extract_sketch_entities(self, sketch: Sketch) -> None:
         """
         Helper function to extract entities from a sketch and link them.
 
         Args:
             sketch (Sketch): The sketch to extract entities from.
-            sketch_id (str): The ID of the sketch node.
         """
+        # TODO add try and catch
+        for profile in sketch.profiles:
+            self.extract_data(profile)
+            
         for point in sketch.sketchPoints:
-            _ = self.extract_and_append(point, sketch_id, "CONTAINS")
+            self.extract_data(point)
         
         for curve in sketch.sketchCurves:
-            _ = self.extract_and_append(curve, sketch_id, "CONTAINS")
+            self.extract_data(curve)
 
         for dimension in sketch.sketchDimensions:
-            _ = self.extract_and_append(dimension, sketch_id, "CONTAINS")
+            self.extract_data(dimension)
 
         for constraint in sketch.geometricConstraints:
-            _ = self.extract_and_append(constraint, sketch_id, "CONTAINS")
+            self.extract_data(constraint)
 
-    def extract_component_data(self) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
+    def extract_component_data(self) -> None:
         """
         Extracts data from the components, and their children sketches, features
         and BRep bodies in the design.
@@ -343,28 +140,9 @@ class ExtractorOrchestrator(object):
             self.logger.info('Starting component Extraction')
             self.logger.info(f'Extracting component: {comp.name}')
 
-            component_info = self.extract_data(comp)
-            if component_info:
-                self.nodes.append(component_info)
-                component_id = component_info['id_token']
+        return None
 
-            for sketch in comp.sketches:
-                sketch_id = self.extract_sketch_profiles(sketch, component_id)
-                if sketch_id:
-                    self.extract_sketch(sketch, sketch_id)
-
-            for feat in comp.features:
-                feature_id = self.extract_and_append(feat, component_id, "CONTAINS")
-                if feature_id and hasattr(feat, 'bodies'):
-                    for body in feat.bodies:
-                        self.extract_brep_entity_data(body, feature_id)
-
-            for body in comp.bRepBodies:
-                _ = self.extract_and_append(body, component_id, "CONTAINS")
-
-        return self.nodes, self.relationships
-
-    def _get_current_brep_entities(self, comp: Component) -> Tuple[Set[str], Set[str], Set[str]]:
+    def _get_current_brep_entities(self, comp: Component) -> None:
         """
         Get the current BRep entities (faces, edges, vertices) of the component.
         
@@ -374,13 +152,12 @@ class ExtractorOrchestrator(object):
         Returns:
             tuple: A tuple containing sets of current face, edge, and vertex tokens.
         """
-        current_faces = {face.entityToken for body in comp.bRepBodies for face in body.faces}
-        current_edges = {edge.entityToken for body in comp.bRepBodies for edge in body.edges}
-        current_vertices = {vertex.entityToken for body in comp.bRepBodies for vertex in body.vertices}
+        # TODO avoid repeating the body loop and share it across them
+        self.current_faces = {face.entityToken for body in comp.bRepBodies for face in body.faces}
+        self.current_edges = {edge.entityToken for body in comp.bRepBodies for edge in body.edges}
+        self.current_vertices = {vertex.entityToken for body in comp.bRepBodies for vertex in body.vertices}
 
-        return current_faces, current_edges, current_vertices
-
-    def _process_new_entities(self, new_entities: Set[str], entity_type: str, comp: Component, feature_id: str, index: int):
+    def _process_new_entities(self, new_entities: Set[str], entity_type: str, comp: Component):
         """
         Process new BRep entities (faces, edges, vertices) and add them to the extraction nodes and relationships.
 
@@ -391,27 +168,17 @@ class ExtractorOrchestrator(object):
             feature_id (str): The ID of the feature.
             index (int): The timeline index.
         """
-        entity_map = {
-            'face': ('faces', BRepFaceExtractor),
-            'edge': ('edges', BRepEdgeExtractor),
-            'vertex': ('vertices', BaseExtractor)
-        }
-        if entity_type not in entity_map:
-            return
+        # TODO is there a mroe efficient way either way using 
+        if entity_type not in ENTITY_MAP:
+            return None
 
-        entity_attr, extractor_class = entity_map[entity_type]
+        entity_attr, extractor_class = ENTITY_MAP[entity_type] # remove and just use entity_type
 
-        for token in new_entities:
+        for token in new_entities: # TODO change new entities to dictionary and use entity type as key
             entity = next((e for body in comp.bRepBodies for e in getattr(body, entity_attr) if e.entityToken == token), None)
-            if entity:
-                extractor = extractor_class(entity)
-                info = extractor.extract_info()
-                if info:
-                    self.nodes.append(info)
-                    self.add_relationship(feature_id, info['id_token'], "CONTAINS")
-                    self.add_timeline_tag(info['id_token'], index)
+            self.extract_data(entity)
 
-    def _extract_feature(self, entity: Feature, comp: Component, index: int, component_id: str, previous_faces: Set[str], previous_edges: Set[str], previous_vertices: Set[str]):
+    def _extract_feature(self, entity, comp: Component):
         """
         Extract data from a feature entity and process its BRep entities.
 
@@ -420,97 +187,60 @@ class ExtractorOrchestrator(object):
             comp (Component): The Fusion 360 component.
             index (int): The timeline index.
             component_id (str): The ID of the component.
-            previous_faces (Set[str]): Set of previous face tokens.
-            previous_edges (Set[str]): Set of previous edge tokens.
-            previous_vertices (Set[str]): Set of previous vertex tokens.
+            self.previous_faces (Set[str]): Set of previous face tokens.
+            self.previous_edges (Set[str]): Set of previous edge tokens.
+            self.previous_vertices (Set[str]): Set of previous vertex tokens.
         """
-        self.logger.info(f'Extracting feature at timeline index {index}: {entity.name}')
-        feature_id = self.extract_and_append(entity, component_id, "CONTAINS")
-        if feature_id:
-            current_faces, current_edges, current_vertices = self._get_current_brep_entities(comp)
+        self.logger.info(f'Extracting feature at timeline index {self.timelineIndex}: {entity.name}')
+        self.extract_data(entity)
+        if True:
+            self._get_current_brep_entities(comp)
+            self.new_faces = self.current_faces - self.previous_faces
+            self.new_edges = self.current_edges - self.previous_edges
+            self.new_vertices = self.current_vertices - self.previous_vertices
 
-            new_faces = current_faces - previous_faces
-            new_edges = current_edges - previous_edges
-            new_vertices = current_vertices - previous_vertices
+            self._process_new_entities(self.new_faces, 'face', comp)
+            self._process_new_entities(self.new_edges, 'edge', comp)
+            self._process_new_entities(self.new_vertices, 'vertex', comp)
 
-            self._process_new_entities(new_faces, 'face', comp, feature_id, index)
-            self._process_new_entities(new_edges, 'edge', comp, feature_id, index)
-            self._process_new_entities(new_vertices, 'vertex', comp, feature_id, index)
-
-    def _extract_sketch(self, entity: Sketch, comp: Component, index: int, component_id: str):
+    def _extract_sketch(self, sketchEntity: Sketch):
         """
-        Extract data from a sketch entity and its profiles.
+        Extract data from a sketch entity and the contained entities.
 
         Args:
-            entity (Sketch): The Fusion 360 sketch entity.
-            comp (Component): The Fusion 360 component.
-            index (int): The timeline index.
-            component_id (str): The ID of the component.
+            sketchEntity (Sketch): The Fusion 360 sketch entity.
         """
-        self.logger.info(f'Extracting sketch at timeline index {index}: {entity.name}')
-        sketch_id = self.extract_sketch_profiles(entity, component_id)
-        if sketch_id:
-            self.extract_sketch(entity, sketch_id)
+        self.logger.info(f'Extracting sketch at timeline index {self.timelineIndex}: {sketchEntity.name}')
+        self.extract_data(sketchEntity)
+        self.extract_sketch_entities(sketchEntity)
 
-    def extract_final_brep_entities(self, comp: Component, component_id: str) -> None:
+    def extract_brep_entities(self, comp: Component) -> None:
         """
         Extract final BRep entities and establish relationships.
 
         Args:
             comp (Component): The Fusion 360 component.
-            component_id (str): The ID of the component.
         """
         self.logger.info('Extracting final BRep entities and establishing relationships')
 
         for body in comp.bRepBodies:
-            body_id = self.extract_and_append(body, component_id, "CONTAINS")
-            if not body_id:
-                continue
+            self.extract_data(body)
 
             for face in body.faces:
-                face_id = self.extract_and_append(face, body_id, "CONTAINS")
-                if not face_id:
-                    continue
+                self.extract_data(face)
 
-                for edge in face.edges:
-                    edge_id = self.extract_and_append(edge, face_id, "CONTAINS")
-                    if not edge_id:
-                        continue
+            for edge in body.edges:
+                self.extract_data(edge)
 
-                    for vertex in [edge.startVertex, edge.endVertex]:
-                        vertex_id = self.extract_and_append(vertex, edge_id, "CONTAINS")
+            for vertex in body.vertices:
+                self.extract_data(vertex)
 
 
-    def extract_brep_relationships(self, comp: Component) -> None:
-        """
-        Extracts relationships among BRep entities (faces, edges, vertices).
-
-        Args:
-            comp (Component): The Fusion 360 component.
-        """
-        self.logger.info('Extracting BRep relationships')
-        for body in comp.bRepBodies:
-            for face in body.faces:
-                face_id = face.entityToken
-
-                for edge in face.edges:
-                    edge_id = edge.entityToken
-                    self.add_relationship(face_id, edge_id, "HAS_EDGE")
-
-                    for vertex in [edge.startVertex, edge.endVertex]:
-                        vertex_id = vertex.entityToken
-                        self.add_relationship(edge_id, vertex_id, "HAS_VERTEX")
-                        self.add_relationship(face_id, vertex_id, "HAS_VERTEX")
-
-    def _extract_other_entity(self, entity: Base, component_id: Optional[str]) -> None:
+    def _extract_other_entity(self, entity: Base) -> None:
         """Extract data for other entity types."""
-        entity_info = self.extract_data(entity)
-        if entity_info:
-            self.nodes.append(entity_info)
-            entity_id = entity_info['id_token']
-            self.add_relationship(component_id, entity_id, "CONTAINS")
+        self.extract_data(entity)
 
-    def _extract_construction_geometry(self, comp: Component, component_id: str) -> None:
+    def _extract_origin_construction_geometry(self, comp: Component) -> None:
         """
         Extracts construction planes and axes from the component.
 
@@ -533,12 +263,52 @@ class ExtractorOrchestrator(object):
         origin = comp.originConstructionPoint
 
         for plane in construction_planes:
-            self.extract_and_append(plane, component_id, "CONTAINS")
+            self.extract_data(plane)
 
         for axis in construction_axes:
-            self.extract_and_append(axis, component_id, "CONTAINS")
+            self.extract_data(axis)
 
-        self.extract_and_append(origin, component_id, "CONTAINS")
+        self.extract_data(origin)
+
+    def _extract_feature_face_relationship(self, comp: Component) -> None:
+        """
+        Extract data from a feature entity and process its BRep entities for startFaces, endFaces, and sideFaces.
+
+        Args:
+            comp (Component): The Fusion 360 component.
+            
+        This method iterates over all features in the given component, extracts the startFaces, endFaces,
+        and sideFaces for each feature, and updates the `self.nodes` dictionary with the union of the new
+        and existing faces for each feature.
+        """
+        for feature in comp.features:
+            self._extract_faces(feature, 'faces', self.nodes)
+            self._extract_faces(feature, 'startFaces', self.nodes)
+            self._extract_faces(feature, 'endFaces', self.nodes)
+            self._extract_faces(feature, 'sideFaces', self.nodes)
+
+    def _extract_faces(self, feature, face_attr, nodes):
+        """
+        Extract and update the face entities for a given feature and face attribute.
+
+        Args:
+            feature (Feature): The Fusion 360 feature object from which to extract faces.
+            face_attr (str): The attribute name of the faces to be extracted (e.g., 'startFaces', 'endFaces', 'sideFaces').
+            nodes (dict): The dictionary to be updated with the face entities.
+
+        This method retrieves the face entities associated with the given feature and face attribute,
+        performs a union operation with any existing faces in the `nodes` dictionary, and updates the
+        `nodes` dictionary with the result.
+        """
+        entityToken = getattr(feature, 'entityToken', None)
+        if entityToken is not None:
+            faces = [getattr(face, 'entityToken', None) for face in getattr(feature, face_attr, [])]
+            if entityToken in nodes and face_attr in nodes[entityToken]:
+                existing_faces = nodes[entityToken][face_attr]
+                faces_union = list(set(existing_faces) | set(faces))
+            else:
+                faces_union = faces
+            nodes[entityToken][face_attr] = faces_union
 
     def extract_timeline_based_data(self) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
         """
@@ -550,46 +320,42 @@ class ExtractorOrchestrator(object):
         comp = self.design.rootComponent
         timeline = self.design.timeline
 
-        previous_faces: Set[str] = set()
-        previous_edges: Set[str] = set()
-        previous_vertices: Set[str] = set()
+        self.previous_faces: Set[str] = set()
+        self.previous_edges: Set[str] = set()
+        self.previous_vertices: Set[str] = set()
+        self.current_faces: Set[str] = set()
+        self.current_edges: Set[str] = set()
+        self.current_vertices: Set[str] = set()
 
-        component_info = self.extract_data(comp)
-        if component_info:
-            self.nodes.append(component_info)
-            component_id = component_info['id_token']
-            self._extract_construction_geometry(comp, component_id)
-
-        else:
-            component_id = None
-            # TODO should this return None, two empty lists or nothing
-            #   if so the type checking might need to change
+        self.extract_data(comp)
+        self._extract_origin_construction_geometry(comp)
 
         for index in range(timeline.count):
-            timeline_object = timeline.item(index)
-            entity = timeline_object.entity
+            timelineObject = timeline.item(index)
+            entity = timelineObject.entity
+            self.timelineIndex = index
 
             # Roll to current timeline
             self.logger.info(f'Rolling to timeline index {index}')
-            timeline_object.rollTo(True)
+            timelineObject.rollTo(True)
 
             # Ensure the collections are updated after rolling the timeline
-            current_faces, current_edges, current_vertices = self._get_current_brep_entities(comp)
+            self._get_current_brep_entities(comp)
 
             if entity:
                 if isinstance(entity, Feature):
-                    self._extract_feature(entity, comp, index, component_id, previous_faces, previous_edges, previous_vertices)
+                    self._extract_feature(entity, comp)
                 elif isinstance(entity, Sketch):
-                    self._extract_sketch(entity, comp, index, component_id)
+                    self._extract_sketch(entity)
                 else:
-                     self._extract_other_entity(entity, component_id)
+                     self._extract_other_entity(entity)
 
                 # Update previous sets
-                previous_faces = current_faces.copy()
-                previous_edges = current_edges.copy()
-                previous_vertices = current_vertices.copy()
-    
-        # Extract final BRep entities and establish relationships
-        self.extract_brep_relationships(comp)
+                self.previous_faces = self.current_faces.copy()
+                self.previous_edges = self.current_edges.copy()
+                self.previous_vertices = self.current_vertices.copy()
 
-        return self.nodes, self.relationships
+        self.extract_brep_entities(comp)
+        self._extract_feature_face_relationship(comp)
+
+        return list(self.nodes.values())

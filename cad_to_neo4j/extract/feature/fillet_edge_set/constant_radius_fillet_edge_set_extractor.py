@@ -21,15 +21,6 @@ class ConstantRadiusFilletEdgeSetExtractor(BaseEdgeSetExtractor):
         """Initialize the extractor with the ConstantRadiusFilletEdgeSet element."""
         super().__init__(element)
 
-    @property
-    def radius(self) -> Optional[str]:
-        """Extracts the radius of the fillet edge set."""
-        try:
-            return nested_getattr(self._obj, 'radius.value', None)
-        except AttributeError as e:
-            self.logger.error(f'Error extracting radius: {e}\n{traceback.format_exc()}')
-            return None
-
     def extract_info(self) -> dict:
         """Extract all information from the ConstantRadiusFilletEdgeSet element.
 
@@ -41,3 +32,12 @@ class ConstantRadiusFilletEdgeSetExtractor(BaseEdgeSetExtractor):
             'radius': self.radius,
         }
         return {**edge_set_info, **constant_radius_info}
+
+    @property
+    def radius(self) -> Optional[str]:
+        """Extracts the radius of the fillet edge set."""
+        try:
+            return nested_getattr(self._obj, 'radius.value', None)
+        except AttributeError as e:
+            self.logger.error(f'Error extracting radius: {e}\n{traceback.format_exc()}')
+            return None

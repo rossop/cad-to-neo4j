@@ -65,10 +65,10 @@ def run(context):
             Orchestrator = ExtractorOrchestrator(design, logger_utility.logger)
 
             # Extract component data
-            nodes, relationships = Orchestrator.extract_timeline_based_data()
+            nodes = Orchestrator.extract_timeline_based_data()
             
             # Load all nodes and relationships in batch
-            Loader.load_data(nodes, relationships)
+            Loader.load_data(nodes, []) # TODO remove relationships
 
         with Neo4jTransformer(uri=NEO4J_URI, user=NEO4J_USER, password=NEO4J_PASSWORD, Logger=logger_utility.logger) as Transformer:
             # Transform graph data

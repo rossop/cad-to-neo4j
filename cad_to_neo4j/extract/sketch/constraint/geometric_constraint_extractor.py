@@ -22,8 +22,22 @@ class GeometricConstraintExtractor(BaseExtractor):
         """Initialize the extractor with the GeometricConstraint element."""
         super().__init__(element)
 
+    def extract_info(self) -> Dict[str, Optional[Any]]:
+        """Extract all information from the GeometricConstraint element.
+
+        Returns:
+            dict: A dictionary containing the extracted information.
+        """
+        base_info = super().extract_info()
+        constraint_info = {
+            'isDeletable': self.isDeletable,
+            'parentSketch': self.parentSketch,
+            # 'assemblyContext': self.assemblyContext,
+        }
+        return {**base_info, **constraint_info}
+
     @property
-    def is_deletable(self) -> Optional[bool]:
+    def isDeletable(self) -> Optional[bool]:
         """Indicates if this constraint is deletable.
 
         Returns:
@@ -36,7 +50,7 @@ class GeometricConstraintExtractor(BaseExtractor):
             return None
 
     @property
-    def parent_sketch(self) -> Optional[str]:
+    def parentSketch(self) -> Optional[str]:
         """Extracts the ID of the parent sketch.
 
         Returns:
@@ -47,9 +61,11 @@ class GeometricConstraintExtractor(BaseExtractor):
         except AttributeError as e:
             self.logger.error(f'Error extracting parentSketch: {e}\n{traceback.format_exc()}')
             return None
+        
+
 
     # @property
-    # def assembly_context(self) -> Optional[str]:
+    # def assemblyContext(self) -> Optional[str]:
     #     """Extracts the assembly context of the geometric constraint.
 
     #     Returns:
@@ -76,17 +92,3 @@ class GeometricConstraintExtractor(BaseExtractor):
     #     except AttributeError as e:
     #         self.logger.error(f'Error extracting attributes: {e}\n{traceback.format_exc()}')
     #         return None
-
-    def extract_info(self) -> Dict[str, Optional[Any]]:
-        """Extract all information from the GeometricConstraint element.
-
-        Returns:
-            dict: A dictionary containing the extracted information.
-        """
-        base_info = super().extract_info()
-        constraint_info = {
-            'is_deletable': self.is_deletable,
-            'parent_sketch': self.parent_sketch,
-            # 'assembly_context': self.assembly_context,
-        }
-        return {**base_info, **constraint_info}

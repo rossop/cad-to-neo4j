@@ -19,6 +19,19 @@ class SketchCircleExtractor(SketchCurveExtractor):
     def __init__(self, obj: SketchCircle) -> None:
         """Initialize the extractor with the SketchCircle element."""
         super().__init__(obj)
+    
+    def extract_info(self) -> Dict[str,Any]:
+        """Extract all information from the SketchCircle element.
+
+        Returns:
+            dict: A dictionary containing the extracted information.
+        """
+        basic_info = super().extract_info()
+        circle_info = {
+            'centerPoint': self.centerSketchPoint,
+            'radius': self.radius,
+        }
+        return {**basic_info, **circle_info}
 
     @property
     def centerSketchPoint(self) -> Optional[str]:
@@ -35,16 +48,3 @@ class SketchCircleExtractor(SketchCurveExtractor):
             return nested_getattr(self._obj, "geometry.radius", None)
         except AttributeError:
             return None
-    
-    def extract_info(self) -> Dict[str,Any]:
-        """Extract all information from the SketchCircle element.
-
-        Returns:
-            dict: A dictionary containing the extracted information.
-        """
-        basic_info = super().extract_info()
-        circle_info = {
-            'centerPoint': self.centerSketchPoint,
-            'radius': self.radius,
-        }
-        return {**basic_info, **circle_info}

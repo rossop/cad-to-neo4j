@@ -30,6 +30,19 @@ class BaseExtractor(object):
         self._type = None  # Initialise the type to None
         self.logger = logger_utility.logger
 
+    def extract_info(self) -> Dict[str, Optional[str]]:
+        """Extracts basic information (name, type, id token) of the CAD object.
+
+        Returns:
+            dict: A dictionary containing the name, type, and id token.
+        """
+        return {
+            'name': self.name,
+            'type': self.type,
+            'entityToken': self.entityToken,
+            'timelineIndex': self.timelineIndex,
+        }
+
     @property
     def name(self) -> Optional[str]:
         """Extracts the name of the CAD object.
@@ -59,7 +72,7 @@ class BaseExtractor(object):
             return ["Unknown"]
 
     @property
-    def id_token(self) -> Optional[str]:
+    def entityToken(self) -> Optional[str]:
         """Extracts the id token of the CAD object.
 
         Returns:
@@ -73,7 +86,7 @@ class BaseExtractor(object):
             return None
         
     @property
-    def timeline_index(self) -> Optional[int]:
+    def timelineIndex(self) -> Optional[int]:
         """Extracts the timeline index of the Sketch object.
         
         Returns:
@@ -128,7 +141,8 @@ class BaseExtractor(object):
             collection = getattr(self._obj, attribute, [])
             if hasattr(collection, "__iter__"):
                 ids = [getattr(item, id_attr, None) for item in collection]
-            return ids 
+                return ids 
+            return []
         except AttributeError as e:
             self.logger.error(f'Error extracting IDs from {attribute}: {e}\n{traceback.format_exc()}')
             return []
@@ -146,16 +160,3 @@ class BaseExtractor(object):
             if nested_hasattr(self._obj, attr):
                 return nested_getattr(self._obj, attr, None)
         return None
-
-    def extract_info(self) -> Dict[str, Optional[str]]:
-        """Extracts basic information (name, type, id token) of the CAD object.
-
-        Returns:
-            dict: A dictionary containing the name, type, and id token.
-        """
-        return {
-            'name': self.name,
-            'type': self.type,
-            'id_token': self.id_token,
-            'timeline_index': self.timeline_index,
-        }

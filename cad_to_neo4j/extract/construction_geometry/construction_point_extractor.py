@@ -31,17 +31,17 @@ class ConstructionPointExtractor(BaseExtractor):
         basic_info = super().extract_info()
         construction_point_info = {
             # 'geometry': self.geometry,
-            'is_deletable': self.is_deletable,
+            'isDeletable': self.isDeletable,
             'is_light_bulb_on': self.is_light_bulb_on,
-            'is_visible': self.is_visible,
+            'isVisible': self.isVisible,
             'parent': self.parent,
-            'is_parametric': self.is_parametric,
-            'timeline_object': self.timeline_object,
-            'assembly_context': self.assembly_context,
-            'native_object': self.native_object,
-            'base_feature': self.base_feature,
-            'health_state': self.health_state,
-            'error_or_warning_message': self.error_or_warning_message
+            'isParametric': self.isParametric,
+            'timelineObject': self.timelineObject,
+            'assemblyContext': self.assemblyContext,
+            'nativeObject': self.nativeObject,
+            'baseFeature': self.baseFeature,
+            'healthState': self.healthState,
+            'errorOrWarningMessage': self.errorOrWarningMessage
         }
         # # Add extent two information if available
         # definition_info = self.definition
@@ -112,7 +112,7 @@ class ConstructionPointExtractor(BaseExtractor):
         except AttributeError as e:
             return None
     @property
-    def is_deletable(self) -> Optional[bool]:
+    def isDeletable(self) -> Optional[bool]:
         """Extracts the deletable status of the ConstructionPoint object.
 
         Returns:
@@ -130,7 +130,7 @@ class ConstructionPointExtractor(BaseExtractor):
         return getattr(self._obj, 'isLightBulbOn', None)
 
     @property
-    def is_visible(self) -> Optional[bool]:
+    def isVisible(self) -> Optional[bool]:
         """Extracts the visibility status of the ConstructionPoint object.
 
         Returns:
@@ -148,7 +148,7 @@ class ConstructionPointExtractor(BaseExtractor):
         return nested_getattr(self._obj, 'parent.entityToken', None)
 
     @property
-    def is_parametric(self) -> Optional[bool]:
+    def isParametric(self) -> Optional[bool]:
         """Extracts the parametric status of the ConstructionPoint object.
 
         Returns:
@@ -157,7 +157,7 @@ class ConstructionPointExtractor(BaseExtractor):
         return getattr(self._obj, 'isParametric', None)
 
     @property
-    def timeline_object(self) -> Optional[str]:
+    def timelineObject(self) -> Optional[str]:
         """Extracts the timeline object of the ConstructionPoint object.
 
         Returns:
@@ -166,7 +166,7 @@ class ConstructionPointExtractor(BaseExtractor):
         return nested_getattr(self._obj, 'timelineObject.entityToken', None)
 
     @property
-    def assembly_context(self) -> Optional[str]:
+    def assemblyContext(self) -> Optional[str]:
         """Extracts the assembly context of the ConstructionPoint object.
 
         Returns:
@@ -175,7 +175,7 @@ class ConstructionPointExtractor(BaseExtractor):
         return nested_getattr(self._obj, 'assemblyContext.entityToken', None)
 
     @property
-    def native_object(self) -> Optional[str]:
+    def nativeObject(self) -> Optional[str]:
         """Extracts the native object of the ConstructionPoint object.
 
         Returns:
@@ -184,7 +184,7 @@ class ConstructionPointExtractor(BaseExtractor):
         return nested_getattr(self._obj, 'nativeObject.entityToken', None)
 
     @property
-    def base_feature(self) -> Optional[str]:
+    def baseFeature(self) -> Optional[str]:
         """Extracts the base feature of the ConstructionPoint object.
 
         Returns:
@@ -193,7 +193,7 @@ class ConstructionPointExtractor(BaseExtractor):
         return nested_getattr(self._obj, 'baseFeature.entityToken', None)
 
     @property
-    def health_state(self) -> Optional[str]:
+    def healthState(self) -> Optional[str]:
         """Extracts the health state of the ConstructionPoint object.
 
         Returns:
@@ -202,7 +202,7 @@ class ConstructionPointExtractor(BaseExtractor):
         return nested_getattr(self._obj, 'healthState', None)
 
     @property
-    def error_or_warning_message(self) -> Optional[str]:
+    def errorOrWarningMessage(self) -> Optional[str]:
         """Extracts the error or warning message of the ConstructionPoint object.
 
         Returns:

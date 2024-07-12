@@ -21,8 +21,20 @@ class ChamferFeatureExtractor(FeatureExtractor):
         """Initialize the extractor with the ChamferFeature element."""
         super().__init__(obj)
 
+    def extract_info(self) -> dict:
+        """Extract all information from the ChamferFeature element.
+
+        Returns:
+            dict: A dictionary containing the extracted information.
+        """
+        feature_info = super().extract_info()
+        chamfer_info = {
+            'edgeSets': self.edgeSets,
+        }
+        return {**feature_info, **chamfer_info}
+
     @property
-    def edge_sets(self) -> Optional[List[str]]:
+    def edgeSets(self) -> Optional[List[str]]:
         """Extracts the IDs of edge sets associated with the chamfer feature."""
         try:
             edge_set_id_list = []
@@ -33,15 +45,3 @@ class ChamferFeatureExtractor(FeatureExtractor):
         except AttributeError as e:
             self.logger.error(f'Error extracting edge sets: {e}\n{traceback.format_exc()}')
             return None
-
-    def extract_info(self) -> dict:
-        """Extract all information from the ChamferFeature element.
-
-        Returns:
-            dict: A dictionary containing the extracted information.
-        """
-        feature_info = super().extract_info()
-        chamfer_info = {
-            'edge_sets': self.edge_sets,
-        }
-        return {**feature_info, **chamfer_info}

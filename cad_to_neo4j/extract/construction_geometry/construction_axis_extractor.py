@@ -64,7 +64,7 @@ class ConstructionAxisExtractor(BaseExtractor):
             return None
 
     @property
-    def timeline_object(self) -> Optional[str]:
+    def timelineObject(self) -> Optional[str]:
         """Extracts the timeline object associated with this construction axis.
 
         Returns:
@@ -77,7 +77,7 @@ class ConstructionAxisExtractor(BaseExtractor):
             return None
 
     @property
-    def is_parametric(self) -> Optional[bool]:
+    def isParametric(self) -> Optional[bool]:
         """Extracts the parametric state of the construction axis.
 
         Returns:
@@ -90,7 +90,7 @@ class ConstructionAxisExtractor(BaseExtractor):
             return None
 
     @property
-    def is_visible(self) -> Optional[bool]:
+    def isVisible(self) -> Optional[bool]:
         """Indicates if the construction axis is visible.
 
         Returns:
@@ -103,7 +103,7 @@ class ConstructionAxisExtractor(BaseExtractor):
             return None
 
     @property
-    def health_state(self) -> Optional[str]:
+    def healthState(self) -> Optional[str]:
         """Extracts the current health state of the construction axis.
 
         Returns:
@@ -116,7 +116,7 @@ class ConstructionAxisExtractor(BaseExtractor):
             return None
 
     @property
-    def error_or_warning_message(self) -> Optional[str]:
+    def errorOrWarningMessage(self) -> Optional[str]:
         """Extracts the error or warning message, if any, associated with the health state of the construction axis.
 
         Returns:
@@ -179,14 +179,14 @@ class ConstructionAxisExtractor(BaseExtractor):
             elif isinstance(definition, ConstructionAxisTwoPlaneDefinition):
                 return {
                     'definition_type': 'TwoPlane',
-                    'planar_entity_one': definition.planarEntityOne.entityToken,
-                    'planar_entity_two': definition.planarEntityTwo.entityToken
+                    'planar_entityOne': definition.planarEntityOne.entityToken,
+                    'planar_entityTwo': definition.planarEntityTwo.entityToken
                 }
             elif isinstance(definition, ConstructionAxisTwoPointDefinition):
                 return {
                     'definition_type': 'TwoPoint',
-                    'point_entity_one': definition.pointEntityOne.entityToken,
-                    'point_entity_two': definition.pointEntityTwo.entityToken
+                    'point_entityOne': definition.pointEntityOne.entityToken,
+                    'point_entityTwo': definition.pointEntityTwo.entityToken
                 }
             return None
         except AttributeError as e:
@@ -198,6 +198,15 @@ class ConstructionAxisExtractor(BaseExtractor):
         """Extracts the definition information used by the construction axis."""
         definition_root = getattr(self._obj, 'definition', None)
         return self.extract_definition_info(definition_root)
+    
+    @property
+    def parent(self) -> Optional[str]:
+        """Extracts the parent of the ConstructionPoint object.
+
+        Returns:
+            str: The parent of the ConstructionPoint object.
+        """
+        return nested_getattr(self._obj, 'parent.entityToken', None)
 
     def extract_info(self) -> Dict[str, Optional[Any]]:
         """Extract all information from the ConstructionAxis element.
@@ -207,11 +216,13 @@ class ConstructionAxisExtractor(BaseExtractor):
         """
         base_info = super().extract_info()
         construction_axis_info = {
-            'is_parametric': self.is_parametric,
-            'is_visible': self.is_visible,
-            'timeline_object': self.timeline_object,
-            'health_state': self.health_state,
-            'error_or_warning_message': self.error_or_warning_message,
+            'isParametric': self.isParametric,
+            'isVisible': self.isVisible,
+            'timelineObject': self.timelineObject,
+            'healthState': self.healthState,
+            'errorOrWarningMessage': self.errorOrWarningMessage,
+            'parent': self.parent,
+
         }
 
         # Add geometry information if available

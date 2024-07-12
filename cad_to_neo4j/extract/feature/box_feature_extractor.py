@@ -13,6 +13,20 @@ class BoxFeatureExtractor(FeatureExtractor):
         """Initialize the extractor with the BoxFeature element."""
         super().__init__(obj)
 
+    def extract_info(self) -> dict:
+        """Extract all information from the BoxFeature element.
+
+        Returns:
+            dict: A dictionary containing the extracted information.
+        """
+        feature_info = super().extract_info()
+        box_info = {
+            # 'length': self.length, 
+            # 'width': self.width,
+            # 'height': self.height,
+        }             
+        return {**feature_info, **box_info}
+
     @property
     def length(self) -> Optional[float]:
         """Extracts the length of the box."""
@@ -39,17 +53,3 @@ class BoxFeatureExtractor(FeatureExtractor):
         except AttributeError as e:
             self.logger.error(f'Error extracting height: {e}\n{traceback.format_exc()}')
             return None
-
-    def extract_info(self) -> dict:
-        """Extract all information from the BoxFeature element.
-
-        Returns:
-            dict: A dictionary containing the extracted information.
-        """
-        feature_info = super().extract_info()
-        box_info = {
-            # 'length': self.length, 
-            # 'width': self.width,
-            # 'height': self.height,
-        }             
-        return {**feature_info, **box_info}

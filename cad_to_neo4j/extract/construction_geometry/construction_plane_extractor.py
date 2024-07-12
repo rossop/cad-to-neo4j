@@ -76,7 +76,7 @@ class ConstructionPlaneExtractor(BaseExtractor):
             return None
         
     @property
-    def timeline_object(self) -> Optional[str]:
+    def timelineObject(self) -> Optional[str]:
         """Extracts the timeline object associated with this construction plane.
 
         Returns:
@@ -89,7 +89,7 @@ class ConstructionPlaneExtractor(BaseExtractor):
             return None
 
     @property
-    def is_parametric(self) -> Optional[bool]:
+    def isParametric(self) -> Optional[bool]:
         """Extracts the parametric state of the construction plane.
 
         Returns:
@@ -102,7 +102,7 @@ class ConstructionPlaneExtractor(BaseExtractor):
             return None
         
     @property
-    def is_visible(self) -> Optional[bool]:
+    def isVisible(self) -> Optional[bool]:
         """Indicates if the construction plane is visible.
 
         Returns:
@@ -115,7 +115,7 @@ class ConstructionPlaneExtractor(BaseExtractor):
             return None
     
     @property
-    def health_state(self) -> Optional[str]:
+    def healthState(self) -> Optional[str]:
         """Extracts the current health state of this plane.
 
         Returns:
@@ -128,7 +128,7 @@ class ConstructionPlaneExtractor(BaseExtractor):
             return None
         
     @property
-    def error_or_warning_message(self) -> Optional[str]:
+    def errorOrWarningMessage(self) -> Optional[str]:
         """Extracts the error or warning message, if any, associated with the health state of this plane.
 
         Returns:
@@ -174,7 +174,7 @@ class ConstructionPlaneExtractor(BaseExtractor):
             return None
         
     @property
-    def base_feature(self) -> Optional[str]:
+    def baseFeature(self) -> Optional[str]:
         """Extracts the base feature associated with this plane, if available.
 
         Returns:
@@ -251,17 +251,17 @@ class ConstructionPlaneExtractor(BaseExtractor):
                     return None
                 
             elif isinstance(definition, ConstructionPlaneMidplaneDefinition):
-                planar_entity_one = getattr(definition, 'planarEntityOne', None)
-                planar_entity_two = getattr(definition, 'planarEntityTwo', None)
-                if planar_entity_one is not None and planar_entity_two is not None:
+                planar_entityOne = getattr(definition, 'planarEntityOne', None)
+                planar_entityTwo = getattr(definition, 'planarEntityTwo', None)
+                if planar_entityOne is not None and planar_entityTwo is not None:
                     return {
                         'definition_type': 'Midplane',
-                        'planar_entity_one': planar_entity_one.entityToken,
-                        'planar_entity_two': planar_entity_two.entityToken
+                        'planar_entityOne': planar_entityOne.entityToken,
+                        'planar_entityTwo': planar_entityTwo.entityToken
                     }
                 else:
                     self.logger.error(f'Missing entities in ConstructionPlaneMidplaneDefinition: '
-                                    f'planar_entity_one={planar_entity_one}, planar_entity_two={planar_entity_two}')
+                                    f'planar_entityOne={planar_entityOne}, planar_entityTwo={planar_entityTwo}')
                     return None
                 
             elif isinstance(definition, ConstructionPlaneOffsetDefinition):
@@ -305,33 +305,33 @@ class ConstructionPlaneExtractor(BaseExtractor):
                     return None
                 
             elif isinstance(definition, ConstructionPlaneThreePointsDefinition):
-                point_entity_one = getattr(definition, 'pointEntityOne', None)
-                point_entity_two = getattr(definition, 'pointEntityTwo', None)
+                point_entityOne = getattr(definition, 'pointEntityOne', None)
+                point_entityTwo = getattr(definition, 'pointEntityTwo', None)
                 point_entity_three = getattr(definition, 'pointEntityThree', None)
-                if point_entity_one is not None and point_entity_two is not None and point_entity_three is not None:
+                if point_entityOne is not None and point_entityTwo is not None and point_entity_three is not None:
                     return {
                         'definition_type': 'ThreePoints',
-                        'point_entity_one': point_entity_one.entityToken,
-                        'point_entity_two': point_entity_two.entityToken,
+                        'point_entityOne': point_entityOne.entityToken,
+                        'point_entityTwo': point_entityTwo.entityToken,
                         'point_entity_three': point_entity_three.entityToken
                     }
                 else:
                     self.logger.error(f'Missing entities in ConstructionPlaneThreePointsDefinition: '
-                                    f'point_entity_one={point_entity_one}, point_entity_two={point_entity_two}, point_entity_three={point_entity_three}')
+                                    f'point_entityOne={point_entityOne}, point_entityTwo={point_entityTwo}, point_entity_three={point_entity_three}')
                     return None
                 
             elif isinstance(definition, ConstructionPlaneTwoEdgesDefinition):
-                linear_entity_one = getattr(definition, 'linearEntityOne', None)
-                linear_entity_two = getattr(definition, 'linearEntityTwo', None)
-                if linear_entity_one is not None and linear_entity_two is not None:
+                linear_entityOne = getattr(definition, 'linearEntityOne', None)
+                linear_entityTwo = getattr(definition, 'linearEntityTwo', None)
+                if linear_entityOne is not None and linear_entityTwo is not None:
                     return {
                         'definition_type': 'TwoEdges',
-                        'linear_entity_one': linear_entity_one.entityToken,
-                        'linear_entity_two': linear_entity_two.entityToken
+                        'linear_entityOne': linear_entityOne.entityToken,
+                        'linear_entityTwo': linear_entityTwo.entityToken
                     }
                 else:
                     self.logger.error(f'Missing entities in ConstructionPlaneTwoEdgesDefinition: '
-                                    f'linear_entity_one={linear_entity_one}, linear_entity_two={linear_entity_two}')
+                                    f'linear_entityOne={linear_entityOne}, linear_entityTwo={linear_entityTwo}')
                     return None
             else:
                 self.logger.error(f'Unhandled definition type: {definition}')
@@ -345,6 +345,15 @@ class ConstructionPlaneExtractor(BaseExtractor):
         """Extracts the definition information used by the construction plane."""
         definition_root = getattr(self._obj, 'definition', None)
         return self.extract_definition_info(definition_root)
+    
+    @property
+    def parent(self) -> Optional[str]:
+        """Extracts the parent of the ConstructionPoint object.
+
+        Returns:
+            str: The parent of the ConstructionPoint object.
+        """
+        return nested_getattr(self._obj, 'parent.entityToken', None)
 
     def extract_info(self) -> Dict[str, Optional[Any]]:
         """Extract all information from the ConstructionPlane element.
@@ -354,12 +363,13 @@ class ConstructionPlaneExtractor(BaseExtractor):
         """
         base_info = super().extract_info()
         construction_plane_info = {
-            'is_parametric': self.is_parametric,
-            'is_visible': self.is_visible,
-            'timeline_object': self.timeline_object,
-            'base_feature': self.base_feature,
-            'health_state': self.health_state,
-            'error_or_warning_message': self.error_or_warning_message,
+            'parent': self.parent,
+            'isParametric': self.isParametric,
+            'isVisible': self.isVisible,
+            'timelineObject': self.timelineObject,
+            'baseFeature': self.baseFeature,
+            'healthState': self.healthState,
+            'errorOrWarningMessage': self.errorOrWarningMessage,
             'transform': self.transform,
         }
         

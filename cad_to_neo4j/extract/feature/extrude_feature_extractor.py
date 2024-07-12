@@ -22,7 +22,7 @@ class ExtrudeFeatureExtractor(FeatureExtractor):
         super().__init__(obj)
 
     @property
-    def profile_tokens(self):
+    def profileTokens(self):
         """Extracts the tokens of profiles used by the ExtrudeFeature.
 
         Returns:
@@ -46,7 +46,7 @@ class ExtrudeFeatureExtractor(FeatureExtractor):
             return None
         
     @property
-    def start_faces(self) -> Optional[List[str]]:
+    def startFaces(self) -> Optional[List[str]]:
         """Extracts the IDs of start faces created by the feature."""
         try:
             return self.extract_ids('startFaces', 'entityToken')
@@ -55,7 +55,7 @@ class ExtrudeFeatureExtractor(FeatureExtractor):
             return None
         
     @property
-    def end_faces(self) -> Optional[List[str]]:
+    def endFaces(self) -> Optional[List[str]]:
         """Extracts the IDs of end faces created by the feature."""
         try:
             return self.extract_ids('endFaces', 'entityToken')
@@ -64,7 +64,7 @@ class ExtrudeFeatureExtractor(FeatureExtractor):
             return None
         
     @property
-    def side_faces(self) -> Optional[List[str]]:
+    def sideFaces(self) -> Optional[List[str]]:
         """Extracts the IDs of side faces created by the feature."""
         try:
             return self.extract_ids('sideFaces', 'entityToken')
@@ -136,7 +136,7 @@ class ExtrudeFeatureExtractor(FeatureExtractor):
                 extent_info = {
                     f'{prefix}_type': type(extent_root).__name__,
                     f'{prefix}_taper_angle': nested_getattr(extent_root, 'taperAngle.value', None),
-                    f'{prefix}_is_positive_direction': getattr(extent_root, 'isPositiveDirection', None),
+                    f'{prefix}IsPositiveDirection': getattr(extent_root, 'isPositiveDirection', None),
                 }
                 if isinstance(extent_root, adsk.fusion.DistanceExtentDefinition):
                     extent_info[f'{prefix}_distance'] = nested_getattr(extent_root, 'distance.value', None)
@@ -154,16 +154,16 @@ class ExtrudeFeatureExtractor(FeatureExtractor):
             return None
 
     @property
-    def extent_one(self) -> Optional[Dict[str, Any]]:
+    def extentOne(self) -> Optional[Dict[str, Any]]:
         """Extracts the extent one definition used by the feature."""
-        extent_one_root = getattr(self._obj, 'extentOne', None)
-        return self.extract_extent_info(extent_one_root, 'extentOne')
+        extentOne_root = getattr(self._obj, 'extentOne', None)
+        return self.extract_extent_info(extentOne_root, 'extentOne')
 
     @property
-    def extent_two(self) -> Optional[Dict[str, Any]]:
+    def extentTwo(self) -> Optional[Dict[str, Any]]:
         """Extracts the extent two definition used by the feature."""
-        extent_two_root = getattr(self._obj, 'extentTwo', None)
-        return self.extract_extent_info(extent_two_root, 'extentTwo')
+        extentTwo_root = getattr(self._obj, 'extentTwo', None)
+        return self.extract_extent_info(extentTwo_root, 'extentTwo')
     
     @property
     def operation(self) -> Optional[str]:
@@ -184,12 +184,12 @@ class ExtrudeFeatureExtractor(FeatureExtractor):
             return None
 
     @property
-    def participant_bodies(self) -> Optional[List[str]]:
+    def participantBodies(self) -> Optional[List[str]]:
         """Extracts the list of bodies that will participate in the feature when the operation is a cut or intersection."""
         try:
             self.roll_timeline_to_before_feature()
-            participant_bodies = getattr(self._obj, 'participantBodies', [])
-            ids = [body.entityToken for body in participant_bodies]
+            participantBodies = getattr(self._obj, 'participantBodies', [])
+            ids = [body.entityToken for body in participantBodies]
             self.roll_timeline_to_after_feature()
             return ids
         except AttributeError as e:
@@ -204,24 +204,24 @@ class ExtrudeFeatureExtractor(FeatureExtractor):
         """
         feature_info = super().extract_info()
         extrude_info = {
-            'profile_tokens': self.profile_tokens,
+            'profileTokens': self.profileTokens,
             'bodies': self.bodies,
-            'start_faces': self.start_faces,
-            'end_faces': self.end_faces,
-            'side_faces': self.side_faces,
+            'startFaces': self.startFaces,
+            'endFaces': self.endFaces,
+            'sideFaces': self.sideFaces,
             'extent_type': self.extent_type,
             'operation': self.operation,
-            'participant_bodies': self.participant_bodies,
+            'participantBodies': self.participantBodies,
         }
         # Add extent one information
-        extent_one_info = self.extent_one
-        if extent_one_info is not None:
-            extrude_info.update(extent_one_info)
+        extentOne_info = self.extentOne
+        if extentOne_info is not None:
+            extrude_info.update(extentOne_info)
         
         # Add extent two information if available
-        extent_two_info = self.extent_two
-        if extent_two_info is not None:
-            extrude_info.update(extent_two_info)
+        extentTwo_info = self.extentTwo
+        if extentTwo_info is not None:
+            extrude_info.update(extentTwo_info)
 
         extrude_info.update(self.start_extent)
         return {**feature_info, **extrude_info}

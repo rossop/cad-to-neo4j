@@ -19,6 +19,21 @@ class SketchArcExtractor(SketchCurveExtractor):
     def __init__(self, obj: SketchArc) -> None:
         """Initialize the extractor with the SketchArc element."""
         super().__init__(obj)
+    
+    def extract_info(self) -> Dict[str,Any]:
+        """Extract all information from the SketchArc element.
+
+        Returns:
+            dict: A dictionary containing the extracted information.
+        """
+        basic_info = super().extract_info()
+        arc_info = {
+            'centerPoint': self.centerSketchPoint,
+            'radius': self.radius,
+            'startPoint': self.startSketchPoint,
+            'endPoint': self.endSketchPoint,
+        }
+        return {**basic_info, **arc_info}
 
     @property
     def centerSketchPoint(self):
@@ -51,18 +66,3 @@ class SketchArcExtractor(SketchCurveExtractor):
             return nested_getattr(self._obj, 'endSketchPoint.entityToken', None)
         except AttributeError:
             return None
-    
-    def extract_info(self) -> Dict[str,Any]:
-        """Extract all information from the SketchArc element.
-
-        Returns:
-            dict: A dictionary containing the extracted information.
-        """
-        basic_info = super().extract_info()
-        arc_info = {
-            'centerPoint': self.centerSketchPoint,
-            'radius': self.radius,
-            'startPoint': self.startSketchPoint,
-            'endPoint': self.endSketchPoint,
-        }
-        return {**basic_info, **arc_info}

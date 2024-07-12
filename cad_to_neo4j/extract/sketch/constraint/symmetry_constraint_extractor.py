@@ -8,14 +8,24 @@ Classes:
 """
 from typing import Optional, Dict, Any
 import traceback
+from adsk.fusion import SymmetryConstraint
 from .geometric_constraint_extractor import GeometricConstraintExtractor
 from ....utils.general_utils import nested_getattr
 
 class SymmetryConstraintExtractor(GeometricConstraintExtractor):
     """Extractor for SymmetryConstraint objects."""
 
+    def __init__(self, obj: SymmetryConstraint):
+        """
+        Initialise the extractor with the SymmetryConstraint element.
+
+        Args:
+            obj (SymmetryConstraint): The SymmetryConstraint object to extract information from.
+        """
+        super().__init__(obj)   
+
     @property
-    def entity_one(self) -> Optional[str]:
+    def entityOne(self) -> Optional[str]:
         """Extracts the first entity of the symmetry constraint.
 
         Returns:
@@ -28,7 +38,7 @@ class SymmetryConstraintExtractor(GeometricConstraintExtractor):
             return None
 
     @property
-    def entity_two(self) -> Optional[str]:
+    def entityTwo(self) -> Optional[str]:
         """Extracts the second entity of the symmetry constraint.
 
         Returns:
@@ -61,8 +71,8 @@ class SymmetryConstraintExtractor(GeometricConstraintExtractor):
         """
         base_info = super().extract_info()
         constraint_info = {
-            'entity_one': self.entity_one,
-            'entity_two': self.entity_two,
+            'entityOne': self.entityOne,
+            'entityTwo': self.entityTwo,
             'symmetry_line': self.symmetry_line,
         }
         return {**base_info, **constraint_info}

@@ -26,6 +26,21 @@ class SketchDistanceBetweenLineAndPlanarSurfaceDimensionExtractor(SketchDimensio
         """
         super().__init__(obj)
 
+    def extract_info(self) -> Dict[str, Any]:
+        """
+        Extract all information from the SketchDistanceBetweenLineAndPlanarSurfaceDimension element.
+
+        Returns:
+            dict: A dictionary containing the extracted information.
+        """
+        basic_info = super().extract_info()
+        dimension_info = {
+            'line': self.line,
+            'planarSurface': self.planarSurface,
+        }
+
+        return {**basic_info, **dimension_info}
+
     @property
     def line(self) -> Optional[str]:
         """
@@ -40,7 +55,7 @@ class SketchDistanceBetweenLineAndPlanarSurfaceDimensionExtractor(SketchDimensio
             return None
 
     @property
-    def planar_surface(self) -> Optional[str]:
+    def planarSurface(self) -> Optional[str]:
         """
         Extract the planar surface the dimension is anchored to.
 
@@ -51,18 +66,3 @@ class SketchDistanceBetweenLineAndPlanarSurfaceDimensionExtractor(SketchDimensio
             return nested_getattr(self._obj, 'planarSurface.entityToken', None)
         except AttributeError:
             return None
-
-    def extract_info(self) -> Dict[str, Any]:
-        """
-        Extract all information from the SketchDistanceBetweenLineAndPlanarSurfaceDimension element.
-
-        Returns:
-            dict: A dictionary containing the extracted information.
-        """
-        basic_info = super().extract_info()
-        dimension_info = {
-            'line': self.line,
-            'planar_surface': self.planar_surface,
-        }
-
-        return {**basic_info, **dimension_info}

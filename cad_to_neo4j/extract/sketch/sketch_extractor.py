@@ -18,6 +18,7 @@ __all__ = ['SketchExtractor']
 class SketchExtractor(SketchEntityExtractor):
     """Extractor for extracting detailed information from Sketch objects."""
     '''
+    TODO
     REFACTOR: should the following be extracted here instead? 
         - sketchPoints
         - sketchCurves 
@@ -41,33 +42,35 @@ class SketchExtractor(SketchEntityExtractor):
         """
         basic_info = super().extract_info()
         sketch_info = {
-            'timeline_index': self.timeline_index,
+            'timelineIndex': self.timelineIndex,
             'reference_plane_entity_token': self.reference_plane_entity_token,
             'name': self.name,
-            # 'transform': self.transform, # AttributeError: 'Matrix3D' object has no attribute 'getAsArray'
-            'is_parametric': self.is_parametric,
-            'is_visible': self.is_visible,
+            'isParametric': self.isParametric,
+            'isVisible': self.isVisible,
             'are_dimensions_shown': self.are_dimensions_shown,
             'are_profiles_shown': self.are_profiles_shown,
             'origin': self.origin,
             'x_direction': self.x_direction,
             'y_direction': self.y_direction,
-            # 'bounding_box': self.bounding_box, # change to vector or use update
             'origin_point': self.origin_point,
             'is_fully_constrained': self.is_fully_constrained,
             'base_or_form_feature': self.base_or_form_feature,
-            'health_state': self.health_state,
-            'error_or_warning_message': self.error_or_warning_message,
-            # 'sketch_points': self.sketch_points,
-            # 'sketch_curves': self.sketch_curves,
-            # 'sketch_dimensions': self.sketch_dimensions,
-            # 'geometric_constraints': self.geometric_constraints,
-            # 'profiles': self.profiles,
+            'healthState': self.healthState,
+            'errorOrWarningMessage': self.errorOrWarningMessage,
+            'parentComponent': self.parentComponent,
+            # 'transform': self.transform, # AttributeError: 'Matrix3D' object has no attribute 'getAsArray'
         }
+
+        # Add bounding box information if available
+        bbbox = self.bounding_box
+        if bbbox is not None:
+            sketch_info.update(bbbox)
+
+        
         return {**basic_info, **sketch_info}
     
     @property
-    def timeline_index(self) -> Optional[int]:
+    def timelineIndex(self) -> Optional[int]:
         """Extracts the timeline index of the Sketch object.
         
         Returns:
@@ -128,7 +131,7 @@ class SketchExtractor(SketchEntityExtractor):
             return None
     
     @property
-    def is_parametric(self) -> Optional[bool]:
+    def isParametric(self) -> Optional[bool]:
         """Extracts the parametric status of the Sketch object.
 
         Returns:
@@ -137,7 +140,7 @@ class SketchExtractor(SketchEntityExtractor):
         return getattr(self._obj, 'isParametric', None)  
     
     @property
-    def is_visible(self) -> Optional[bool]:
+    def isVisible(self) -> Optional[bool]:
         """Extracts the visibility status of the Sketch object.
 
         Returns:
@@ -218,17 +221,17 @@ class SketchExtractor(SketchEntityExtractor):
         Returns:
             Dict[str, float]: The bounding box of the Sketch object.
         """
-        bounding_box = nested_getattr(self._obj, 'boundingBox', None)
-        if bounding_box:
-            return {
-                'min_x': bounding_box.minPoint.x,
-                'min_y': bounding_box.minPoint.y,
-                'min_z': bounding_box.minPoint.z,
-                'max_x': bounding_box.maxPoint.x,
-                'max_y': bounding_box.maxPoint.y,
-                'max_z': bounding_box.maxPoint.z
-            }
-        return None
+        try:
+            bbox = getattr(self._obj, 'boundingBox', None)
+            if bbox:
+                return {
+                    'bbMinPoint': [bbox.minPoint.x, bbox.minPoint.y, bbox.minPoint.z],
+                    'bbMaxPoint': [bbox.maxPoint.x, bbox.maxPoint.y, bbox.maxPoint.z]
+                }
+            return None
+        except Exception as e:
+            self.logger.error(f"Error extracting bounding box: {e}")
+            return None
     
     @property
     def origin_point(self) -> Optional[str]:
@@ -258,7 +261,7 @@ class SketchExtractor(SketchEntityExtractor):
         return nested_getattr(self._obj, 'baseOrFormFeature.entityToken', None)
     
     @property
-    def health_state(self) -> Optional[str]:
+    def healthState(self) -> Optional[str]:
         """Extracts the health state of the Sketch object.
 
         Returns:
@@ -267,10 +270,20 @@ class SketchExtractor(SketchEntityExtractor):
         return nested_getattr(self._obj, 'healthState', None)
 
     @property
-    def error_or_warning_message(self) -> Optional[str]:
+    def errorOrWarningMessage(self) -> Optional[str]:
         """Extracts the error or warning message of the Sketch object.
 
         Returns:
             str: The error or warning message of the Sketch object.
         """
         return getattr(self._obj, 'errorOrWarningMessage', None)
+    
+    @property
+    def parentComponent(self) -> Optional[str]:
+        """
+        Returns the parent component.
+        """
+        try:
+            return nested_getattr(self._obj, 'parentComponent.entityToken', None)
+        except AttributeError:
+            return None
