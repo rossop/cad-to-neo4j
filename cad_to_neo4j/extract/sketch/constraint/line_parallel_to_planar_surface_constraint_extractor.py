@@ -9,11 +9,21 @@ Classes:
 
 from typing import Optional, Dict, Any
 import traceback
+from adsk.fusion import LineParallelToPlanarSurfaceConstraint
 from .geometric_constraint_extractor import GeometricConstraintExtractor
 from ....utils.general_utils import nested_getattr
 
 class LineParallelToPlanarSurfaceConstraintExtractor(GeometricConstraintExtractor):
     """Extractor for LineParallelToPlanarSurfaceConstraint objects."""
+
+    def __init__(self, obj: LineParallelToPlanarSurfaceConstraint):
+        """
+        Initialise the extractor with the LineParallelToPlanarSurfaceConstraint element.
+
+        Args:
+            obj (LineParallelToPlanarSurfaceConstraint): The LineParallelToPlanarSurfaceConstraint object to extract information from.
+        """
+        super().__init__(obj)
 
     @property
     def line(self) -> Optional[str]:

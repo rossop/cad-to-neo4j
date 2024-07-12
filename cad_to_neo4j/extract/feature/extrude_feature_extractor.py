@@ -20,6 +20,36 @@ class ExtrudeFeatureExtractor(FeatureExtractor):
     def __init__(self, obj: adsk.fusion.ExtrudeFeature):
         """Initialize the extractor with the ExtrudeFeature element."""
         super().__init__(obj)
+            
+    def extract_info(self) -> dict:
+        """Extract all information from the ExtrudeFeature element.
+
+        Returns:
+            dict: A dictionary containing the extracted information.
+        """
+        feature_info = super().extract_info()
+        extrude_info = {
+            'profileTokens': self.profileTokens,
+            'bodies': self.bodies,
+            'startFaces': self.startFaces,
+            'endFaces': self.endFaces,
+            'sideFaces': self.sideFaces,
+            'extent_type': self.extent_type,
+            'operation': self.operation,
+            'participantBodies': self.participantBodies,
+        }
+        # Add extent one information
+        extentOne_info = self.extentOne
+        if extentOne_info is not None:
+            extrude_info.update(extentOne_info)
+        
+        # Add extent two information if available
+        extentTwo_info = self.extentTwo
+        if extentTwo_info is not None:
+            extrude_info.update(extentTwo_info)
+
+        extrude_info.update(self.start_extent)
+        return {**feature_info, **extrude_info}
 
     @property
     def profileTokens(self):
@@ -195,33 +225,3 @@ class ExtrudeFeatureExtractor(FeatureExtractor):
         except AttributeError as e:
             self.logger.error(f'Error extracting participant bodies: {e}\n{traceback.format_exc()}')
             return None
-            
-    def extract_info(self) -> dict:
-        """Extract all information from the ExtrudeFeature element.
-
-        Returns:
-            dict: A dictionary containing the extracted information.
-        """
-        feature_info = super().extract_info()
-        extrude_info = {
-            'profileTokens': self.profileTokens,
-            'bodies': self.bodies,
-            'startFaces': self.startFaces,
-            'endFaces': self.endFaces,
-            'sideFaces': self.sideFaces,
-            'extent_type': self.extent_type,
-            'operation': self.operation,
-            'participantBodies': self.participantBodies,
-        }
-        # Add extent one information
-        extentOne_info = self.extentOne
-        if extentOne_info is not None:
-            extrude_info.update(extentOne_info)
-        
-        # Add extent two information if available
-        extentTwo_info = self.extentTwo
-        if extentTwo_info is not None:
-            extrude_info.update(extentTwo_info)
-
-        extrude_info.update(self.start_extent)
-        return {**feature_info, **extrude_info}

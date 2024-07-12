@@ -27,13 +27,13 @@ class ChordLengthFilletEdgeSetExtractor(BaseEdgeSetExtractor):
             dict: A dictionary containing the extracted information.
         """
         edge_set_info = super().extract_info()
-        chordLength_info = {
-            'chordLength': self.chordLength,
+        chord_length_info = {
+            'chord_length': self.chord_length,
         }
-        return {**edge_set_info, **chordLength_info}
+        return {**edge_set_info, **chord_length_info}
 
     @property
-    def chordLength(self) -> Optional[str]:
+    def chord_length(self) -> Optional[str]:
         """Extracts the chord length of the fillet edge set."""
         try:
             return getattr(self._obj, 'chordLength', None)
