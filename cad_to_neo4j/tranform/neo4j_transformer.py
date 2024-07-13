@@ -1,27 +1,35 @@
 """
-Neo4j Transformer Module
+Neo4j Transformer Orchestrator Module
 
-This module provides functions to transform CAD data in a Neo4j graph database.
+This module provides a class orchestrating other transformation classes used to
+transform CAD data in a Neo4j graph database.
 
 Classes:
-    - Neo4jTransformer: A class to handle transformations in a Neo4j graph database.
+    - Neo4jTransformer: A class to handle transformations in a Neo4j graph 
+      database.
 """
 
 from ..utils.neo4j_utils import Neo4jTransactionManager
 import logging
 import traceback 
 
-__all__ = ['Neo4jTransformer']
+from .core.strategies import TimelineTransformer
 
-class Neo4jTransformer(Neo4jTransactionManager):
+__all__ = ['Neo4jTransformerOrchestrator']
+
+class Neo4jTransformerOrchestrator(Neo4jTransactionManager):
     """
-    A class to handle transformations in a Neo4j graph database.
+    A class to orchestrate all transformations in a Neo4j graph database.
 
     Attributes:
         driver (neo4j.GraphDatabase.driver): The Neo4j driver for database connections.
         logger (logging.Logger): The logger for logging messages and errors.
+        transformers (list): A list of transformer instances.
     
     Methods:
+        __init__(uri, user, password, logger): Initialises the transformer with database credentials and sub-transformers.
+        execute_query(query): Executes a Cypher query on the Neo4j database.
+        execute(): Runs all transformation methods to create relationships in the model.
         create_timeline_relationships(): Creates relationships between nodes based on their timeline index.
         create_profile_relationships(): Creates 'USES_PROFILE' relationships between extrusions and profiles.
         create_adjacent_face_relationships(): Creates 'ADJACENT' relationships between faces sharing the same edge.
@@ -40,6 +48,9 @@ class Neo4jTransformer(Neo4jTransactionManager):
         """
         super().__init__(uri, user, password)
         self.logger = Logger
+        self.transformers = [
+            TimelineTransformer(self.logger)
+        ]
 
     def execute(self):
         """
@@ -49,26 +60,32 @@ class Neo4jTransformer(Neo4jTransactionManager):
             dict: Results of all transformations.
         """
         results = {}
-        
         self.logger.info('Running all transformations...')
+
+        # Execute timeline transformations
+        for transformer in self.transformers:
+            try:
+                self.logger.info(f'Executing {transformer.__class__.__name__} transformations...')
+                results[transformer.__class__.__name__] = transformer.transform(self.execute_query)
+            except Exception as e:
+                self.logger.error(f'Exception in {transformer.__class__.__name__}: {e}\n{traceback.format_exc()}')
         
         # The order matters
         transformation_methods = [
-            self.create_timeline_relationships, # REVIEWED
-            self.create_sketch_relationships,
-            self.create_profile_relationships,
-            self.component_relationships,
-            self.brep_relationships,
-            self.create_adjacent_face_relationships,
-            self.create_adjacent_edge_relationships,
-            self.link_sketches_to_planes,
-            self.create_sketch_dimensions_relationships,
-            self.link_construction_planes,
-            self.link_feature_to_extents_and_faces,
-            self.link_feature_to_axes_bodies_extents,
-            self.create_sketch_axis_and_origin_for_all_sketches,
-            self.create_sketch_geometric_constraints,
-            self.create_brep_face_relationships
+            self.create_sketch_relationships, # sketch
+            self.create_profile_relationships, 
+            self.component_relationships, # component
+            self.brep_relationships, # brep
+            self.create_adjacent_face_relationships, # brep
+            self.create_adjacent_edge_relationships, # brep
+            self.link_sketches_to_planes, # component or timeline
+            self.create_sketch_dimensions_relationships, # sketch
+            self.link_construction_planes, # construction
+            self.link_feature_to_extents_and_faces, # feature
+            self.link_feature_to_axes_bodies_extents, # construction
+            self.create_sketch_axis_and_origin_for_all_sketches, # sketches
+            self.create_sketch_geometric_constraints, # sketch
+            self.create_brep_face_relationships # brep
         ]
         
         results = {}
@@ -84,38 +101,6 @@ class Neo4jTransformer(Neo4jTransactionManager):
                 self.logger.error(f'Exception in {method_name}: {e}\n{traceback.format_exc()}')
         
         return results
-
-
-    def create_timeline_relationships(self):
-        """
-        Creates relationships between nodes based on their timeline index.
-
-        Returns:
-            list: The result values from the query execution.
-        """
-        cypher_query = """
-        MATCH (n)
-        WHERE n.timelineIndex IS NOT NULL
-        WITH n
-        ORDER BY n.timelineIndex ASC
-
-        WITH collect(n) AS nodes
-
-        UNWIND range(0, size(nodes) - 2) AS i
-        WITH nodes[i] AS node1, nodes[i + 1] AS node2
-
-        MERGE (node1)-[:NEXT_ON_TIMELINE]->(node2)
-
-        RETURN node1, node2
-        """
-
-        result = []
-        self.logger.info('Creating timeline relationships')
-        try:
-            result = self.execute_query(cypher_query)
-        except Exception as e:
-            self.logger.error(f'Exception: {e}\n{traceback.format_exc()}')
-        return result
 
     def create_profile_relationships(self):
         """
@@ -1009,7 +994,7 @@ if __name__ == "__main__":
     NEO4J_USER = credentials["NEO4J_USER"]
     NEO4J_PASSWORD = credentials["NEO4J_PASSWORD"]
 
-    transformer = Neo4jTransformer(NEO4J_URI, NEO4J_USER, NEO4J_PASSWORD)
+    transformer = Neo4jTransformerOrchestrator(NEO4J_URI, NEO4J_USER, NEO4J_PASSWORD)
     try:
         nodes = transformer.create_timeline_relationships()
         for record in nodes:

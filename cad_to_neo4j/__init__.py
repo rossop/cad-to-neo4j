@@ -10,7 +10,7 @@ Modules:
     - extract: Contains modules and classes for extracting various properties and information 
       from CAD objects.
     - load: Provides functionalities for loading data into the Neo4j graph database.
-    - transform: (Future implementation) Contains modules and classes for transforming data.
+    - transform: aContains modules and classes for transforming data.
     - utils: Common utility functions and classes used across the package.
 """
 

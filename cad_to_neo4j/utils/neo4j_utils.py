@@ -76,5 +76,9 @@ class Neo4jTransactionManager(object):
         Returns:
             list: The result values from the query execution.
         """
-        result = self.session.run(query, parameters)
-        return result.values()
+        try:
+            result = self.session.run(query, parameters)
+            return result.values()
+        except Exception as e:
+            self.logger.error(f'Error executing query: {e}')
+            raise
