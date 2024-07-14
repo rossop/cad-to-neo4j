@@ -6,7 +6,7 @@ This module provides the transformation logic for sketch relationships.
 Classes:
     - SketchTransformer: A class to handle sketch-based transformations.
 """
-
+import traceback
 from ..base_transformer import BaseTransformer
 
 class SketchTransformer(BaseTransformer):
@@ -118,11 +118,11 @@ class SketchTransformer(BaseTransformer):
         ]
         results = []
         self.logger.info('Creating sketch relationships')
-        try:
-            for query in queries:
+        for query in queries:
+            try:
                 results.extend(execute_query(query))
-        except Exception as e:
-            self.logger.error(f'Exception in creating relationship between sketch and its entities: {e}')
+            except Exception as e:
+                self.logger.error(f'Exception executing query: {query}\n{e}\n{traceback.format_exc()}')
         return results
 
     def create_sketch_dimensions_relationships(self, execute_query):
@@ -269,11 +269,11 @@ class SketchTransformer(BaseTransformer):
         
         results = []
         self.logger.info('Creating relationships between sketch entities and their dimensions')
-        try:
-            for query in cypher_queries:
+        for query in cypher_queries:
+            try:
                 results.extend(execute_query(query))
-        except Exception as e:
-            self.logger.error(f'Exception in creating relationship between sketch entities and their dimensions: {e}')
+            except Exception as e:
+                    self.logger.error(f'Exception executing query: {query}\n{e}\n{traceback.format_exc()}')
         return results
 
     def create_sketch_geometric_constraints(self, execute_query):
@@ -416,7 +416,10 @@ class SketchTransformer(BaseTransformer):
         results = []
         self.logger.info('Creating geometric constraints')
         for query in queries:
-            results.extend(execute_query(query))
+            try:
+                results.extend(execute_query(query))
+            except Exception as e:
+                self.logger.error(f'Exception executing query: {query}\n{e}\n{traceback.format_exc()}')
         return results
 
     def create_sketch_axis_and_origin_for_all_sketches(self, execute_query):
@@ -431,8 +434,7 @@ class SketchTransformer(BaseTransformer):
             None
         """
         self.logger.info("Creating sketch axis and origin nodes for all sketches")
-        try:
-            query = """
+        query = """
             MATCH (sketch:Sketch)
             WITH sketch, sketch.origin AS origin_position, sketch.x_direction AS x_axis_vector, sketch.y_direction AS y_axis_vector, sketch.origin_point AS origin_entityToken
             MERGE (origin:SketchEntity {entityToken: origin_entityToken})
@@ -448,6 +450,7 @@ class SketchTransformer(BaseTransformer):
             MERGE (sketch)-[:CONTAINS]->(y_axis)
             MERGE (sketch)-[:CONTAINS]->(origin)
             """
+        try:
             execute_query(query)
         except Exception as e:
             self.logger.error(f"Error creating sketch axis and origin nodes for all sketches: {e}")
