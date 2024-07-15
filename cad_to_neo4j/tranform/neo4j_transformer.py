@@ -14,8 +14,9 @@ import logging
 import traceback 
 
 from .core.strategies import (
-    TimelineTransformer,
+    BRepTransformer,
     SketchTransformer,
+    TimelineTransformer,
     )
 
 __all__ = ['Neo4jTransformerOrchestrator']
@@ -52,6 +53,7 @@ class Neo4jTransformerOrchestrator(Neo4jTransactionManager):
         super().__init__(uri, user, password)
         self.logger = Logger
         self.transformers = [
+            BRepTransformer(self.logger),
             TimelineTransformer(self.logger),
             SketchTransformer(self.logger),
         ]
@@ -78,14 +80,10 @@ class Neo4jTransformerOrchestrator(Neo4jTransactionManager):
         transformation_methods = [
             self.create_profile_relationships, 
             self.component_relationships, # component
-            self.brep_relationships, # brep
-            self.create_adjacent_face_relationships, # brep
-            self.create_adjacent_edge_relationships, # brep
             self.link_sketches_to_planes, # component or timeline
             self.link_construction_planes, # construction
-            self.link_feature_to_extents_and_faces, # feature
             self.link_feature_to_axes_bodies_extents, # construction
-            self.create_brep_face_relationships # brep
+            self.link_feature_to_extents_and_faces, # feature
         ]
         
         results = {}
@@ -147,182 +145,6 @@ class Neo4jTransformerOrchestrator(Neo4jTransactionManager):
         """
         result = []
         self.logger.info('Creating profile/feature relationships')
-        try:
-            result = self.execute_query(cypher_query)
-        except Exception as e:
-            self.logger.error(f'Exception: {e}\n{traceback.format_exc()}')
-        return result
-    
-    def brep_relationships(self):
-        """
-        Executes a list of Cypher queries to create relationships between brep entities in the graph database.
-        
-        Returns:
-            list: The result values from the query execution.
-        """
-        queries = [
-            # Create relationships for bodies with entities
-            """
-            // Match existing Entities nodes with a non-null body property
-            MATCH (e)
-            WHERE e.body IS NOT NULL
-            WITH e.body AS body_entityToken, e
-            MATCH (b:BRepBody {entityToken: body_entityToken})
-            MERGE (b)-[:CONTAINS]->(e)
-            RETURN b, e
-            """,
-            # Query to connect BRepEdge nodes to BRepFace nodes based on the faces property
-            """
-            // Match existing BRepEdge nodes with a non-null faces property
-            MATCH (e:BRepEdge)
-            WHERE e.faces IS NOT NULL
-            UNWIND e.faces AS face_entityToken
-            MATCH (f:BRepFace {entityToken: face_entityToken})
-            MERGE (f)-[:CONTAINS]->(e)
-            RETURN e, f
-            """,
-            # Query to connect BRepFace nodes to BRepEdge nodes based on the edges property
-            """
-            // Match existing BRepFace nodes with a non-null faces property
-            MATCH (f:BRepFace)
-            WHERE f.edges IS NOT NULL
-            UNWIND f.edges AS edge_entityToken
-            MATCH (e:BRepEdge {entityToken: edge_entityToken})
-            MERGE (f)-[:CONTAINS]->(e)
-            RETURN e, f
-            """,
-            # Query to create STARTS_WITH and ENDS_WITH relationships for BRepEdge
-            """
-            // Match existing BRepEdge nodes with startVertex and endVertex properties
-            MATCH (e:BRepEdge)
-            WHERE e.startVertex IS NOT NULL AND e.endVertex IS NOT NULL
-            WITH e, e.startVertex AS start_vertex_id, e.endVertex AS end_vertex_id
-            // Match the startVertex node
-            MATCH (sv:BRepVertex {entityToken: start_vertex_id})
-            MERGE (e)-[:STARTS_WITH]->(sv)
-            // Use WITH to separate the MATCH for endVertex
-            WITH e, start_vertex_id, end_vertex_id
-            // Match the endVertex node
-            MATCH (ev:BRepVertex {entityToken: end_vertex_id})
-            MERGE (e)-[:ENDS_WITH]->(ev)
-            RETURN e
-            """,
-        ]
-
-        results = []
-        self.logger.info('Executing BRep queries')
-        for query in queries:
-            try:
-                result = self.execute_query(query)
-                results.append(result)
-            except Exception as e:
-                self.logger.error(f'Exception executing query: {query}\n{e}\n{traceback.format_exc()}')
-        
-        return results
-
-    def create_brep_face_relationships(self):
-        """
-        Creates relationships between BRepEdge nodes and their vertices.
-
-        This method creates 'BOUNDED_BY' relationships between BRepEdge nodes and their start and end vertices.
-        The 'BOUNDED_BY' relationship will have a type property indicating whether it is a 'START_WITH' or 'ENDS_WITH' relationship.
-
-        Returns:
-            list: The result values from the query execution.
-        """
-        queries = [
-            """
-            MATCH (feature:Feature)
-            WHERE feature.startFaces IS NOT NULL
-            UNWIND feature.startFaces AS face_entityToken
-            MERGE (face:BRepFace {entityToken: face_entityToken})
-            MERGE (feature)-[:BOUNDED_BY {type: 'startFaces'}]->(face)
-            """,
-            """
-            MATCH (feature:Feature)
-            WHERE feature.endFaces IS NOT NULL
-            UNWIND feature.endFaces AS face_entityToken
-            MERGE (face:BRepFace {entityToken: face_entityToken})
-            MERGE (feature)-[:BOUNDED_BY {type: 'endFaces'}]->(face)
-            """,
-            """
-            MATCH (feature:Feature)
-            WHERE feature.sideFaces IS NOT NULL
-            UNWIND feature.sideFaces AS face_entityToken
-            MERGE (face:BRepFace {entityToken: face_entityToken})
-            MERGE (feature)-[:BOUNDED_BY {type: 'sideFaces'}]->(face)
-            """,
-            """
-            MATCH (f:BRepFace)
-            WHERE f.edges IS NOT NULL
-            UNWIND f.edges AS edge_entityToken
-            MERGE (e:BRepEdge {entityToken: edge_entityToken})
-            MERGE (f)-[:BOUNDED_BY]->(e)
-            """,
-            """
-            MATCH (f:BRepFace)
-            WHERE NOT (f)-[:BOUNDED_BY]->()
-            WITH f
-            OPTIONAL MATCH (e:BRepEdge)-[:SURROUNDED_BY]->(f)
-            OPTIONAL MATCH (sv:BRepVertex)<-[:STARTS_WITH]-(e)
-            OPTIONAL MATCH (ev:BRepVertex)<-[:ENDS_WITH]-(e)
-            WITH f, collect(e) AS edges, collect(sv) AS start_vertices, collect(ev) AS end_vertices
-            UNWIND edges + start_vertices + end_vertices AS entity
-            WITH f, entity WHERE entity IS NOT NULL
-            MERGE (f)-[:BOUNDED_BY]->(entity)
-            """
-        ]
-        results = []
-        self.logger.info('Creating BRep face relationships')
-        for query in queries:
-            try:
-                result = self.execute_query(query)
-                results.extend(result)
-            except Exception as e:
-                self.logger.error(f'Exception executing query: {query}\n{e}\n{traceback.format_exc()}')
-        return results
-    
-    def create_adjacent_face_relationships(self):
-        """
-        Creates 'ADJACENT' relationships between faces sharing the same edge.
-
-        Returns:
-            list: The result values from the query execution.
-        """
-        cypher_query = r"""
-        MATCH (e:`BRepEdge`)<-[:CONTAINS]-(f1:`BRepFace`), 
-              (e)<-[:CONTAINS]-(f2:`BRepFace`)
-        WHERE id(f1) <> id(f2)
-        MERGE (f1)-[:ADJACENT]->(f2)
-        MERGE (f2)-[:ADJACENT]->(f1)
-        RETURN f1.entityToken AS face1_id, f2.entityToken AS face2_id
-        """
-        result = []
-        self.logger.info('Creating adjacent face relationships')
-        try:
-            result = self.execute_query(cypher_query)
-        except Exception as e:
-            self.logger.error(f'Exception: {e}\n{traceback.format_exc()}')
-        return result
-
-    def create_adjacent_edge_relationships(self):
-        """
-        Creates 'ADJACENT' relationships between edges sharing the same vertex.
-
-        Returns:
-            list: The result values from the query execution.
-        """
-        cypher_query = r"""
-        // Find BRepEdges that share BRepVertices and create ADJACENT relationships between them
-        MATCH (v:`BRepVertex`)<-[:CONTAINS]-(e1:`BRepEdge`), 
-            (v)<-[:CONTAINS]-(e2:`BRepEdge`)
-        WHERE id(e1) <> id(e2)
-        MERGE (e1)-[:ADJACENT]->(e2)
-        MERGE (e2)-[:ADJACENT]->(e1)
-        RETURN e1.entityToken AS edge1_id, collect(e2.entityToken) AS adjacent_edge_ids
-        """
-        result = []
-        self.logger.info('Creating adjacent edge relationships')
         try:
             result = self.execute_query(cypher_query)
         except Exception as e:

@@ -5,10 +5,11 @@ This submodule contains modules for different types of transformations
 strategies in a Neo4j graph database.
 """
 
-from .timeline_transformer import TimelineTransformer
+from .brep_transformer import BRepTransformer
 from .sketch_transformer import SketchTransformer
+from .timeline_transformer import TimelineTransformer
 
 __all__ = [
-        'TimelineTransformer',
         'SketchTransformer',
+        'TimelineTransformer',
         ]
