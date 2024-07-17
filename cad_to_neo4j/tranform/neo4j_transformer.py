@@ -15,6 +15,7 @@ import traceback
 
 from .core.strategies import (
     BRepTransformer,
+    ComponentTransformer,
     ConstructionElementsTransformer,
     FeatureTransformer,
     SketchTransformer,
@@ -56,6 +57,7 @@ class Neo4jTransformerOrchestrator(Neo4jTransactionManager):
         self.logger = Logger
         self.transformers = [
             BRepTransformer(self.logger),
+            ComponentTransformer(self.logger),
             ConstructionElementsTransformer(self.logger),
             FeatureTransformer(self.logger),
             TimelineTransformer(self.logger),
@@ -82,7 +84,6 @@ class Neo4jTransformerOrchestrator(Neo4jTransactionManager):
         
         # The order matters
         transformation_methods = [
-            self.component_relationships, # component
             self.link_sketches_to_planes, # component or timeline
         ]
         
@@ -99,33 +100,6 @@ class Neo4jTransformerOrchestrator(Neo4jTransactionManager):
                 self.logger.error(f'Exception in {method_name}: {e}\n{traceback.format_exc()}')
         
         return results
-
-    def component_relationships(self):
-        """
-        Creates 'CONTAINS' relationships between features, sketches or other timeline entities
-        and components containing them.
-
-        Returns:
-            list: The result values from the query execution.
-        """
-        cypher_query = r"""
-        // Match existing Entities nodes with a non-null parentComponent
-        MATCH (e)
-        WHERE ('Sketch' IN labels(e) 
-            OR 'Feature' IN labels(e)) 
-            AND e.parentComponent IS NOT NULL
-        WITH e.parentComponent AS component_token, e
-        MATCH (c:Component {entityToken: component_token})
-        MERGE (c)-[:CONTAINS]->(e)
-        RETURN c, e
-        """
-        result = []
-        self.logger.info('Creating profile/feature relationships')
-        try:
-            result = self.execute_query(cypher_query)
-        except Exception as e:
-            self.logger.error(f'Exception: {e}\n{traceback.format_exc()}')
-        return result
     
     def link_sketches_to_planes(self):
         """
