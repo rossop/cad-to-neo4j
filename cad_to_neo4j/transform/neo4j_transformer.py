@@ -81,48 +81,8 @@ class Neo4jTransformerOrchestrator(Neo4jTransactionManager):
                 results[transformer.__class__.__name__] = transformer.transform(self.execute_query)
             except Exception as e:
                 self.logger.error(f'Exception in {transformer.__class__.__name__}: {e}\n{traceback.format_exc()}')
-        
-        # The order matters
-        transformation_methods = [
-            self.link_sketches_to_planes, # component or timeline
-        ]
-        
-        results = {}
-        
-        self.logger.info('Running all transformations...')
-        
-        for method in transformation_methods:
-            method_name = method.__name__
-            try:
-                results[method_name] = method()
-                # self.logger.debug(f'Successfully completed {method_name}')
-            except Exception as e:
-                self.logger.error(f'Exception in {method_name}: {e}\n{traceback.format_exc()}')
-        
+                
         return results
-    
-    def link_sketches_to_planes(self):
-        """
-        Creates 'BUILT_ON' relationships between sketches and their reference planes or faces.
-
-        Returns:
-            list: The result values from the query execution.
-        """
-        cypher_query = r"""
-        MATCH (s:`Sketch`)
-        WHERE s.reference_plane_entity_token IS NOT NULL
-        MATCH (p {entityToken: s.reference_plane_entity_token})
-        MERGE (s)-[:BUILT_ON]->(p)
-        RETURN s.entityToken AS sketch_id, p.entityToken AS plane_id, labels(p) AS plane_labels
-        """
-        
-        result = []
-        self.logger.info('Creating sketch to plane/face relationships')
-        try:
-            result = self.execute_query(cypher_query)
-        except Exception as e:
-            self.logger.error(f'Exception in linking sketches to planes: {e}\n{traceback.format_exc()}')
-        return result
 
 # Usage example
 if __name__ == "__main__":

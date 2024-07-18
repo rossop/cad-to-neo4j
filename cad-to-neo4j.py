@@ -25,7 +25,7 @@ NEO4J_PASSWORD = credentials["NEO4J_PASSWORD"]
 from .cad_to_neo4j.utils.logger_utils import logger_utility
 from .cad_to_neo4j.extract import ExtractorOrchestrator
 from .cad_to_neo4j.load import Neo4jLoader
-from .cad_to_neo4j.tranform import Neo4jTransformerOrchestrator
+from .cad_to_neo4j.transform import Neo4jTransformerOrchestrator
 
 def run(context):
     global app, logger_utility, NEO4J_URI, NEO4J_USER, NEO4J_PASSWORD

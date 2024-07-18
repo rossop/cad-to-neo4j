@@ -16,7 +16,7 @@ Modules:
 
 from . import utils
 from . import extract
-from . import tranform
+from . import transform
 from . import load
 
-__all__ = utils.__all__ + extract.__all__ + load.__all__ + tranform.__all__
+__all__ = utils.__all__ + extract.__all__ + load.__all__ + transform.__all__
