@@ -31,7 +31,6 @@ class BRepTransformer(BaseTransformer):
         results = {}
         results['create_brep_relationships'] = self.create_brep_relationships(execute_query)
         results['create_brep_face_relationships'] = self.create_brep_face_relationships(execute_query)
-        results['create_brep_adjacencies'] = self.create_brep_adjacencies(execute_query)
         return results
 
     def create_brep_relationships(self, execute_query):
@@ -136,25 +135,6 @@ class BRepTransformer(BaseTransformer):
             MERGE (face:BRepFace {entityToken: face_entityToken})
             MERGE (feature)-[:BOUNDED_BY {type: 'sideFaces'}]->(face)
             """,
-            """
-            MATCH (f:BRepFace)
-            WHERE f.edges IS NOT NULL
-            UNWIND f.edges AS edge_entityToken
-            MERGE (e:BRepEdge {entityToken: edge_entityToken})
-            MERGE (f)-[:BOUNDED_BY]->(e)
-            """,
-            """
-            MATCH (f:BRepFace)
-            WHERE NOT (f)-[:BOUNDED_BY]->()
-            WITH f
-            OPTIONAL MATCH (e:BRepEdge)-[:SURROUNDED_BY]->(f)
-            OPTIONAL MATCH (sv:BRepVertex)<-[:STARTS_WITH]-(e)
-            OPTIONAL MATCH (ev:BRepVertex)<-[:ENDS_WITH]-(e)
-            WITH f, collect(e) AS edges, collect(sv) AS start_vertices, collect(ev) AS end_vertices
-            UNWIND edges + start_vertices + end_vertices AS entity
-            WITH f, entity WHERE entity IS NOT NULL
-            MERGE (f)-[:BOUNDED_BY]->(entity)
-            """
         ]
         results = []
         self.logger.info('Creating BRep face relationships')
