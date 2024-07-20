@@ -25,7 +25,7 @@ NEO4J_PASSWORD = credentials["NEO4J_PASSWORD"]
 from .cad_to_neo4j.utils.logger_utils import logger_utility
 from .cad_to_neo4j.extract import ExtractorOrchestrator
 from .cad_to_neo4j.load import Neo4jLoader
-from .cad_to_neo4j.tranform import Neo4jTransformer
+from .cad_to_neo4j.transform import Neo4jTransformerOrchestrator
 
 def run(context):
     global app, logger_utility, NEO4J_URI, NEO4J_USER, NEO4J_PASSWORD
@@ -70,7 +70,7 @@ def run(context):
             # Load all nodes and relationships in batch
             Loader.load_data(nodes, []) # TODO remove relationships
 
-        with Neo4jTransformer(uri=NEO4J_URI, user=NEO4J_USER, password=NEO4J_PASSWORD, Logger=logger_utility.logger) as Transformer:
+        with Neo4jTransformerOrchestrator(uri=NEO4J_URI, user=NEO4J_USER, password=NEO4J_PASSWORD, Logger=logger_utility.logger) as Transformer:
             # Transform graph data
             _ = Transformer.execute()
 
