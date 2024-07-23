@@ -18,6 +18,7 @@ from .core.strategies import (
     ComponentTransformer,
     ConstructionElementsTransformer,
     FeatureTransformer,
+    ProfileTransformer,
     SketchTransformer,
     TimelineTransformer,
     )
@@ -60,6 +61,7 @@ class Neo4jTransformerOrchestrator(Neo4jTransactionManager):
             ComponentTransformer(self.logger),
             ConstructionElementsTransformer(self.logger),
             FeatureTransformer(self.logger),
+            ProfileTransformer(self.logger),
             TimelineTransformer(self.logger),
             SketchTransformer(self.logger),
         ]

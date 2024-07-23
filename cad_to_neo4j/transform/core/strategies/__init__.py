@@ -18,6 +18,8 @@ Modules:
       planes, axes, and points.
     - feature_transformer.py: Provides strategies to create relationships and 
       enhance the data model for feature entities.
+    - profile_transformer.py: Provides strategies to create relationships and
+      enhance the data model for profile entities 
     - sketch_transformer.py: Provides strategies to create relationships and 
       enhance the data model for sketch entities.
     - timeline_transformer.py: Provides strategies to create relationships and 
@@ -28,6 +30,7 @@ from .brep_transformer import BRepTransformer
 from .component_transformer import ComponentTransformer
 from .construction_elements_tranformer import ConstructionElementsTransformer
 from .feature_transformer import FeatureTransformer
+from .profile_transformer import ProfileTransformer
 from .sketch_transformer import SketchTransformer
 from .timeline_transformer import TimelineTransformer
 
@@ -36,6 +39,7 @@ __all__ = [
         'ComponentTransformer',
         'ConstructionElementsTransformer',
         'FeatureTransformer',
+        'ProfileTransformer',
         'SketchTransformer',
         'TimelineTransformer',
         ]
