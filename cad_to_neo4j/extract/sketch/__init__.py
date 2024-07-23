@@ -46,7 +46,7 @@ from .sketch_ellipse_extractor import SketchEllipseExtractor
 from .sketch_elliptical_arc_extractor import SketchEllipticalArcExtractor
 from .sketch_fitted_spline_extractor import SketchFittedSplineExtractor
 from .sketch_fixed_spline_extractor import SketchFixedSplineExtractor
-from .profile_extractor import ProfileExtractor
+from .profile import ProfileExtractor
 from . import dimension
 from . import constraint
 

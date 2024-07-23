@@ -6,10 +6,14 @@ This module provides an extractor class for extracting information from Profile 
 Classes:
     - ProfileExtractor: Extractor for Profile objects.
 """
+import uuid
 from typing import Optional, Dict, List, Any
 from adsk.fusion import Profile
-from ..base_extractor import BaseExtractor
-from ...utils.general_utils import nested_getattr
+import traceback
+
+from .profile_loop_extractor import ProfileLoopExtractor
+from ...base_extractor import BaseExtractor
+from ....utils.general_utils import nested_getattr
 
 __all__ = ['ProfileExtractor']
 
@@ -42,8 +46,6 @@ class ProfileExtractor(BaseExtractor):
         """
         basic_info = super().extract_info()
         profile_info = {
-            'profileCurves': self.profileCurves,
-            'profileLoops': self.profileLoops,
             'parentSketch': self.parentSketch,
         }
 
@@ -62,10 +64,15 @@ class ProfileExtractor(BaseExtractor):
         if bbbox_info is not None:
             profile_info.update(bbbox_info)
 
+        # Add profileLoops information if available
+        profileLoopInfo = self.profileLoopInfo
+        if profileLoopInfo is not None:
+            profile_info.update(profileLoopInfo)
+
         return {**basic_info, **profile_info}
 
     @property
-    def profileLoops(self) -> Optional[List[str]]:
+    def profileLoopInfo(self) -> Optional[List[str]]:
         """
         Extracts the loops or closed areas within this profile, including their identity tokens if available.
 
@@ -74,28 +81,24 @@ class ProfileExtractor(BaseExtractor):
         """
         try:
             loops = getattr(self._obj, 'profileLoops', [])
-            return [getattr(loop, 'entityToken', None) for loop in loops]
+            profileLoopsEntities = []
+            profileLoops = []
+            for loop in loops:
+                info = ProfileLoopExtractor(loop).extract_info()
+                if info['tempId'] is None:
+                    tempId = str(uuid.uuid4())
+                    info['tempId'] = tempId
+                    profileLoops.append(tempId)
+                    profileLoopsEntities.append(info)
+            
+            return {
+                'profileLoopsEntities' : profileLoopsEntities,
+                'profileLoops' : profileLoops,
+            }
+        
         except AttributeError:
             return None
         
-    @property
-    def profileCurves(self) -> Optional[List[str]]:
-        """
-        Extracts the curves within this profile.
-
-        Returns:
-            Optional[List[str]]: List of entity tokens for the profile curves.
-        """
-        try:
-            entityTokens = []
-            for profile_loop in self._profileLoops:
-                for profile_curve in getattr(profile_loop, 'profileCurves', []):
-                    token = nested_getattr(profile_curve, 'sketchEntity.entityToken', None)  
-                    if token is not None:                     
-                        entityTokens.append(token)
-            return entityTokens
-        except AttributeError:
-            return None
         
     @property
     def boundingBox(self) -> Optional[Dict[str, List[float]]]:
