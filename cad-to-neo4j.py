@@ -57,7 +57,7 @@ def run(context):
             return None
        
         # Initialise Neo4J Loader 
-        with Neo4jLoader(uri=NEO4J_URI, user=NEO4J_USER, password=NEO4J_PASSWORD, Logger=logger_utility.logger) as Loader:
+        with Neo4jLoader(uri=NEO4J_URI, user=NEO4J_USER, password=NEO4J_PASSWORD, logger=logger_utility.logger) as Loader:
             
             # Clear Graph:
             Loader.clear()
@@ -70,7 +70,7 @@ def run(context):
             # Load all nodes and relationships in batch
             Loader.load_data(nodes, []) # TODO remove relationships
 
-        with Neo4jTransformerOrchestrator(uri=NEO4J_URI, user=NEO4J_USER, password=NEO4J_PASSWORD, Logger=logger_utility.logger) as Transformer:
+        with Neo4jTransformerOrchestrator(uri=NEO4J_URI, user=NEO4J_USER, password=NEO4J_PASSWORD, logger=logger_utility.logger) as Transformer:
             # Transform graph data
             _ = Transformer.execute()
 
