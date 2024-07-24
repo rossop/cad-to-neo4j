@@ -38,13 +38,8 @@ class Neo4jTransformerOrchestrator(Neo4jTransactionManager):
         __init__(uri, user, password, logger): Initialises the transformer with database credentials and sub-transformers.
         execute_query(query): Executes a Cypher query on the Neo4j database.
         execute(): Runs all transformation methods to create relationships in the model.
-        create_timeline_relationships(): Creates relationships between nodes based on their timeline index.
-        create_profile_relationships(): Creates 'USES_PROFILE' relationships between extrusions and profiles.
-        create_adjacent_face_relationships(): Creates 'ADJACENT' relationships between faces sharing the same edge.
-        create_adjacent_edge_relationships(): Creates 'ADJACENT' relationships between edges sharing the same vertex.
-        create_sketch_relationships(): Creates various relationships between sketch entities.
     """
-    def __init__(self, uri: str, user: str, password: str, Logger: logging.Logger = None):
+    def __init__(self, uri: str, user: str, password: str, logger: logging.Logger = None, max_retries: int = 5, timeout: int = 5):
         """
         Initializes the Neo4jTransformer with the provided database credentials.
 
@@ -53,9 +48,10 @@ class Neo4jTransformerOrchestrator(Neo4jTransactionManager):
             user (str): The username for authentication.
             password (str): The password for authentication.
             logger (logging.Logger, optional): The logger for logging messages and errors.
+            max_retries (int, optional): The maximum number of retries for connecting to the database. Defaults to 5.
+            timeout (int, optional): The timeout in seconds between retries. Defaults to 5.
         """
-        super().__init__(uri, user, password)
-        self.logger = Logger
+        super().__init__(uri, user, password, logger, max_retries, timeout)
         self.transformers = [
             BRepTransformer(self.logger),
             ComponentTransformer(self.logger),
