@@ -30,7 +30,7 @@ class Neo4jLoader(Neo4jTransactionManager):
         create_relationships(tx, relationships): Creates multiple relationships in the Neo4j database in a batch.
         load_data(nodes, relationships=None): Loads extracted data into the Neo4j database.
     """
-    def __init__(self, uri: str, user: str, password: str, Logger: logging.Logger = None ):
+    def __init__(self, uri: str, user: str, password: str, logger: logging.Logger = None, max_retries: int = 5, timeout: int = 5):
         """
         Initialises the Neo4jLoader with the provided database credentials.
 
@@ -38,11 +38,12 @@ class Neo4jLoader(Neo4jTransactionManager):
             uri (str): The URI for the Neo4j database.
             user (str): The username for authentication.
             password (str): The password for authentication.
-            Logger (logging.Logger, optional): The logger for logging messages and errors.
+            logger (logging.Logger, optional): The logger for logging messages and errors.
+            max_retries (int, optional): The maximum number of retries for connecting to the database. Defaults to 5.
+            timeout (int, optional): The timeout in seconds between retries. Defaults to 5.
         """
-        super().__init__(uri, user, password)
-        self._batch_size = 1000
-        self.logger = Logger  
+        super().__init__(uri, user, password, logger, max_retries, timeout)
+        self._batch_size: int = 1000  
 
     @property
     def batch_size(self):
