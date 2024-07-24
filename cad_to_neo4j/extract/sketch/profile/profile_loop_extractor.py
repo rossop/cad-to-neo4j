@@ -13,8 +13,9 @@ Functions:
     - curveInfo: Property to get the information about profile curves in the ProfileLoop object.
 """
 import uuid
-from typing import Dict, Any, Optional
-from adsk.fusion import ProfileLoop
+import traceback
+from typing import Tuple, List, Dict, Any, Optional
+from adsk.fusion import ProfileLoop, ProfileCurve
 from ...base_extractor import BaseExtractor
 from .profile_curve_extractor import ProfileCurveExtractor
 
@@ -42,12 +43,11 @@ class ProfileLoopExtractor(BaseExtractor):
         Extract all information from the ProfileLoop element.
 
         Returns:
-            dict: A dictionary containing the extracted information.
+            Dict[str, Any]: A dictionary containing the extracted information.
         """
-        base_info = super().extract_info()
-        loop_info = {
+        base_info: Dict[str, Any] = super().extract_info()
+        loop_info: Dict[str, Any] = {
             'isOuter': self.isOuter,
-            'profileCurves': None,
             'tempId' : None,
         }
 
@@ -67,7 +67,7 @@ class ProfileLoopExtractor(BaseExtractor):
             bool: True if the loop is an outer loop, False otherwise.
         """
         return getattr(self._obj, 'isOuter', None)
-
+    
     @property
     def curveInfo(self) -> Optional[Dict[str,Any]]:
         """
@@ -76,18 +76,42 @@ class ProfileLoopExtractor(BaseExtractor):
         Returns:
             dict: A dictionary containing profile curve entities and their tempIds.
         """
+        def process_curve(curve: ProfileCurve) -> Tuple[Optional[str], Optional[Dict[str, Any]]]:
+            """
+            Process a single profile curve to extract its information and ensure it has a tempId.
+
+            Args:
+                curve (adsk.fusion.ProfileCurve) : The profile curve to be processed.
+
+            Returns:
+                Tuple[Optional[str], Optional[Dict[str, Any]]]: A tuple containing the tempId and a dictionary of the curve's information.
+            """
+            info: Optional[Dict[str, Any]] = ProfileCurveExtractor(curve).extract_info()
+            if info is None:
+                return None, None
+
+            if info['tempId'] is None:
+                tempId: str = str(uuid.uuid4())
+                info['tempId'] = tempId
+            else:
+                tempId = info['tempId']
+            # TODO filter before load impact on speed
+            # info = {k: v for k, v in info.items() if v is not None} 
+            return tempId, info
+
         try:
-            curvesEntities = getattr(self._obj, 'profileCurves', [])
-            profileCurves = []
-            profileCurveEntities =[]
-            for curve in curvesEntities:
-                info = ProfileCurveExtractor(curve).extract_info()
-                if info['tempId'] is None:
-                    tempId = str(uuid.uuid4())
-                    info['tempId'] = tempId
-                    profileCurves.append(tempId)
-                    profileCurveEntities.append(info)
-            
+            profileCurves: List[str] = []
+            profileCurveEntities: List[Dict[str, Any]] = []
+            curves = getattr(self._obj, 'profileCurves', [])
+    
+            if not curves:
+                self.logger.info(f"No profileCurves found for ProfileLoop with entityToken: {self._obj.entityToken}")
+
+            processed_curves = map(process_curve, curves)
+            for tempId, info in processed_curves:
+                profileCurves.append(tempId)
+                profileCurveEntities.append(info)
+
             return {
                 'profileCurveEntities' : profileCurveEntities,
                 'profileCurves' : profileCurves,

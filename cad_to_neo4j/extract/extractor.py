@@ -179,32 +179,8 @@ class ExtractorOrchestrator(object):
                               Error in extract_data: {str(e)}\n
                               Failed:\n{traceback.format_exc()}
                             """)
-        flattened_data = {}
+            flattened_data = {}
         
-        def _extract_and_store(data):
-            if not isinstance(data, dict):
-                return None
-            
-            entity_id = data.get('entityToken') or data.get('tempId')
-            if entity_id:
-                flattened_data[entity_id] = data
-
-            for key, value in list(data.items()):
-                if isinstance(value, list):
-                    nested_ids = []
-                    for item in value:
-                        if isinstance(item, dict):
-                            nested_id = _extract_and_store(item, entity_id)
-                            nested_ids.append(nested_id)
-                        else:
-                            nested_ids.append(item)
-                    data[key] = nested_ids
-                elif isinstance(value, dict):
-                    nested_id = _extract_and_store(value, entity_id)
-                    data[key] = nested_id
-                    data.pop(key, None)
-            
-            return entity_id
 
     def update_nodes(self, flattened_data):
         """

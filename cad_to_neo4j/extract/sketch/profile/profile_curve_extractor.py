@@ -66,7 +66,10 @@ class ProfileCurveExtractor(BaseExtractor):
         Returns:
             str: The geometry type.
         """
-        return getattr(self._obj, 'geometryType', None)
+        try:
+            return getattr(self._obj, 'geometryType', None)
+        except:
+            return None
 
     @property
     def geometry(self) -> Dict[str, Any]:
@@ -77,12 +80,16 @@ class ProfileCurveExtractor(BaseExtractor):
             dict: A dictionary containing the start and end points of the geometry.
         """
         geom = getattr(self._obj, 'geometry', None)
-        if geom:
-            return {
-                'startPoint': [geom.startPoint.x, geom.startPoint.y, geom.startPoint.z],
-                'endPoint': [geom.endPoint.x, geom.endPoint.y, geom.endPoint.z]
-            }
-        return {}
+        try:
+            if geom:
+                return {
+                    'startPoint': [geom.startPoint.x, geom.startPoint.y, geom.startPoint.z],
+                    'endPoint': [geom.endPoint.x, geom.endPoint.y, geom.endPoint.z]
+                }
+            return {}
+        except:
+            # TODO deal with different types of curves which will have different types of geometries
+            return {}
 
     @property
     def sketch_entity(self) -> str:

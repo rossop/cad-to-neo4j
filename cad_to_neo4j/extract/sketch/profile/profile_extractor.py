@@ -7,8 +7,8 @@ Classes:
     - ProfileExtractor: Extractor for Profile objects.
 """
 import uuid
-from typing import Optional, Dict, List, Any
-from adsk.fusion import Profile
+from typing import Optional, Tuple, Dict, List, Any
+from adsk.fusion import Profile, ProfileLoop
 import traceback
 
 from .profile_loop_extractor import ProfileLoopExtractor
@@ -44,8 +44,8 @@ class ProfileExtractor(BaseExtractor):
         Returns:
             dict: A dictionary containing the extracted information.
         """
-        basic_info = super().extract_info()
-        profile_info = {
+        basic_info: Dict[str, Any] = super().extract_info()
+        profile_info: Dict[str, Any] = {
             'parentSketch': self.parentSketch,
         }
 
@@ -70,26 +70,52 @@ class ProfileExtractor(BaseExtractor):
             profile_info.update(profileLoopInfo)
 
         return {**basic_info, **profile_info}
-
+    
     @property
-    def profileLoopInfo(self) -> Optional[List[str]]:
+    def profileLoopInfo(self) -> Optional[Dict[str,List]]:
         """
-        Extracts the loops or closed areas within this profile, including their identity tokens if available.
+        Extracts the loops or closed areas within this profile, including their 
+        identity tokens if available.
 
         Returns:
             Optional[List[str]]: List of identity tokens for the profile loops.
         """
+        def process_loop(loop: ProfileLoop) -> Tuple[Optional[str], Optional[Dict[str, Any]]]:
+            """
+            Process a single profile loop to extract its information and ensure
+            it has a tempId.
+
+            Args:
+                loop (adsk.fusion.ProfileLoop)  The profile loop to be processed.
+
+            Returns:
+                Tuple[Optional[str], Optional[Dict[str, Any]]]: A tuple containing
+                    the tempId and a dictionary of the loop's information.
+            """
+            info: Optional[Dict[str, Any]] = ProfileLoopExtractor(loop).extract_info()
+            if info is None:
+                return None, None
+
+            if info['tempId'] is None:
+                tempId: str = str(uuid.uuid4())
+                info['tempId'] = tempId
+            else:
+                tempId = info['tempId']
+            
+            return tempId, info
+
         try:
+            profileLoops: List[str] = []
+            profileLoopsEntities: List[Dict[str, Any]] = []
+            TEXT = "\n"
+
             loops = getattr(self._obj, 'profileLoops', [])
-            profileLoopsEntities = []
-            profileLoops = []
-            for loop in loops:
-                info = ProfileLoopExtractor(loop).extract_info()
-                if info['tempId'] is None:
-                    tempId = str(uuid.uuid4())
-                    info['tempId'] = tempId
-                    profileLoops.append(tempId)
-                    profileLoopsEntities.append(info)
+            processed_loops = map(process_loop, loops)
+
+            for tempId, info in processed_loops:
+                profileLoops.append(tempId)
+                profileLoopsEntities.append(info)
+                TEXT += f"{tempId}    {len(info)}\n"
             
             return {
                 'profileLoopsEntities' : profileLoopsEntities,
@@ -106,7 +132,8 @@ class ProfileExtractor(BaseExtractor):
         Returns the 3D bounding box of the profile in sketch space.
 
         Returns:
-            Optional[Dict[str, List[float]]]: Dictionary with min and max points of the bounding box.
+            Optional[Dict[str, List[float]]]: Dictionary with min and max points 
+            of the bounding box.
         """
         try:
             bbox = getattr(self._obj, 'boundingBox', None)
