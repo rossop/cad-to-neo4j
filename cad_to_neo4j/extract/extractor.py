@@ -91,6 +91,112 @@ class ExtractorOrchestrator(object):
                               Error in extract_data: {str(e)}\n
                               Failed:\n{traceback.format_exc()}
                             """)
+                
+    def extract_nested_data(self, element, parent_id=None):
+        """
+        Extracts nested data from the given element using the appropriate extractor 
+        and stores it.
+
+        Args:
+            element (Base): The CAD element.
+
+        Returns:
+            dict: The flattened data.
+        """
+        def contains_dict(lst):
+            """
+            Check if a list contains any dictionaries.
+            
+            Args:
+                lst (list): The list to check.
+            
+            Returns:
+                bool: True if any item in the list is a dictionary, False otherwise.
+            """
+            return any(isinstance(item, dict) for item in lst)
+
+        def check_dict_values(d):
+            """
+            Check if any values in a dictionary are lists that contain dictionaries.
+            
+            Args:
+                d (dict): The dictionary to check.
+            
+            Returns:
+                bool: True if any value in the dictionary is a list containing dictionaries, False otherwise.
+            """
+            return any(isinstance(val, list) and contains_dict(val) for val in d.values())
+
+        def flatten(data):
+            """
+            Flatten nested dictionaries within lists in a data structure.
+            
+            Args:
+                data (dict): The dictionary to flatten.
+            
+            Returns:
+                list: A list of flattened dictionaries.
+            """
+            flattened_data = []
+            
+            if not isinstance(data, dict):
+                raise TypeError("Input data must be a dictionary.")
+            
+            if check_dict_values(data):
+                for key, val in data.items():
+                    if isinstance(val, list):
+                        for i in range(len(val)):
+                            item = val[i]
+                            if isinstance(item, dict):
+                                flattened_data += flatten(item)
+                                val[i] = None  # Remove nested dictionary
+                        # Set the list to None if all its elements are None
+                        data[key] = None if all(item is None for item in val) else val
+                # Append modified data once nested dicts have been removed
+                flattened_data.append(data)
+            else:
+                flattened_data.append(data)
+            
+            return flattened_data
+
+        flattened_data = []
+        try:
+            Extractor = self.get_extractor(element)
+            extracted_info = Extractor.extract_info()
+            if extracted_info:
+                flattened_data = flatten(extracted_info)
+            
+
+            for data in flattened_data:
+                entity_id = data.get('entityToken') or data.get('tempId')   
+                if entity_id not in self.nodes:
+                    self.nodes[entity_id] = data
+                else:
+                    self.add_or_update(self.nodes[entity_id],data)
+                
+        except Exception as e:
+            self.logger.error(f"""
+                              Error in extract_data: {str(e)}\n
+                              Failed:\n{traceback.format_exc()}
+                            """)
+            flattened_data = {}
+        
+
+    def update_nodes(self, flattened_data):
+        """
+        Updates the nodes with the flattened data.
+
+        Args:
+            flattened_data (dict): The flattened data to update the nodes with.
+
+        Returns:
+            None
+        """
+        for entity_id, data in flattened_data.items():
+            if entity_id not in self.nodes:
+                self.nodes[entity_id] = data
+            else:
+                self.add_or_update(self.nodes[entity_id], data)
             
     def add_or_update(self, stored_dict: Dict, other_dict: Dict):
         for key, value in other_dict.items():
@@ -113,7 +219,7 @@ class ExtractorOrchestrator(object):
         """
         # TODO add try and catch
         for profile in sketch.profiles:
-            self.extract_data(profile)
+            self.extract_nested_data(profile)
             
         for point in sketch.sketchPoints:
             self.extract_data(point)

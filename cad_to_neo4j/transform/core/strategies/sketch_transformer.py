@@ -110,7 +110,7 @@ class SketchTransformer(BaseTransformer):
             r"""
             MATCH (se:SketchEntity)
             WHERE se.referencedEntity IS NOT NULL
-            MATCH (re:SketchEntity)
+            MATCH (re)
             WHERE re.entityToken = se.referencedEntity
             MERGE (re)-[:PROJECTED_TO]->(se)
             RETURN se,re
