@@ -1,6 +1,6 @@
-
-
 # CAD to Neo4j
+![Python 3.10](https://img.shields.io/badge/python-3.10-blue.svg)
+
 
 Turn you CAD models into graphs.
 
