@@ -31,6 +31,7 @@ class ComponentTransformer(BaseTransformer):
         results = {}
         results['create_component_relationships'] = self.create_component_relationships(execute_query)
         results['create_sketches_to_planes_relationship'] = self.create_sketches_to_planes_relationship(execute_query)
+        results['create_contains_relationships'] = self.create_contains_relationships(execute_query)
         return results
 
     def create_component_relationships(self, execute_query):
@@ -63,7 +64,7 @@ class ComponentTransformer(BaseTransformer):
             except Exception as e:
                 self.logger.error(f'Exception executing query: {query}\n{e}\n{traceback.format_exc()}')
         return results
-    
+
     def create_sketches_to_planes_relationship(self, execute_query):
         """
         Creates 'BUILT_ON' relationships between sketches and their reference 
@@ -84,7 +85,7 @@ class ComponentTransformer(BaseTransformer):
             RETURN s.entityToken AS sketch_id, p.entityToken AS plane_id, labels(p) AS plane_labels
             """,
         ]
-        
+
         results = []
         self.logger.info('Creating sketch to plane/face relationships')
         for query in queries:
@@ -92,4 +93,30 @@ class ComponentTransformer(BaseTransformer):
                 results.extend(execute_query(query))
             except Exception as e:
                 self.logger.error(f'Exception executing query: {query}\n{e}\n{traceback.format_exc()}')
+        return results
+
+    def create_contains_relationships(self, execute_query):
+        """
+        Creates 'CONTAINS' relationships between root components and their child components
+        using the rootComponentToken property.
+
+        Args:
+            execute_query (function): Function to execute a Cypher query.
+
+        Returns:
+            list: The result values from the query execution.
+        """
+        query = """
+        MATCH (childComponent:Component)
+        WHERE childComponent.rootComponentToken IS NOT NULL
+        MATCH (rootComponent:Component {entityToken: childComponent.rootComponentToken})
+        MERGE (rootComponent)-[:CONTAINS]->(childComponent)
+        RETURN rootComponent, childComponent
+        """
+        results = []
+        self.logger.info('Creating CONTAINS relationships between root components and child components')
+        try:
+            results = execute_query(query)
+        except Exception as e:
+            self.logger.error(f'Exception executing query: {query}\n{e}\n{traceback.format_exc()}')
         return results

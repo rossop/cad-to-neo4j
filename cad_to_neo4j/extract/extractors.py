@@ -71,10 +71,12 @@ from .brep import (
     BRepEdgeExtractor,
     BRepVertexExtractor,
 )
+from .component_extractor import ComponentExtractor
 
 __all__ = ['EXTRACTORS', 'ENTITY_MAP']
 
 EXTRACTORS = {
+    'adsk::fusion::Component': ComponentExtractor,
     'adsk::fusion::Sketch': SketchExtractor,
     'adsk::fusion::SketchPoint': SketchPointExtractor,
     'adsk::fusion::SketchCurve': SketchCurveExtractor,
