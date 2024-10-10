@@ -545,7 +545,6 @@ class ExtractorOrchestrator(object):
                 {traceback.format_exc()}
             """
             self.logger.error(general_exception_msg)
-            
 
     def extract_timeline_based_data(self) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
         """
@@ -567,7 +566,8 @@ class ExtractorOrchestrator(object):
 
         self._extract_all_components(self.design)
 
-        timeline_to_component_map: Dict[int, str] = {}
+        # Map to hold component ID -> { 'index': timeline_index, 'rootToken': root_component_token }
+        timeline_to_component_map: Dict[str, Dict[str, Union[int, str]]] = {}
 
 
         for index in range(timeline.count):
@@ -591,7 +591,12 @@ class ExtractorOrchestrator(object):
                 elif isinstance(entity, adsk.fusion.Occurrence):
                     # Get the associated component ID and add it to the map
                     component_id = entity.nativeObject.component.id
-                    timeline_to_component_map[component_id] = index
+                    root_component_token = comp.entityToken
+                    # Map the component ID to its timeline index and root component token
+                    timeline_to_component_map[component_id] = {
+                        'index': index,
+                        'rootToken': root_component_token
+                    }
                     continue
                 elif isinstance(entity, adsk.fusion.Component):
                     continue  # Components are already dealt with
@@ -611,34 +616,35 @@ class ExtractorOrchestrator(object):
             self._extract_feature_face_relationship(component)
 
         return list(self.nodes.values())
-
     def process_components_with_timeline(self, timeline_to_component_map: Dict[str, int]) -> None:
         """
         Processes components to extract the entityToken and checks if the component's ID
         exists in the timeline_to_component_map. If the component's ID is found, it adds
-        the timeline index to the component data.
+        the timeline index to the component data, and entityToken of rootcomponent.
 
         Args:
             design (adsk.fusion.Design): The Fusion 360 design object.
             timeline_to_component_map (Dict[str, int]): A map of component IDs to their timeline indices.
         """
         all_components = self.design.allComponents
-        self.logger.debug(f"{timeline_to_component_map}")
         for component in all_components:
             # Extract the entity token of the component
             entity_token = component.entityToken
             component_id = component.id
 
             # Log entityToken and component_id for debugging
-            self.logger.debug(f"Processing component with ID: {component_id}, EntityToken: {entity_token}")
+            self.logger.info(f"Processing component with ID: {component_id}, EntityToken: {entity_token}")
 
             # Check if the component's ID exists in the timeline_to_component_map
             if component_id in timeline_to_component_map:
                 # If found, get the timeline index from the map
-                timeline_index = timeline_to_component_map[component_id]
+                timeline_data = timeline_to_component_map[component_id]
+                timeline_index = timeline_data['index']
+                root_component_token = timeline_data['rootToken']
 
                 # Add a new field 'timelineIndex' with the timeline index to the component's node data
                 self.nodes[entity_token]['timelineIndex'] = timeline_index
+                self.nodes[entity_token]['rootComponentToken'] = root_component_token
 
                 # Log the association of the timelineIndex for debugging
-                self.logger.debug(f"Assigned timeline index {timeline_index} to component with ID: {component_id}")
+                self.logger.info(f"Assigned timeline index {timeline_index} to component with ID: {component_id}")
