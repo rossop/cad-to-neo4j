@@ -527,21 +527,43 @@ class ExtractorOrchestrator(object):
                 faces_union = faces
             nodes[entityToken][face_attr] = faces_union
 
-    def _extract_all_components(self, design: adsk.fusion.Design) -> None:
+    def _extract_all_components(self) -> None:
         """
         Extracts all components from the given design.
-
-        Args:
-            design (adsk.fusion.Design): The Fusion 360 design object.
         """
         try:
-            all_components = design.allComponents
+            all_components = self.design.allComponents
             for component in all_components:
                 self.extract_data(component)
                 self._extract_origin_construction_geometry(component)
         except Exception as e:  # TODO: Add specific exceptions if required
             general_exception_msg: str = f"""
                 Error in _extract_all_components: {str(e)}\n
+                {traceback.format_exc()}
+            """
+            self.logger.error(general_exception_msg)
+
+    def _extract_all_parameters(self) -> None:
+        """
+        Extracts all parameters from the given design, including their parent component information.
+        """
+        try:
+            all_parameters = self.design.allParameters
+            for parameter in all_parameters:
+                # Extract the data for each parameter
+                self.extract_data(parameter)
+
+                # Check if the parameter is a ModelParameter to extract parent component
+                if isinstance(parameter, adsk.fusion.ModelParameter):
+                    parent_component = parameter.component
+                    if parent_component:
+                        # Add the parent component data to the nodes
+                        parameter_entity_token = parameter.entityToken
+                        self.nodes[parameter_entity_token]['parentComponent'] = parent_component.entityToken
+
+        except Exception as e:  # TODO: Add specific exceptions if required
+            general_exception_msg: str = f"""
+                Error in _extract_all_parameters: {str(e)}\n
                 {traceback.format_exc()}
             """
             self.logger.error(general_exception_msg)
@@ -564,7 +586,8 @@ class ExtractorOrchestrator(object):
         self.current_edges = set()
         self.current_vertices = set()
 
-        self._extract_all_components(self.design)
+        self._extract_all_components()
+        self._extract_all_parameters()
 
         # Map to hold component ID -> { 'index': timeline_index, 'rootToken': root_component_token }
         timeline_to_component_map: Dict[str, Dict[str, Union[int, str]]] = {}
@@ -616,6 +639,7 @@ class ExtractorOrchestrator(object):
             self._extract_feature_face_relationship(component)
 
         return list(self.nodes.values())
+
     def process_components_with_timeline(self, timeline_to_component_map: Dict[str, int]) -> None:
         """
         Processes components to extract the entityToken and checks if the component's ID

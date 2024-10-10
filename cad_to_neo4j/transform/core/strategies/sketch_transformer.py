@@ -33,6 +33,7 @@ class SketchTransformer(BaseTransformer):
         results['create_sketch_axis_and_origin_for_all_sketches'] = self.create_sketch_axis_and_origin_for_all_sketches(execute_query)
         results['create_sketch_dimensions_relationships'] = self.create_sketch_dimensions_relationships(execute_query)
         results['create_sketch_geometric_constraints'] = self.create_sketch_geometric_constraints(execute_query)
+        results['link_sketch_dimensions_to_parameters'] = self.link_sketch_dimensions_to_parameters(execute_query)
         return results
 
     def create_sketch_relationships(self, execute_query):
@@ -49,12 +50,12 @@ class SketchTransformer(BaseTransformer):
             r"""
             // Match existing SketchEntity nodes with a non-null parentSketch
             MATCH (se)
-            WHERE ('SketchEntity' IN labels(se) 
-                OR 'SketchDimension' IN labels(se) 
-                OR 'GeometricConstraint' IN labels(se) 
-                OR 'Profile' IN labels(se)) 
-                AND se.parentSketch IS NOT NULL 
-            
+            WHERE ('SketchEntity' IN labels(se)
+                OR 'SketchDimension' IN labels(se)
+                OR 'GeometricConstraint' IN labels(se)
+                OR 'Profile' IN labels(se))
+                AND se.parentSketch IS NOT NULL
+
             // Match existing Sketch node where entityToken matches parentSketch of SketchEntity
             MATCH (s:Sketch {entityToken: se.parentSketch})
 
@@ -454,3 +455,35 @@ class SketchTransformer(BaseTransformer):
             execute_query(query)
         except Exception as e:
             self.logger.error(f"Error creating sketch axis and origin nodes for all sketches: {e}")
+
+    def link_sketch_dimensions_to_parameters(self, execute_query):
+        """
+        Creates relationships between SketchDimensions and Parameters in the Neo4j database.
+
+        This method finds SketchDimension nodes that have an associatedModelParameter
+        and links them to the corresponding Parameter node based on their entityToken.
+
+        Args:
+            execute_query (function): Function to execute a Cypher query.
+
+        Returns:
+            list: The result values from the query execution.
+        """
+        query = """
+        MATCH (d:SketchDimension), (p:Parameter)
+        WHERE d.associatedModelParameter IS NOT NULL
+        AND d.associatedModelParameter = p.entityToken
+        MERGE (d)-[:DRIVEN_BY]->(p)
+        RETURN d, p
+        """
+
+        results = []
+
+        try:
+            self.logger.info('Linking SketchDimensions to Parameters')
+            results = execute_query(query)
+            self.logger.info(f'Linked {len(results)} SketchDimensions to Parameters')
+        except Exception as e:
+            self.logger.error(f'Exception executing query: {query}\n{e}\n{traceback.format_exc()}')
+
+        return results

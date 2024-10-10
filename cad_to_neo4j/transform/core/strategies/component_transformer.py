@@ -32,6 +32,7 @@ class ComponentTransformer(BaseTransformer):
         results['create_component_relationships'] = self.create_component_relationships(execute_query)
         results['create_sketches_to_planes_relationship'] = self.create_sketches_to_planes_relationship(execute_query)
         results['create_contains_relationships'] = self.create_contains_relationships(execute_query)
+        results['create_parameter_relationships'] = self.create_parameter_relationships(execute_query)
         return results
 
     def create_component_relationships(self, execute_query):
@@ -119,4 +120,42 @@ class ComponentTransformer(BaseTransformer):
             results = execute_query(query)
         except Exception as e:
             self.logger.error(f'Exception executing query: {query}\n{e}\n{traceback.format_exc()}')
+        return results
+
+    def create_parameter_relationships(self, execute_query):
+        """
+        Creates relationships between parameters and the components or features they belong to.
+
+        Args:
+            execute_query (function): Function to execute a Cypher query.
+
+        Returns:
+            list: The result values from the query execution.
+        """
+        queries = [
+            """
+            MATCH (p:Parameter)
+            WHERE p.parentComponent IS NOT NULL
+            MATCH (c:Component {entityToken: p.parentComponent})
+            MERGE (c)-[:HAS_PARAMETER]->(p)
+            RETURN c, p
+            """,
+            """
+            MATCH (p:Parameter)
+            WHERE p.createdBy IS NOT NULL
+            MATCH (e {entityToken: p.createdBy})
+            MERGE (e)-[:HAS_PARAMETER]->(p)
+            RETURN e, p
+            """
+        ]
+        
+        results = []
+        self.logger.info('Creating relationships between parameters and their parent components or features')
+        
+        for query in queries:
+            try:
+                results.extend(execute_query(query))
+            except Exception as e:
+                self.logger.error(f'Exception executing query: {query}\n{e}\n{traceback.format_exc()}')
+        
         return results
