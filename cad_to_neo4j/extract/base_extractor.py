@@ -7,15 +7,19 @@ Classes:
     - BaseExtractor: Extracts name, type, and id token from a CAD object.
 """
 
-from adsk.core import Base # TODO fix import
 import logging
+import traceback
+
 from typing import Optional, Dict, List, Any
+import inspect
+
+from adsk.core import Base # TODO fix import
 from ..utils.general_utils import nested_getattr, nested_hasattr
 import traceback
-import inspect
 from ..utils.logger_utils import logger_utility
 
 __all__ = ['BaseExtractor']
+
 
 class BaseExtractor(object):
     """Base class for extracting basic properties from CAD objects."""
@@ -82,24 +86,31 @@ class BaseExtractor(object):
             if hasattr(self._obj, 'entityToken'):
                 return getattr(self._obj, 'entityToken', None)
         except AttributeError as e:
-            self.logger.error(f'Error : {e}\n{traceback.format_exc()}')
+            # Create a detailed error message for AttributeError
+            attribute_error_msg: str = f'AttributeError while extracting entity token: {e}\n{traceback.format_exc()}'
+            self.logger.error(attribute_error_msg)
             return None
-        
+        except RuntimeError as e:
+            # Create a detailed error message for RuntimeError
+            runtime_error_msg: str = f"RuntimeError while extracting entity token: {e}\n{traceback.format_exc()}"
+            self.logger.error(runtime_error_msg)
+            return None
+
     @property
     def timelineIndex(self) -> Optional[int]:
         """Extracts the timeline index of the Sketch object.
-        
+
         Returns:
             int: The timeline index of the Sketch object, or None if not available.
         """
         try:
             return nested_getattr(self._obj, 'timelineObject.index', None)
         except AttributeError:
-            return None 
-        
+            return None
+
     def _get_class_hierarchy(self) -> List[str]:
         """Gets the class hierarchy of the CAD object.
-        
+
         Returns:
             List[str]: A list of class names in the class hierarchy
         """
@@ -110,13 +121,13 @@ class BaseExtractor(object):
                 lambda cls: self._simplify_class_name(cls.__name__) if '::' in cls.__name__ else cls.__name__,
                 class_hierarchy
             )
-            
+
             # Filter out 'Base' and 'object' using filter
             filtered_class_names = filter(
                 lambda name: name not in ('Base', 'object'),
                 simplified_class_names
             )
-            
+
             # Convert the filter object to a list and return it
             return list(filtered_class_names)
         except Exception as e:

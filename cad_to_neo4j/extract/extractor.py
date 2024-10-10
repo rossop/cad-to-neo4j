@@ -122,7 +122,10 @@ class ExtractorOrchestrator(object):
             Optional[Dict[str, Any]]: The extracted data.
         """
         try:
-            self.log_element_properties(element)
+            if hasattr(element, 'isProxy') and element.isProxy:
+                element = element.nativeObject
+
+            # self.log_element_properties(element)
 
             extractor: BaseExtractor = self.get_extractor(element)
             extracted_info: Optional[Dict[str, Any]] = extractor.extract_info()
@@ -524,6 +527,26 @@ class ExtractorOrchestrator(object):
                 faces_union = faces
             nodes[entityToken][face_attr] = faces_union
 
+    def _extract_all_components(self, design: adsk.fusion.Design) -> None:
+        """
+        Extracts all components from the given design.
+
+        Args:
+            design (adsk.fusion.Design): The Fusion 360 design object.
+        """
+        try:
+            all_components = design.allComponents
+            for component in all_components:
+                self.extract_data(component)
+                self._extract_origin_construction_geometry(component)
+        except Exception as e:  # TODO: Add specific exceptions if required
+            general_exception_msg: str = f"""
+                Error in _extract_all_components: {str(e)}\n
+                {traceback.format_exc()}
+            """
+            self.logger.error(general_exception_msg)
+            
+
     def extract_timeline_based_data(self) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
         """
         Extract data based on the timeline order.
@@ -534,7 +557,7 @@ class ExtractorOrchestrator(object):
         comp: adsk.fusion.Component = self.design.rootComponent
         timeline: adsk.fusion.Timeline = self.design.timeline
 
-        # Reinitialise sets
+        # Reinitialise BREP sets
         self.previous_faces = set()
         self.previous_edges = set()
         self.previous_vertices = set()
@@ -542,12 +565,14 @@ class ExtractorOrchestrator(object):
         self.current_edges = set()
         self.current_vertices = set()
 
-        self.extract_data(comp)
-        self._extract_origin_construction_geometry(comp)
+        self._extract_all_components(self.design)
+
+        timeline_to_component_map: Dict[int, str] = {}
+
 
         for index in range(timeline.count):
             timelineObject = timeline.item(index)
-            entity = timelineObject.entity
+            entity: adsk.core.Base = timelineObject.entity
             self.timeline_index = index
 
             # Roll to current timeline
@@ -558,10 +583,18 @@ class ExtractorOrchestrator(object):
             self._get_current_brep_entities(comp)
 
             if entity:
+
                 if isinstance(entity, Feature):
                     self._extract_feature(entity, comp)
                 elif isinstance(entity, Sketch):
                     self._extract_sketch(entity)
+                elif isinstance(entity, adsk.fusion.Occurrence):
+                    # Get the associated component ID and add it to the map
+                    component_id = entity.nativeObject.component.id
+                    timeline_to_component_map[component_id] = index
+                    continue
+                elif isinstance(entity, adsk.fusion.Component):
+                    continue  # Components are already dealt with
                 else:
                     self._extract_other_entity(entity)
 
@@ -570,7 +603,42 @@ class ExtractorOrchestrator(object):
                 self.previous_edges = self.current_edges.copy()
                 self.previous_vertices = self.current_vertices.copy()
 
-        self.extract_brep_entities(comp)
-        self._extract_feature_face_relationship(comp)
+        self.process_components_with_timeline(timeline_to_component_map)
+
+        all_components = self.design.allComponents
+        for component in all_components:
+            self.extract_brep_entities(component)
+            self._extract_feature_face_relationship(component)
 
         return list(self.nodes.values())
+
+    def process_components_with_timeline(self, timeline_to_component_map: Dict[str, int]) -> None:
+        """
+        Processes components to extract the entityToken and checks if the component's ID
+        exists in the timeline_to_component_map. If the component's ID is found, it adds
+        the timeline index to the component data.
+
+        Args:
+            design (adsk.fusion.Design): The Fusion 360 design object.
+            timeline_to_component_map (Dict[str, int]): A map of component IDs to their timeline indices.
+        """
+        all_components = self.design.allComponents
+        self.logger.debug(f"{timeline_to_component_map}")
+        for component in all_components:
+            # Extract the entity token of the component
+            entity_token = component.entityToken
+            component_id = component.id
+
+            # Log entityToken and component_id for debugging
+            self.logger.debug(f"Processing component with ID: {component_id}, EntityToken: {entity_token}")
+
+            # Check if the component's ID exists in the timeline_to_component_map
+            if component_id in timeline_to_component_map:
+                # If found, get the timeline index from the map
+                timeline_index = timeline_to_component_map[component_id]
+
+                # Add a new field 'timelineIndex' with the timeline index to the component's node data
+                self.nodes[entity_token]['timelineIndex'] = timeline_index
+
+                # Log the association of the timelineIndex for debugging
+                self.logger.debug(f"Assigned timeline index {timeline_index} to component with ID: {component_id}")
