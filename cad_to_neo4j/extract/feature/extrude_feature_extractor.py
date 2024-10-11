@@ -175,7 +175,7 @@ class ExtrudeFeatureExtractor(FeatureExtractor):
         two_sides_feature_extent_type: int = 1
         symmetric_feature_extent_type: int = 2
         try:
-            direction_value = self._obj.extentType
+            direction_value: int = self._obj.extentType
             if direction_value == one_side_feature_extent_type:
                 return 'One Sided'
             elif direction_value == two_sides_feature_extent_type:

@@ -1,12 +1,11 @@
 """
 Parameter Extractor Module
 
-This module provides extractors for extracting information from Parameter and ModelParameter objects.
+This module provides extractors for extracting information from Parameter
+Object
 
 Classes:
-    - ParameterExtractor: Extractor for generic Parameter objects.
-    - ModelParameterExtractor: Extractor for ModelParameter objects.
-"""
+    - ParameterExtractor: Extractor for generic Parameter objects."""
 
 from typing import Dict, Optional, Union
 import adsk.core
@@ -21,7 +20,8 @@ class ParameterExtractor:
         Initializes the ParameterExtractor with a Parameter object.
 
         Args:
-            obj (adsk.fusion.Parameter): The Parameter object to extract information from.
+            obj (adsk.fusion.Parameter): The Parameter object to extract
+                information from.
         """
         self._obj = obj
 
@@ -31,7 +31,7 @@ class ParameterExtractor:
 
         Returns:
             Dict[str, Optional[Union[str, float]]]: A dictionary containing
-                                                    detailed information of the parameter.
+                                        detailed information of the parameter.
         """
         return {
             'name': self._obj.name,
@@ -43,7 +43,7 @@ class ParameterExtractor:
         }
 
     @property
-    def entityToken(self) -> str:
+    def entity_token(self) -> str:
         """
         Returns the entity token for the parameter.
 

@@ -6,7 +6,7 @@ This module provides an extractor class for extracting information from Feature 
 Classes:
     - FeatureExtractor: Extractor for Feature objects.
 """
-from typing import Optional, List, Dict
+from typing import Any, Optional, List, Dict
 from adsk.fusion import Feature
 from ..base_extractor import BaseExtractor
 import traceback
@@ -21,7 +21,7 @@ class FeatureExtractor(BaseExtractor):
         """Initialize the extractor with the Feature element."""
         super().__init__(obj)
        
-    def extract_info(self) -> dict:
+    def extract_info(self) -> Dict[str, Any]:
         """Extract all information from the Feature element.
 
         Returns:
@@ -67,7 +67,7 @@ class FeatureExtractor(BaseExtractor):
         except AttributeError as e:
             self.logger.error(f'Error extracting isParametric: {e}\n{traceback.format_exc()}')
             return None
-    
+
     @property
     def parentComponent(self) -> Optional[str]:
         """Extracts the ID of the parent component."""
@@ -76,7 +76,7 @@ class FeatureExtractor(BaseExtractor):
         except AttributeError as e:
             self.logger.error(f'Error extracting parentComponent: {e}\n{traceback.format_exc()}')
             return None
-    
+
     @property
     def linkedFeatures(self) -> Optional[List[str]]:
         """Extracts the IDs of linked features."""
@@ -85,7 +85,7 @@ class FeatureExtractor(BaseExtractor):
         except AttributeError as e:
             self.logger.error(f'Error extracting linkedFeatures: {e}\n{traceback.format_exc()}')
             return None
-        
+
     @property
     def bodies(self) -> Optional[List[str]]:
         """Extracts the IDs of bodies modified or created by the feature."""
@@ -94,7 +94,7 @@ class FeatureExtractor(BaseExtractor):
         except AttributeError as e:
             self.logger.error(f'Error extracting bodies: {e}\n{traceback.format_exc()}')
             return None
-        
+
     @property
     def baseFeature(self) -> Optional[str]:
         """Extracts the ID of the associated base feature, if any."""
@@ -112,7 +112,7 @@ class FeatureExtractor(BaseExtractor):
         except AttributeError as e:
             self.logger.error(f'Error extracting healthState: {e}\n{traceback.format_exc()}')
             return None
-        
+
     @property
     def errorOrWarningMessage(self) -> Optional[str]:
         """Extracts the error or warning message if the feature has health issues."""
