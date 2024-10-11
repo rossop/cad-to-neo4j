@@ -7,12 +7,17 @@ Object
 Classes:
     - ParameterExtractor: Extractor for generic Parameter objects."""
 
-from typing import Dict, Optional, Union
+from typing import Dict, Optional, Union, List
+
 import adsk.core
 import adsk.fusion
 
+from ..base_extractor import BaseExtractor
 
-class ParameterExtractor:
+import traceback
+
+
+class ParameterExtractor(BaseExtractor):
     """Extractor for extracting detailed information from Parameter objects."""
 
     def __init__(self, obj: adsk.fusion.Parameter) -> None:
@@ -23,7 +28,7 @@ class ParameterExtractor:
             obj (adsk.fusion.Parameter): The Parameter object to extract
                 information from.
         """
-        self._obj = obj
+        super().__init__(obj)
 
     def extract_info(self) -> Dict[str, Optional[Union[str, float]]]:
         """
@@ -31,43 +36,50 @@ class ParameterExtractor:
 
         Returns:
             Dict[str, Optional[Union[str, float]]]: A dictionary containing
-                                        detailed information of the parameter.
+            detailed information of the parameter.
         """
-        return {
-            'name': self._obj.name,
+        base_info = super().extract_info()
+        parameter_info = {
             'value': self._obj.value,
             'expression': self._obj.expression,
             'unit': self._obj.unit,
             'isFavorite': self._obj.isFavorite,
             'isDeletable': self._obj.isDeletable
         }
+        return {**base_info, **parameter_info}
 
     @property
-    def entity_token(self) -> str:
-        """
-        Returns the entity token for the parameter.
-
-        Returns:
-            str: The entity token of the parameter.
-        """
-        return self._obj.entityToken
-
-    @property
-    def dependent_parameters(self) -> list:
+    def dependent_parameters(self) -> List[str]:
         """
         Returns a list of parameters that are dependent on this parameter.
 
         Returns:
             list: A list of dependent parameters.
         """
-        return [param.name for param in self._obj.dependentParameters]
+        try:
+            return [param.name for param in self._obj.dependentParameters]
+        except (AttributeError, RuntimeError) as e:
+            error_msg: str = (
+                f"Error extracting dependent parameters: {e}\n"
+                f"{traceback.format_exc()}"
+                )
+            self.logger.error(error_msg)
+            return []
 
     @property
-    def dependency_parameters(self) -> list:
+    def dependency_parameters(self) -> List[str]:
         """
         Returns a list of parameters that this parameter is dependent on.
 
         Returns:
             list: A list of dependency parameters.
         """
-        return [param.name for param in self._obj.dependencyParameters]
+        try:
+            return [param.name for param in self._obj.dependencyParameters]
+        except (AttributeError, RuntimeError) as e:
+            error_msg: str = (
+                f"Error extracting dependent parameters: {e}\n"
+                f"{traceback.format_exc()}"
+                )
+            self.logger.error(error_msg)
+            return []

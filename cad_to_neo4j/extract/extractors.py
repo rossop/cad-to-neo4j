@@ -81,8 +81,8 @@ from .parameters import (
 __all__ = ['EXTRACTORS', 'ENTITY_MAP']
 
 EXTRACTORS = {
-    'adsk::fusion::ParameterExtractor': ParameterExtractor,
-    'adsk::fusion::ModelParameterExtractort': ModelParameterExtractor,
+    'adsk::fusion::Parameter': ParameterExtractor,
+    'adsk::fusion::ModelParameter': ModelParameterExtractor,
     'adsk::fusion::Component': ComponentExtractor,
     'adsk::fusion::Sketch': SketchExtractor,
     'adsk::fusion::SketchPoint': SketchPointExtractor,
