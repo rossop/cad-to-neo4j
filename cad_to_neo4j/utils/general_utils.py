@@ -42,7 +42,7 @@ def nested_getattr(obj: object, attr: str, default: Optional[Any] = None) -> Any
         return obj
     except AttributeError:
         return default
-    
+
 def nested_hasattr(obj, attr: str) -> bool:
     """
     Recursively check if the nested attribute exists.

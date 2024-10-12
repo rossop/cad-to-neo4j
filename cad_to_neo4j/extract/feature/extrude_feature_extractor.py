@@ -9,11 +9,11 @@ Classes:
 """
 from typing import Optional, Any, Dict, List
 
-import traceback
 import adsk.fusion
 import adsk.core
 
 from .feature_extractor import FeatureExtractor
+from ..base_extractor import BaseExtractor
 from ...utils.general_utils import nested_getattr
 
 __all__ = ['ExtrudeFeatureExtractor']
@@ -60,74 +60,45 @@ class ExtrudeFeatureExtractor(FeatureExtractor):
         return {**feature_info, **extrude_info}
 
     @property
+    @BaseExtractor.safe_extraction
     def profile_tokens(self):
         """Extracts the tokens of profiles used by the ExtrudeFeature.
 
         Returns:
             list: A list of profile tokens used by the ExtrudeFeature.
         """
-        try:
-            profiles = self._obj.profile
-            if isinstance(profiles, adsk.core.ObjectCollection):
-                profile_list = [profile.entityToken for profile in profiles]
-                return profile_list
-            return [profiles.entityToken]
-        except AttributeError:
-            return []
+        profiles = self._obj.profile
+        if isinstance(profiles, adsk.core.ObjectCollection):
+            profile_list = [profile.entityToken for profile in profiles]
+            return profile_list
+        return [profiles.entityToken]
 
     @property
+    @BaseExtractor.safe_extraction
     def bodies(self) -> Optional[List[str]]:
         """Extracts the IDs of bodies created or modified by the feature."""
-        try:
-            return self.extract_ids('bodies', 'entityToken')
-        except AttributeError as e:
-            attribute_error_msg: str = (
-                f'Error extracting bodies: {e}\n'
-                f'{traceback.format_exc()}'
-                )
-            self.logger.error(attribute_error_msg)
-            return None
+        return self.extract_collection_tokens('bodies', 'entityToken')
 
     @property
+    @BaseExtractor.safe_extraction
     def start_faces(self) -> Optional[List[str]]:
         """Extracts the IDs of start faces created by the feature."""
-        try:
-            return self.extract_ids('startFaces', 'entityToken')
-        except AttributeError as e:
-            attribute_error_msg: str = (
-                f'Error extracting start faces: {e}\n'
-                f'{traceback.format_exc()}'
-                )
-            self.logger.error(attribute_error_msg)
-            return None
+        return self.extract_collection_tokens('startFaces', 'entityToken')
 
     @property
+    @BaseExtractor.safe_extraction
     def end_faces(self) -> Optional[List[str]]:
         """Extracts the IDs of end faces created by the feature."""
-        try:
-            return self.extract_ids('endFaces', 'entityToken')
-        except AttributeError as e:
-            attribute_error_msg: str = (
-                f'Error extracting end faces: {e}\n'
-                f'{traceback.format_exc()}'
-                )
-            self.logger.error(attribute_error_msg)
-            return None
+        return self.extract_collection_tokens('endFaces', 'entityToken')
 
     @property
+    @BaseExtractor.safe_extraction
     def side_faces(self) -> Optional[List[str]]:
         """Extracts the IDs of side faces created by the feature."""
-        try:
-            return self.extract_ids('sideFaces', 'entityToken')
-        except AttributeError as e:
-            attribute_error_msg: str = (
-                f'Error extracting side faces: {e}\n'
-                f'{traceback.format_exc()}'
-                )
-            self.logger.error(attribute_error_msg)
-            return None
+        return self.extract_collection_tokens('sideFaces', 'entityToken')
 
     @property
+    @BaseExtractor.safe_extraction
     def start_extent(self) -> Dict[str, Any]:
         """Extracts the start extent definition used by the feature."""
         start_extent_info = {}
@@ -169,28 +140,22 @@ class ExtrudeFeatureExtractor(FeatureExtractor):
         return start_extent_info
 
     @property
+    @BaseExtractor.safe_extraction
     def extent_type(self) -> Optional[str]:
         """Extracts the direction of the extrusion."""
         one_side_feature_extent_type: int = 0
         two_sides_feature_extent_type: int = 1
         symmetric_feature_extent_type: int = 2
-        try:
-            direction_value: int = self._obj.extentType
-            if direction_value == one_side_feature_extent_type:
-                return 'One Sided'
-            elif direction_value == two_sides_feature_extent_type:
-                return 'Two Sided'
-            elif direction_value == symmetric_feature_extent_type:
-                return 'Symmetric'
-            else:
-                return 'Unknown'
-        except AttributeError as e:
-            attribute_error_msg: str = (
-                f'Error extracting extent one: {e}\n'
-                f'{traceback.format_exc()}'
-                )
-            self.logger.error(attribute_error_msg)
-            return None
+
+        direction_value: int = self._obj.extentType
+        if direction_value == one_side_feature_extent_type:
+            return 'One Sided'
+        elif direction_value == two_sides_feature_extent_type:
+            return 'Two Sided'
+        elif direction_value == symmetric_feature_extent_type:
+            return 'Symmetric'
+        else:
+            return 'Unknown'
 
     def extract_extent_info(self,
                             extent_root: Any,
@@ -205,61 +170,58 @@ class ExtrudeFeatureExtractor(FeatureExtractor):
         Returns:
             dict: A dictionary containing the extracted extent information.
         """
-        try:
-            if extent_root is not None:
-                extent_info = {
-                    f'{prefix}_type': type(extent_root).__name__,
-                    f'{prefix}_taper_angle': nested_getattr(
-                                                    extent_root,
-                                                    'taperAngle.value',
-                                                    None),
-                    f'{prefix}IsPositiveDirection': getattr(
-                                                        extent_root,
-                                                        'isPositiveDirection',
-                                                        None),
-                }
-                if isinstance(
-                        extent_root,
-                        adsk.fusion.DistanceExtentDefinition):
-                    extent_info[f'{prefix}_distance'] = \
-                        nested_getattr(extent_root, 'distance.value', None)
-                elif isinstance(
-                        extent_root,
-                        adsk.fusion.ThroughAllExtentDefinition):
-                    extent_info[f'{prefix}_distance'] = 'Through All'
-                elif isinstance(
-                        extent_root,
-                        adsk.fusion.ToEntityExtentDefinition):
-                    extent_info[f'{prefix}_offset'] = \
-                        nested_getattr(extent_root, 'distance.value', None)
-                    extent_info[f'{prefix}_object_id'] = \
-                        nested_getattr(extent_root, 'entity.entityToken', None)
+        if extent_root is not None:
+            extent_info = {
+                f'{prefix}Type': type(extent_root).__name__,
+                f'{prefix}TaperAngle': nested_getattr(
+                    extent_root, 'taperAngle.value', None),
+                f'{prefix}TaperAngleToken': nested_getattr(
+                    extent_root, 'taperAngle.entityToken', None),
+                f'{prefix}IsPositiveDirection': getattr(
+                    extent_root, 'isPositiveDirection', None),
+            }
 
-                return extent_info
+            # Handle DistanceExtentDefinition
+            if isinstance(extent_root, adsk.fusion.DistanceExtentDefinition):
+                extent_info[f'{prefix}Distance'] = \
+                    nested_getattr(extent_root, 'distance.value', None)
+                extent_info[f'{prefix}DistanceToken'] = \
+                    nested_getattr(extent_root, 'distance.entityToken', None)
 
-            return None
+            # Handle ThroughAllExtentDefinition
+            elif isinstance(
+                    extent_root, adsk.fusion.ThroughAllExtentDefinition):
+                extent_info[f'{prefix}Distance'] = 'Through All'
 
-        except AttributeError as e:
-            attribute_error_msg: str = (
-                f'Error extracting extent info: {e}\n'
-                f'{traceback.format_exc()}'
-            )
-            self.logger.error(attribute_error_msg)
-            return None
+            # Handle ToEntityExtentDefinition
+            elif isinstance(extent_root, adsk.fusion.ToEntityExtentDefinition):
+                extent_info[f'{prefix}Offset'] = \
+                    nested_getattr(extent_root, 'distance.value', None)
+                extent_info[f'{prefix}OffsetToken'] = \
+                    nested_getattr(extent_root, 'distance.entityToken', None)
+                extent_info[f'{prefix}EntityToken'] = \
+                    nested_getattr(extent_root, 'entity.entityToken', None)
+
+            return extent_info
+
+        return None
 
     @property
+    @BaseExtractor.safe_extraction
     def extent_one(self) -> Optional[Dict[str, Any]]:
         """Extracts the extent one definition used by the feature."""
         extent_one_root = getattr(self._obj, 'extentOne', None)
         return self.extract_extent_info(extent_one_root, 'extentOne')
 
     @property
+    @BaseExtractor.safe_extraction
     def extent_two(self) -> Optional[Dict[str, Any]]:
         """Extracts the extent two definition used by the feature."""
         extent_two_root = getattr(self._obj, 'extentTwo', None)
         return self.extract_extent_info(extent_two_root, 'extentTwo')
 
     @property
+    @BaseExtractor.safe_extraction
     def operation(self) -> Optional[str]:
         """Extracts the type of operation performed by the extrusion."""
         operation_mapping = {
@@ -270,59 +232,40 @@ class ExtrudeFeatureExtractor(FeatureExtractor):
             4: 'NewComponentFeatureOperation'
         }
 
-        try:
-            operation_val = getattr(self._obj, 'operation', None)
-            return operation_mapping[operation_val] if operation_val else None
-        except AttributeError as e:
-            attribute_error_msg: str = (
-                f'Error extracting operation: {e}\n'
-                f'{traceback.format_exc()}'
-            )
-            self.logger.error(attribute_error_msg)
-            return None
+        operation_val = getattr(self._obj, 'operation', None)
+        return operation_mapping[operation_val] if operation_val else None
 
     @property
+    @BaseExtractor.safe_extraction
     def participant_bodies(self) -> Optional[List[str]]:
         """Extracts the list of bodies that will participate in the feature
         when the operation is a cut or intersection."""
-        try:
-            self.roll_timeline_to_before_feature()
-            participant_bodies = getattr(self._obj, 'participantBodies', [])
-            ids = [body.entityToken for body in participant_bodies]
-            self.roll_timeline_to_after_feature()
-            return ids
-        except AttributeError as e:
-            attribute_error_msg: str = (
-                f'Error extracting participant bodies: {e}\n'
-                f'{traceback.format_exc()}'
-            )
-            self.logger.error(attribute_error_msg)
-            return None
+        self.roll_timeline_to_before_feature()
+        participant_bodies = getattr(self._obj, 'participantBodies', [])
+        ids = [body.entityToken for body in participant_bodies]
+        self.roll_timeline_to_after_feature()
+        return ids
 
     @property
+    @BaseExtractor.safe_extraction
     def taper_angle_one_token(self) -> Optional[str]:
         """
         Extracts the entity token for the parameter controlling the taper angle
         for side one of the extrusion.
         """
-        try:
-            taper_angle_one = self._obj.taperAngleOne
-            if taper_angle_one:
-                return taper_angle_one.entityToken
-            return None
-        except AttributeError:
-            return None
+        taper_angle_one = self._obj.taperAngleOne
+        if taper_angle_one:
+            return taper_angle_one.entityToken
+        return None
 
     @property
+    @BaseExtractor.safe_extraction
     def taper_angle_two_token(self) -> Optional[str]:
         """
         Extracts the entity token for the parameter controlling the taper angle
         for side two of the extrusion.
         """
-        try:
-            taper_angle_two = self._obj.taperAngleTwo
-            if taper_angle_two:
-                return taper_angle_two.entityToken
-            return None
-        except AttributeError:
-            return None
+        taper_angle_two = self._obj.taperAngleTwo
+        if taper_angle_two:
+            return taper_angle_two.entityToken
+        return None
