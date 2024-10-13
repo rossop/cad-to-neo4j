@@ -62,6 +62,9 @@ from .feature import (
     FilletFeatureExtractor,
     ChamferFeatureExtractor,
     BoxFeatureExtractor,
+    RectangularPatternFeatureExtractor,
+    PathPatternFeatureExtractor,
+    CircularPatternFeatureExtractor,
 )
 from .construction_geometry import ConstructionPlaneExtractor, ConstructionAxisExtractor, ConstructionPointExtractor
 from .brep import (
@@ -115,6 +118,9 @@ EXTRACTORS = {
     'adsk::fusion::FilletFeature': FilletFeatureExtractor,
     'adsk::fusion::ChamferFeature': ChamferFeatureExtractor,
     'adsk::fusion::BoxFeature': BoxFeatureExtractor,
+    'adsk::fusion::RectangularPatternFeature': RectangularPatternFeatureExtractor,
+    'adsk::fusion::CircularPatternFeature': CircularPatternFeatureExtractor,
+    'adsk::fusion::PathPatternFeature': PathPatternFeatureExtractor,
     'adsk::fusion::BRepBody': BRepBodyExtractor,
     'adsk::fusion::BRepShell': BRepEntityExtractor,  # TODO change to ShellExtractor
     'adsk::fusion::BRepLump': BRepEntityExtractor,  # TODO change to LumpExtractor

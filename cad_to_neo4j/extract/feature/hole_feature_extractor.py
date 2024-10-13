@@ -1,31 +1,30 @@
 """
 Hole Feature Extractor Module
 
-This module provides an extractor class for extracting information from HoleFeature objects.
+This module provides an extractor class for extracting information from
+HoleFeature objects.
 
 Classes:
     - HoleFeatureExtractor: Extractor for HoleFeature objects.
 """
 from typing import Optional, Any, Dict, List
-from adsk.fusion import (
-        HoleFeature,
-        AtCenterHolePositionDefinition, 
-        OnEdgeHolePositionDefinition, 
-        PlaneAndOffsetsHolePositionDefinition, 
-        PointHolePositionDefinition, 
-        SketchPointHolePositionDefinition, 
-        SketchPointsHolePositionDefinition
-    )
-import traceback
+
+import adsk.fusion
+import adsk.core
+
 from .feature_extractor import FeatureExtractor
+from ..base_extractor import BaseExtractor
 from ...utils.general_utils import nested_getattr
 
 __all__ = ['HoleFeatureExtractor']
 
-class HoleFeatureExtractor(FeatureExtractor):
-    """Extractor for extracting detailed information from HoleFeature objects."""
 
-    def __init__(self, obj: HoleFeature):
+class HoleFeatureExtractor(FeatureExtractor):
+    """
+    Extractor for extracting detailed information from HoleFeature objects.
+    """
+
+    def __init__(self, obj: adsk.fusion.HoleFeature):
         """Initialize the extractor with the HoleFeature obj."""
         super().__init__(obj)
 
@@ -39,245 +38,280 @@ class HoleFeatureExtractor(FeatureExtractor):
         hole_info = {
             'position': self.position,
             'direction': self.direction,
-            'holeType': self.holeType,
-            'holeDiameter': self.holeDiameter,
-            'tip_angle': self.tip_angle,
-            'counterboreDiameter': self.counterboreDiameter,
-            'counterboreDepth': self.counterboreDepth,
-            'countersinkDiameter': self.countersinkDiameter,
-            'countersinkAngle': self.countersinkAngle,
-            'isDefaultDirection': self.isDefaultDirection,
+            'holeType': self.hole_type,
+            'holeDiameterValue': self.hole_diameter_value,
+            'holeDiameterToken': self.hole_diameter_token,
+            'tipAngleValue': self.tip_angle_value,
+            'tipAngleToken': self.tip_angle_token,
+            'counterboreDiameterValue': self.counterbore_diameter_value,
+            'counterboreDiameterToken': self.counterbore_diameter_token,
+            'counterboreDepthValue': self.counterbore_depth_value,
+            'counterboreDepthToken': self.counterbore_depth_token,
+            'countersinkDiameterValue': self.countersink_diameter_value,
+            'countersinkDiameterToken': self.countersink_diameter_token,
+            'countersink_angleValue': self.countersink_angle_value,
+            'countersink_angleToken': self.countersink_angle_token,
+            'isDefaultDirection': self.is_default_direction,
+            # 'holePositionDefinition': self.hole_position_definition,
+            'nativeObject': self.native_object,
         }
-        # Add hole position information if available
-        # hole_position_info = self.holePositionDefinition # TODO define
-        # if hole_position_info is not None:
-        #     hole_info.update(hole_position_info)
 
         # Add extent information if available
-        extent_info = self.extentDefinition #TODO add all 6 HolePositionDefinition
+        extent_info = self.extent_definition
         if extent_info is not None:
             hole_info.update(extent_info)
 
         return {**feature_info, **hole_info}
 
     @property
+    @BaseExtractor.safe_extraction
     def position(self) -> Optional[List[float]]:
         """Returns the position of the hole as a vector."""
-        try:
-            point = getattr(self._obj,'position', None)
-            if point is not None:
-                return [getattr(point, 'x', None),
-                        getattr(point, 'y', None),
-                        getattr(point, 'z', None)]
-            else:
-                return None
-            
-        except AttributeError as e:
-            self.logger.error(f'Error extracting position: {e}\n{traceback.format_exc()}')
+        point = getattr(self._obj, 'position', None)
+        if point is not None:
+            return [getattr(point, 'x', None),
+                    getattr(point, 'y', None),
+                    getattr(point, 'z', None)]
+        else:
             return None
 
     @property
+    @BaseExtractor.safe_extraction
     def direction(self) -> Optional[List[float]]:
         """Returns the direction of the hole as a vector."""
-        try:
-            vector = getattr(self._obj,'direction', None)
-            if vector is not None:    
-                return [getattr(vector, 'x', None),
-                        getattr(vector, 'y', None),
-                        getattr(vector, 'z', None)]
-            else:
-                return None
-            
-        except AttributeError as e:
-            self.logger.error(f'Error extracting direction: {e}\n{traceback.format_exc()}')
+        vector = getattr(self._obj, 'direction', None)
+        if vector is not None:
+            return [getattr(vector, 'x', None),
+                    getattr(vector, 'y', None),
+                    getattr(vector, 'z', None)]
+        else:
             return None
 
     @property
-    def holeType(self) -> Optional[str]:
+    @BaseExtractor.safe_extraction
+    def hole_type(self) -> Optional[str]:
         """
         Returns the current type of hole this feature represents.
-        
+
         SimpleHoleType = 0
         CounterboreHoleType = 1
         CountersinkHoleType = 2
         """
-        try:
-            holeTypes_map = {
-                0: 'SimpleHoleType',
-                1: 'CounterboreHoleType',
-                2: 'CountersinkHoleType',
-            }
-            holeType = nested_getattr(self._obj, 'holeType', None)
-            if holeType is not None:
-                return holeTypes_map[holeType]
-            else:
-                return None
-        except AttributeError as e:
-            self.logger.error(f'Error extracting hole type: {e}\n{traceback.format_exc()}')
+        hole_types_map = {
+            0: 'SimpleHoleType',
+            1: 'CounterboreHoleType',
+            2: 'CountersinkHoleType',
+        }
+        hole_type = nested_getattr(self._obj, 'holeType', None)
+        if hole_type is not None:
+            return hole_types_map[hole_type]
+        else:
             return None
 
     @property
-    def holeDiameter(self) -> Optional[float]:
-        """Returns the model parameter controlling the hole diameter."""
-        try:
-            return nested_getattr(self._obj, 'holeDiameter.value', None)
-        except AttributeError as e:
-            self.logger.error(f'Error extracting hole diameter: {e}\n{traceback.format_exc()}')
-            return None
+    @BaseExtractor.safe_extraction
+    def hole_diameter_value(self) -> Optional[float]:
+        """Returns the value of the hole diameter."""
+        return nested_getattr(self._obj, 'holeDiameter.value', None)
 
     @property
-    def tip_angle(self) -> Optional[float]:
-        """Returns the model parameter controlling the angle of the tip of the hole."""
-        try:
-            return nested_getattr(self._obj, 'tipAngle.value', None)
-        except AttributeError as e:
-            self.logger.error(f'Error extracting tip angle: {e}\n{traceback.format_exc()}')
-            return None
+    @BaseExtractor.safe_extraction
+    def hole_diameter_token(self) -> Optional[str]:
+        """Returns the entityToken of the hole diameter."""
+        return nested_getattr(self._obj, 'holeDiameter.entityToken', None)
 
     @property
-    def counterboreDiameter(self) -> Optional[float]:
-        """Returns the model parameter controlling the counterbore diameter."""
-        try:
-            return nested_getattr(self._obj, 'counterboreDiameter.value', None)
-        except AttributeError as e:
-            self.logger.error(f'Error extracting counterbore diameter: {e}\n{traceback.format_exc()}')
-            return None
+    @BaseExtractor.safe_extraction
+    def tip_angle_value(self) -> Optional[float]:
+        """Returns the value of the tip angle."""
+        return nested_getattr(self._obj, 'tipAngle.value', None)
 
     @property
-    def counterboreDepth(self) -> Optional[float]:
-        """Returns the model parameter controlling the counterbore depth."""
-        try:
-            return nested_getattr(self._obj, 'counterboreDepth.value', None)
-        except AttributeError as e:
-            self.logger.error(f'Error extracting counterbore depth: {e}\n{traceback.format_exc()}')
-            return None
+    @BaseExtractor.safe_extraction
+    def tip_angle_token(self) -> Optional[str]:
+        """Returns the entityToken of the tip angle."""
+        return nested_getattr(self._obj, 'tipAngle.entityToken', None)
 
     @property
-    def countersinkDiameter(self) -> Optional[float]:
-        """Returns the model parameter controlling the countersink diameter."""
-        try:
-            return nested_getattr(self._obj, 'countersinkDiameter.value', None)
-        except AttributeError as e:
-            self.logger.error(f'Error extracting countersink diameter: {e}\n{traceback.format_exc()}')
-            return None
+    @BaseExtractor.safe_extraction
+    def counterbore_diameter_value(self) -> Optional[float]:
+        """Returns the value of the counterbore diameter."""
+        return nested_getattr(self._obj, 'counterboreDiameter.value', None)
 
     @property
-    def countersinkAngle(self) -> Optional[float]:
-        """Returns the model parameter controlling the countersink angle."""
-        try:
-            return nested_getattr(self._obj, 'countersinkAngle.value', None)
-        except AttributeError as e:
-            self.logger.error(f'Error extracting countersink angle: {e}\n{traceback.format_exc()}')
-            return None
+    @BaseExtractor.safe_extraction
+    def counterbore_diameter_token(self) -> Optional[str]:
+        """Returns the entityToken of the counterbore diameter."""
+        return nested_getattr(
+            self._obj, 'counterboreDiameter.entityToken', None)
 
     @property
-    def isDefaultDirection(self) -> Optional[bool]:
+    @BaseExtractor.safe_extraction
+    def counterbore_depth_value(self) -> Optional[float]:
+        """Returns the value of the counterbore depth."""
+        return nested_getattr(self._obj, 'counterboreDepth.value', None)
+
+    @property
+    @BaseExtractor.safe_extraction
+    def counterbore_depth_token(self) -> Optional[str]:
+        """Returns the entityToken of the counterbore depth."""
+        return nested_getattr(self._obj, 'counterboreDepth.entityToken', None)
+
+    @property
+    @BaseExtractor.safe_extraction
+    def countersink_diameter_value(self) -> Optional[float]:
+        """Returns the value of the countersink diameter."""
+        return nested_getattr(self._obj, 'countersinkDiameter.value', None)
+
+    @property
+    @BaseExtractor.safe_extraction
+    def countersink_diameter_token(self) -> Optional[str]:
+        """Returns the entityToken of the countersink diameter."""
+        return nested_getattr(
+            self._obj, 'countersinkDiameter.entityToken', None)
+
+    @property
+    @BaseExtractor.safe_extraction
+    def countersink_angle_value(self) -> Optional[float]:
+        """Returns the value of the countersink angle."""
+        return nested_getattr(self._obj, 'countersinkAngle.value', None)
+
+    @property
+    @BaseExtractor.safe_extraction
+    def countersink_angle_token(self) -> Optional[str]:
+        """Returns the entityToken of the countersink angle."""
+        return nested_getattr(self._obj, 'countersinkAngle.entityToken', None)
+
+    @property
+    @BaseExtractor.safe_extraction
+    def is_default_direction(self) -> Optional[bool]:
         """Gets if the hole is in the default direction or not."""
-        try:
-            return nested_getattr(self._obj, 'isDefaultDirection', None)
-        except AttributeError as e:
-            self.logger.error(f'Error extracting isDefaultDirection: {e}\n{traceback.format_exc()}')
-            return None
+        return nested_getattr(self._obj, 'isDefaultDirection', None)
 
     @property
-    def extentDefinition(self) -> Optional[str]:
-        """Gets the definition object that is defining the extent of the hole."""
-        try:
-            extentDefinition = nested_getattr(self._obj, 'extentDefinition', None)
-            return self.extract_extent_info(extentDefinition, 'extentDefinition')
-        except AttributeError as e:
-            self.logger.error(f'Error extracting extent definition: {e}\n{traceback.format_exc()}')
-            return None
+    @BaseExtractor.safe_extraction
+    def extent_definition(self) -> Optional[Dict[str, Any]]:
+        """
+        Gets the definition object that is defining the extent of the hole.
+        """
+        extent_definition = nested_getattr(self._obj, 'extentDefinition', None)
+        return self.extract_extent_info(extent_definition, 'extentDefinition')
 
     @property
-    def holePositionDefinition(self) -> Optional[str]:
-        """Returns a HolePositionDefinition object that provides access to the information used to define the position of the hole."""
-        try:
-            return nested_getattr(self._obj, 'holePositionDefinition', None)
-        except AttributeError as e:
-            self.logger.error(f'Error extracting hole position definition: {e}\n{traceback.format_exc()}')
-            return None
+    @BaseExtractor.safe_extraction
+    def hole_position_definition(self) -> Optional[str]:
+        """
+        Returns a HolePositionDefinition object that provides access to the
+        information used to define the position of the hole.
+        """
+        return nested_getattr(self._obj, 'holePositionDefinition', None)
 
     @property
-    def nativeObject(self) -> Optional[str]:
-        """The NativeObject is the object outside the context of an assembly and in the context of its parent component."""
-        try:
-            return nested_getattr(self._obj, 'nativeObject', None)
-        except AttributeError as e:
-            self.logger.error(f'Error extracting native object: {e}\n{traceback.format_exc()}')
-            return None
+    @BaseExtractor.safe_extraction
+    def native_object(self) -> Optional[str]:
+        """
+        The NativeObject is the object outside the context of an assembly and
+        in the context of its parent component.
+        """
+        return nested_getattr(self._obj, 'nativeObject', None)
 
-    def extract_extent_info(self, extent_root: Any, prefix: str) -> Optional[Dict[str, Any]]:
+    @BaseExtractor.safe_extraction
+    def extract_extent_info(self,
+                            extent_root: Any,
+                            prefix: str) -> Optional[Dict[str, Any]]:
         """Extracts the extent definition information.
-        
+
         Args:
             extent_root (Any): The extent definition object.
-            prefix (str): The prefix to add to the keys in the returned dictionary.
-        
+            prefix (str): The prefix to add to the keys in the returned
+                dictionary.
+
         Returns:
             dict: A dictionary containing the extracted extent information.
         """
-        try:
-            if extent_root is None:
-                return None
-
-            extent_info = {
-                f'{prefix}Type': type(extent_root).__name__,
-                f'{prefix}Taper_angle': nested_getattr(extent_root, 'taperAngle.value', None), #TODO review if you should remove
-                f'{prefix}IsPositiveDirection': nested_getattr(extent_root, 'isPositiveDirection', None), #TODO review if you should remove
-            }
-
-            def extract_at_center(extent_root):
-                return {
-                    f'{prefix}Plane': nested_getattr(extent_root, 'planarEntity.entityToken', None),
-                    f'{prefix}CenterEdge': nested_getattr(extent_root, 'centerEdge.entityToken', None),
-                }
-
-            def extract_on_edge(extent_root):
-                return {
-                    f'{prefix}Plane': nested_getattr(extent_root, 'planarEntity.entityToken', None),
-                    f'{prefix}Edge': nested_getattr(extent_root, 'edge.entityToken', None),
-                    f'{prefix}Position': nested_getattr(extent_root, 'position.name', None),
-                }
-
-            def extract_plane_and_offsets(extent_root):
-                return {
-                    f'{prefix}Plane': nested_getattr(extent_root, 'planarEntity.entityToken', None),
-                    f'{prefix}Edge_one': nested_getattr(extent_root, 'edgeOne.entityToken', None),
-                    f'{prefix}OffsetOne': nested_getattr(extent_root, 'offsetOne.value', None),
-                    f'{prefix}Edge_two': nested_getattr(extent_root, 'edgeTwo.entityToken', None),
-                    f'{prefix}OffsetTwo': nested_getattr(extent_root, 'offsetTwo.value', None),
-                }
-
-            def extract_point(extent_root):
-                return {
-                    f'{prefix}Plane': nested_getattr(extent_root, 'planarEntity.entityToken', None),
-                    f'{prefix}_point': nested_getattr(extent_root, 'point.entityToken', None),
-                }
-
-            def extract_sketch_point(extent_root):
-                return {
-                    f'{prefix}SketchPoint': nested_getattr(extent_root, 'sketchPoint.entityToken', None),
-                }
-
-            def extract_sketch_points(extent_root):
-                return {
-                    f'{prefix}SketchPoints': [nested_getattr(point, 'entityToken', None) for point in nested_getattr(extent_root, 'sketchPoints', [])],
-                }
-
-            extractors = {
-                AtCenterHolePositionDefinition: extract_at_center,
-                OnEdgeHolePositionDefinition: extract_on_edge,
-                PlaneAndOffsetsHolePositionDefinition: extract_plane_and_offsets,
-                PointHolePositionDefinition: extract_point,
-                SketchPointHolePositionDefinition: extract_sketch_point,
-                SketchPointsHolePositionDefinition: extract_sketch_points,
-            }
-
-            extent_info.update(extractors.get(type(extent_root), lambda x: {})(extent_root))
-
-            return extent_info
-
-        except AttributeError as e:
-            self.logger.error(f'Error extracting extent info: {e}\n{traceback.format_exc()}')
+        if extent_root is None:
             return None
+
+        extent_info = {
+            f'{prefix}Type': type(extent_root).__name__,
+            f'{prefix}TaperAngleValue': nested_getattr(
+                extent_root, 'taperAngle.value', None),
+            f'{prefix}TaperAngleToken': nested_getattr(
+                extent_root, 'taperAngle.entityToken', None),
+            f'{prefix}IsPositiveDirection': nested_getattr(
+                extent_root, 'isPositiveDirection', None),
+        }
+
+        def extract_at_center(extent_root):
+            return {
+                f'{prefix}PlaneToken': nested_getattr(
+                    extent_root, 'planarEntity.entityToken', None),
+                f'{prefix}CenterEdgeToken': nested_getattr(
+                    extent_root, 'centerEdge.entityToken', None),
+            }
+
+        def extract_on_edge(extent_root):
+            return {
+                f'{prefix}PlaneToken': nested_getattr(
+                    extent_root, 'planarEntity.entityToken', None),
+                f'{prefix}EdgeToken': nested_getattr(
+                    extent_root, 'edge.entityToken', None),
+                f'{prefix}PositionToken': nested_getattr(
+                    extent_root, 'position.name', None),
+            }
+
+        def extract_plane_and_offsets(extent_root):
+            return {
+                f'{prefix}PlaneToken': nested_getattr(
+                    extent_root, 'planarEntity.entityToken', None),
+                f'{prefix}EdgeOneToken': nested_getattr(
+                    extent_root, 'edgeOne.entityToken', None),
+                f'{prefix}OffsetOneToken': nested_getattr(
+                    extent_root, 'offsetOne.value', None),
+                f'{prefix}EdgeTwoToken': nested_getattr(
+                    extent_root, 'edgeTwo.entityToken', None),
+                f'{prefix}OffsetTwoToken': nested_getattr(
+                    extent_root, 'offsetTwo.value', None),
+            }
+
+        def extract_point(extent_root):
+            return {
+                f'{prefix}Plane': nested_getattr(
+                    extent_root, 'planarEntity.entityToken', None),
+                f'{prefix}Point': nested_getattr(
+                    extent_root, 'point.entityToken', None),
+            }
+
+        def extract_sketch_point(extent_root):
+            return {
+                f'{prefix}SketchPoint': nested_getattr(
+                    extent_root, 'sketchPoint.entityToken', None),
+            }
+
+        def extract_sketch_points(extent_root):
+            return {
+                f'{prefix}SketchPoints': [nested_getattr(
+                    point, 'entityToken', None)
+                    for point in nested_getattr(
+                        extent_root, 'sketchPoints', [])],
+            }
+
+        extractors = {
+            adsk.fusion.AtCenterHolePositionDefinition:
+                extract_at_center,
+            adsk.fusion.OnEdgeHolePositionDefinition:
+                extract_on_edge,
+            adsk.fusion.PlaneAndOffsetsHolePositionDefinition:
+                extract_plane_and_offsets,
+            adsk.fusion.PointHolePositionDefinition:
+                extract_point,
+            adsk.fusion.SketchPointHolePositionDefinition:
+                extract_sketch_point,
+            adsk.fusion.SketchPointsHolePositionDefinition:
+                extract_sketch_points,
+        }
+
+        extent_info.update(extractors.get(
+            type(extent_root), lambda x: {})(extent_root))
+
+        return extent_info

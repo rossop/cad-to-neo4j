@@ -24,6 +24,8 @@ class FeatureTransformer(BaseTransformer):
             relationships between features and profiles.
         link_feature_to_extents_and_faces(execute_query): Links features to
             their extents and faces based on various properties.
+        link_feature_to_linked_features_and_parameters(execute_query): Links
+            features to linked features and taper angles to parameters.
     """
     def transform(self, execute_query):
         """
@@ -43,6 +45,8 @@ class FeatureTransformer(BaseTransformer):
                 execute_query)
         results['link_taper_angles_to_parameters'] = \
             self.link_taper_angles_to_parameters(execute_query)
+        results['link_feature_to_linked_features_and_parameters'] =\
+            self.link_feature_to_linked_features_and_parameters(execute_query)
         return results
 
     def create_profile_relationships(self, execute_query):
@@ -175,6 +179,40 @@ class FeatureTransformer(BaseTransformer):
         ]
         results = []
         self.logger.info('Linking taper angles to parameters')
+        for query in queries:
+            try:
+                results.extend(execute_query(query))
+            except Exception as e:
+                general_Exception_msg: str = (
+                    f'Exception executing query: {query}\n'
+                    f'{e}\n{traceback.format_exc()}'
+                )
+                self.logger.error(general_Exception_msg)
+        return results
+
+    def link_feature_to_linked_features_and_parameters(self, execute_query):
+        """
+        Links features to linked features and taper angles to model parameters.
+        """
+        queries = [
+            """
+            MATCH (f:Feature)
+            WHERE f.linkedFeatures IS NOT NULL
+            UNWIND f.linkedFeatures AS linkedFeature
+            MATCH (lf {entityToken: linkedFeature})
+            MERGE (f)-[:LINKED_TO]->(lf)
+            RETURN f.entityToken AS feature_id, collect(lf.entityToken) AS linked_features
+            """,
+            """
+            MATCH (f:Feature)
+            WHERE f.taperAngleOne IS NOT NULL
+            MATCH (p:ModelParameter {entityToken: f.taperAngleOne})
+            MERGE (f)-[:USES_TAPER_ANGLE_ONE]->(p)
+            RETURN f.entityToken AS feature_id, p.entityToken AS parameter_id
+            """
+        ]
+        results = []
+        self.logger.info('Linking features and taper angles')
         for query in queries:
             try:
                 results.extend(execute_query(query))

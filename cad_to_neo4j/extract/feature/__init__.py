@@ -1,12 +1,29 @@
 """
 Feature Extractor Module
 
-This module provides extractors for extracting information from feature objects, including extrude features.
+This module provides extractors for extracting information from feature
+objects, including extrude features.
 
 Classes:
     - FeatureExtractor: Extractor for feature objects.
     - ExtrudeFeatureExtractor: Extractor for extrude feature objects.
     - RevolveFeatureExtractor: Extractor for revolve feature objects.
+    - HoleFeatureExtractor: Extractor for HoleFeature objects
+    - FilletFeatureExtractor: Extractor for FilletFeature objects
+    - ChamferFeatureExtractor: Extractor for ChamferFeature objects
+    - BoxFeatureExtractor: Extractor for BoxFeature objects
+    - ConstantRadiusFilletEdgeSetExtractor: Extractor for
+        ConstantRadiusFilletEdgeSet objects
+    - VariableRadiusFilletEdgeSetExtractor: Extractor for
+        VariableRadiusFilletEdgeSet objects
+    - ChordLengthFilletEdgeSetExtractor: Extractor for ChordLengthFilletEdgeSet
+        objects
+    - EqualDistanceEdgeSetExtractor: Extractor for EqualDistanceEdgeSet objects
+    - TwoDistancesEdgeSetExtractor: Extractor for TwoDistancesEdgeSet objects
+    - DistanceAndAngleEdgeSetExtractor: Extractor for DistanceAndAngleEdgeSet
+        objects
+    - RectangularPatternFeatureExtractor: Extractor for
+        RectangularPatternFeature objects
 """
 
 from .feature_extractor import FeatureExtractor
@@ -26,10 +43,19 @@ from .chamfer_edge_set import (
             DistanceAndAngleEdgeSetExtractor,
             )
 from .box_feature_extractor import BoxFeatureExtractor
+from .rectangular_pattern_feature_extractor import (
+    RectangularPatternFeatureExtractor,
+)
+from .path_pattern_feature_extractor import (
+    PathPatternFeatureExtractor
+)
+from .circular_pattern_feature_extractor import (
+    CircularPatternFeatureExtractor
+)
 
 __all__ = [
-    'FeatureExtractor', 
-    'ExtrudeFeatureExtractor', 
+    'FeatureExtractor',
+    'ExtrudeFeatureExtractor',
     'RevolveFeatureExtractor',
     'HoleFeatureExtractor',
     'FilletFeatureExtractor',
@@ -41,4 +67,7 @@ __all__ = [
     'EqualDistanceEdgeSetExtractor',
     'TwoDistancesEdgeSetExtractor',
     'DistanceAndAngleEdgeSetExtractor',
+    'RectangularPatternFeatureExtractor',
+    'PathPatternFeatureExtractor',
+    'CircularPatternFeatureExtractor',
     ]
