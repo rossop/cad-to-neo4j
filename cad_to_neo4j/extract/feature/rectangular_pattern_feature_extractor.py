@@ -11,12 +11,11 @@ Classes:
 
 from typing import Optional, Dict, List, Any
 
-import traceback
-
 import adsk.core
 import adsk.fusion
 
 from .feature_extractor import FeatureExtractor
+from ...utils.extraction_utils import helper_extraction_error
 
 __all__ = ['RectangularPatternFeatureExtractor']
 
@@ -58,102 +57,65 @@ class RectangularPatternFeatureExtractor(FeatureExtractor):
         return {**feature_info, **pattern_info}
 
     @property
+    @helper_extraction_error
     def input_entities(self) -> Optional[List[str]]:
         """Extracts the input entities of the pattern."""
-        try:
-            input_entities = self._obj.inputEntities
-            return [entity.entityToken
-                    for entity in input_entities] if input_entities else []
-        except AttributeError as e:
-            self._log_extraction_error("input_entities", e)
-
-        return None
+        input_entities = self._obj.inputEntities
+        return [entity.entityToken
+                for entity in input_entities] if input_entities else []
 
     @property
+    @helper_extraction_error
     def direction_one_entity(self) -> Optional[str]:
         """Extracts the first direction entity."""
-        try:
-            direction_one = self._obj.directionOneEntity
-            return direction_one.entityToken if direction_one else None
-        except AttributeError as e:
-            self._log_extraction_error("direction_one_entity", e)
-
-        return None
+        direction_one = self._obj.directionOneEntity
+        return direction_one.entityToken if direction_one else None
 
     @property
     def direction_two_entity(self) -> Optional[str]:
         """Extracts the second direction entity."""
-        try:
-            direction_two = self._obj.directionTwoEntity
-            return direction_two.entityToken if direction_two else None
-        except AttributeError as e:
-            self._log_extraction_error("direction_two_entity", e)
-
-        return None
+        direction_two = self._obj.directionTwoEntity
+        return direction_two.entityToken if direction_two else None
 
     @property
     def quantity_one(self) -> Optional[float]:
         """Extracts the number of instances in the first direction."""
-        try:
-            return getattr(self._obj.quantityOne, 'value', None)
-        except AttributeError as e:
-            self._log_extraction_error("quantity_one", e)
-
-        return None
+        return getattr(self._obj.quantityOne, 'value', None)
 
     @property
+    @helper_extraction_error
     def quantity_two(self) -> Optional[float]:
         """Extracts the number of instances in the second direction."""
-        try:
-            return getattr(self._obj.quantityTwo, 'value', None)
-        except AttributeError as e:
-            self._log_extraction_error("quantity_two", e)
-
-        return None
+        return getattr(self._obj.quantityTwo, 'value', None)
 
     @property
+    @helper_extraction_error
     def distance_one(self) -> Optional[float]:
         """Extracts the distance in the first direction."""
-        try:
-            return getattr(self._obj.distanceOne, 'value', None)
-        except AttributeError as e:
-            self._log_extraction_error("distandistance_oneceOne", e)
-
-        return None
+        return getattr(self._obj.distanceOne, 'value', None)
 
     @property
+    @helper_extraction_error
     def distance_two(self) -> Optional[float]:
         """Extracts the distance in the second direction."""
-        try:
-            return getattr(self._obj.distanceTwo, 'value', None)
-        except AttributeError as e:
-            self._log_extraction_error("distance_two", e)
-
-        return None
+        return getattr(self._obj.distanceTwo, 'value', None)
 
     @property
+    @helper_extraction_error
     def is_symmetric_in_direction_one(self) -> Optional[bool]:
         """Extracts whether the pattern is symmetric in the first direction."""
-        try:
-            return self._obj.isSymmetricInDirectionOne
-        except AttributeError as e:
-            self._log_extraction_error("is_symmetric_in_direction_one", e)
-
-        return None
+        return self._obj.isSymmetricInDirectionOne
 
     @property
+    @helper_extraction_error
     def is_symmetric_in_direction_two(self) -> Optional[bool]:
         """
         Extracts whether the pattern is symmetric in the second direction.
         """
-        try:
-            return self._obj.isSymmetricInDirectionTwo
-        except AttributeError as e:
-            self._log_extraction_error("is_symmetric_in_direction_two", e)
-
-        return None
+        return self._obj.isSymmetricInDirectionTwo
 
     @property
+    @helper_extraction_error
     def pattern_distance_type(self) -> Optional[str]:
         """
         Extracts how the distance between elements is computed.
@@ -163,47 +125,35 @@ class RectangularPatternFeatureExtractor(FeatureExtractor):
         extent_pattern_distance_type: int = 0
         spacing_pattern_distance_type: int = 1
 
-        try:
-            direction_value: int = self._obj.patternDistanceType
-            if direction_value == extent_pattern_distance_type:
-                return 'Extent'
-            elif direction_value == spacing_pattern_distance_type:
-                return 'Spacing'
-            else:
-                return 'Unknown'
-        except AttributeError as e:
-            self._log_extraction_error("is_symmetric_in_direction_two", e)
-
-        return None
+        direction_value: int = self._obj.patternDistanceType
+        if direction_value == extent_pattern_distance_type:
+            return 'Extent'
+        elif direction_value == spacing_pattern_distance_type:
+            return 'Spacing'
+        else:
+            return 'Unknown'
 
     @property
+    @helper_extraction_error
     def suppressed_elements_ids(self) -> Optional[List[int]]:
         """Extracts the IDs of suppressed elements."""
-        try:
-            return self._obj.suppressedElementsIds
-        except AttributeError as e:
-            self._log_extraction_error("suppressed_elements_ids", e)
-
-        return None
+        return self._obj.suppressedElementsIds
 
     @property
+    @helper_extraction_error
     def pattern_faces(self) -> Optional[List[str]]:
         """
         Extracts the faces from the rectangular pattern feature's bodies.
         """
-        try:
-            # Get the bodies associated with the pattern feature
-            faces = self._obj.faces
-            if not faces:
-                return []
+        # Get the bodies associated with the pattern feature
+        faces = self._obj.faces
+        if not faces:
+            return []
 
-            return list(map(lambda face: face.entityToken, faces))
-        except AttributeError as e:
-            self._log_extraction_error("pattern_faces", e)
-
-        return None
+        return list(map(lambda face: face.entityToken, faces))
 
     @property
+    @helper_extraction_error
     def pattern_element_faces(self) -> Optional[List[str]]:
         """
         Extracts the pattern elements faces and encodes them into a single
@@ -216,26 +166,22 @@ class RectangularPatternFeatureExtractor(FeatureExtractor):
 
         ISSUE: despite faces being accessible from CLI they aren't via API
         """
-        try:
-            elements = self._obj.patternElements
+        elements = self._obj.patternElements
 
-            if elements:
-                element_data = []
-                for pattern_element in elements:
-                    # Call the helper function to retrieve the encoded face
-                    # strings
-                    faces_data = \
-                        self._get_pattern_element_faces(pattern_element)
-                    if faces_data:
-                        element_data.extend(faces_data)
+        if elements:
+            element_data = []
+            for pattern_element in elements:
+                # Call the helper function to retrieve the encoded face
+                # strings
+                faces_data = \
+                    self._get_pattern_element_faces(pattern_element)
+                if faces_data:
+                    element_data.extend(faces_data)
 
-                return element_data
-            return []
-        except AttributeError as e:
-            self._log_extraction_error("pattern_element_faces", e)
+            return element_data
+        return []
 
-        return None
-
+    @helper_extraction_error
     def _get_pattern_element_faces(
             self,
             pattern_element) -> Optional[List[str]]:
@@ -253,55 +199,49 @@ class RectangularPatternFeatureExtractor(FeatureExtractor):
         """
         element_faces_data = []
 
-        try:
-            if pattern_element.isValid:
-                # Attempt to access the faces
-                if hasattr(pattern_element, 'faces'):
-                    try:
-                        faces = pattern_element.faces
-                        if faces:
-                            for face in faces:
-                                combined_str = \
-                                    f"""{pattern_element.name}::
-                                    {face.entityToken}"""
-                                element_faces_data.append(combined_str)
-                        else:
-                            debug_msg: str = (
-                                f"Pattern element {pattern_element.id}"
-                                "has no faces."
-                                )
-                            self.logger.debug(debug_msg)
-                    except RuntimeError as re:
-                        self._log_extraction_error(
-                            "faces for pattern element "
-                            f"{pattern_element.id}", re
+        if pattern_element.isValid:
+            # Attempt to access the faces
+            if hasattr(pattern_element, 'faces'):
+                try:
+                    faces = pattern_element.faces
+                    if faces:
+                        for face in faces:
+                            combined_str = \
+                                f"""{pattern_element.name}::
+                                {face.entityToken}"""
+                            element_faces_data.append(combined_str)
+                    else:
+                        debug_msg: str = (
+                            f"Pattern element {pattern_element.id}"
+                            "has no faces."
                             )
-                    except Exception as e:
-                        self._log_extraction_error(
-                            "faces for pattern element "
-                            f"{pattern_element.id}", e
-                            )
-                else:
-                    debug_msg: str = (
-                        f"Pattern element {pattern_element.id} "
-                        "does not have a 'faces' attribute."
-                    )
-                    self.logger.debug(debug_msg)
+                        self.logger.debug(debug_msg)
+                except RuntimeError as re:
+                    self._log_extraction_error(
+                        "faces for pattern element "
+                        f"{pattern_element.id}", re
+                        )
+                except Exception as e:
+                    self._log_extraction_error(
+                        "faces for pattern element "
+                        f"{pattern_element.id}", e
+                        )
             else:
-                msg: str = f"Pattern element {pattern_element.id} is invalid."
-                self.logger.warning(msg)
-        except Exception as e:
-            self._log_extraction_error(
-                f"pattern element {pattern_element.id}", e)
+                debug_msg: str = (
+                    f"Pattern element {pattern_element.id} "
+                    "does not have a 'faces' attribute."
+                )
+                self.logger.debug(debug_msg)
+        else:
+            msg: str = f"Pattern element {pattern_element.id} is invalid."
+            self.logger.warning(msg)
 
         return element_faces_data if element_faces_data else None
 
     @property
+    @helper_extraction_error
     def result_features(self) -> Optional[List[str]]:
         """Extracts the features created for this pattern."""
-        try:
-            features = self._obj.resultFeatures
-            return [feature.entityToken
-                    for feature in features] if features else []
-        except AttributeError as e:
-            self._log_extraction_error("result_features", e)
+        features = self._obj.resultFeatures
+        return [feature.entityToken
+                for feature in features] if features else []

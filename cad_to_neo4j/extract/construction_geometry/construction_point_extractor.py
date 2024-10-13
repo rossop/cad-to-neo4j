@@ -10,7 +10,7 @@ Classes:
 from typing import Optional, Dict, List
 from adsk.fusion import ConstructionPoint
 from ..base_extractor import BaseExtractor
-from ...utils.general_utils import nested_getattr
+from ...utils.extraction_utils import nested_getattr
 import adsk.core, traceback
 
 __all__ = ['ConstructionPointExtractor']

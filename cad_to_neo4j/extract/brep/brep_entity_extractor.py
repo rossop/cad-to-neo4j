@@ -11,7 +11,7 @@ from typing import Optional, Dict, List, Any
 import adsk.core
 import adsk.fusion # TODO standardise this import for 
 from ..base_extractor import BaseExtractor
-from ...utils.general_utils import nested_getattr
+from ...utils.extraction_utils import nested_getattr
 
 
 __all__ = ['BRepEntityExtractor']

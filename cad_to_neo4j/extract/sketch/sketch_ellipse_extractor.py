@@ -11,7 +11,7 @@ from typing import Optional, Dict, Any
 from adsk.core import Vector3D, Ellipse3D
 from adsk.fusion import SketchEllipse
 from .sketch_entity_extractor import SketchEntityExtractor
-from ...utils.general_utils import nested_getattr
+from ...utils.extraction_utils import nested_getattr
 
 __all__ = ['SketchEllipseExtractor']
 

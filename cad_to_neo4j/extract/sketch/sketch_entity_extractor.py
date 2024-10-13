@@ -13,7 +13,9 @@ from typing import Optional, List, Dict, Any
 import adsk.fusion
 
 from ..base_extractor import BaseExtractor
-from ...utils.general_utils import nested_getattr
+from ...utils.extraction_utils import nested_getattr
+from ...utils.extraction_utils import helper_extraction_error
+
 
 __all__ = ['SketchEntityExtractor']
 
@@ -48,7 +50,7 @@ class SketchEntityExtractor(BaseExtractor):
         return {**basic_info, **sketch_entity_info}
 
     @property
-    @BaseExtractor.safe_extraction
+    @helper_extraction_error
     def sketch_dimensions(self) -> Optional[List[adsk.fusion.SketchDimension]]:
         """Extracts the Dimensions linked to this Sketch object.
 
@@ -60,7 +62,7 @@ class SketchEntityExtractor(BaseExtractor):
         return [getattr(dim, 'entityToken', None) for dim in sketchDimensions]
 
     @property
-    @BaseExtractor.safe_extraction
+    @helper_extraction_error
     def geometric_constraints(self) -> Optional[List[str]]:
         """Extracts the geometric constraints linked to this Sketch object.
 
@@ -74,7 +76,7 @@ class SketchEntityExtractor(BaseExtractor):
                 for gc in geometric_constraints]
 
     @property
-    @BaseExtractor.safe_extraction
+    @helper_extraction_error
     def is2D(self) -> Optional[bool]:
         """Indicates if this curve lies entirely on the sketch x-y plane.
 
@@ -85,7 +87,7 @@ class SketchEntityExtractor(BaseExtractor):
         return getattr(self._obj, 'is2D', None)
 
     @property
-    @BaseExtractor.safe_extraction
+    @helper_extraction_error
     def is_reference(self) -> Optional[bool]:
         """Indicates if this geometry is a reference.
 
@@ -96,7 +98,7 @@ class SketchEntityExtractor(BaseExtractor):
         return getattr(self._obj, 'isReference', None)
 
     @property
-    @BaseExtractor.safe_extraction
+    @helper_extraction_error
     def is_fixed(self) -> Optional[bool]:
         """Indicates if this geometry is "fixed".
 
@@ -106,7 +108,7 @@ class SketchEntityExtractor(BaseExtractor):
         return getattr(self._obj, 'isFixed', None)
 
     @property
-    @BaseExtractor.safe_extraction
+    @helper_extraction_error
     def is_visible(self) -> Optional[bool]:
         """Indicates if this geometry is visible.
 
@@ -116,7 +118,7 @@ class SketchEntityExtractor(BaseExtractor):
         return getattr(self._obj, 'isVisible', None)
 
     @property
-    @BaseExtractor.safe_extraction
+    @helper_extraction_error
     def referenced_entity(self) -> Optional[str]:
         """Returns the referenced entity in the case where IsReference is true.
 
@@ -130,7 +132,7 @@ class SketchEntityExtractor(BaseExtractor):
         return None
 
     @property
-    @BaseExtractor.safe_extraction
+    @helper_extraction_error
     def is_deletable(self) -> Optional[bool]:
         """Indicates if this sketch entity can be deleted.
 
@@ -141,7 +143,7 @@ class SketchEntityExtractor(BaseExtractor):
         return getattr(self._obj, 'isDeletable', None)
 
     @property
-    @BaseExtractor.safe_extraction
+    @helper_extraction_error
     def is_fully_constrained(self) -> Optional[bool]:
         """Indicates if this sketch entity is fully constrained.
 
@@ -152,7 +154,7 @@ class SketchEntityExtractor(BaseExtractor):
         return getattr(self._obj, 'isFullyConstrained', None)
 
     @property
-    @BaseExtractor.safe_extraction
+    @helper_extraction_error
     def is_linked(self) -> Optional[bool]:
         """Indicates if this sketch entity was created by a projection,
         inclusion, or driven by an API script.
@@ -163,7 +165,7 @@ class SketchEntityExtractor(BaseExtractor):
         return getattr(self._obj, 'isLinked', None)
 
     @property
-    @BaseExtractor.safe_extraction
+    @helper_extraction_error
     def parent_sketch(self) -> Optional[str]:
         """
         Returns the parent sketch.

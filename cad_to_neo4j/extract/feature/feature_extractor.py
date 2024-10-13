@@ -11,6 +11,7 @@ from typing import Any, Optional, List, Dict
 import adsk.fusion
 
 from ..base_extractor import BaseExtractor
+from ...utils.extraction_utils import helper_extraction_error
 
 __all__ = ['FeatureExtractor']
 
@@ -43,56 +44,56 @@ class FeatureExtractor(BaseExtractor):
         return {**basic_info, **feature_info}
 
     @property
-    @BaseExtractor.safe_extraction
+    @helper_extraction_error
     def faces(self) -> Optional[List[str]]:
         """Extracts the IDs of side faces created by the feature."""
         return self.extract_collection_tokens('faces', 'entityToken')
 
     @property
-    @BaseExtractor.safe_extraction
+    @helper_extraction_error
     def is_suppressed(self) -> Optional[bool]:
         """Extracts whether the feature is suppressed."""
         return self._obj.isSuppressed
 
     @property
-    @BaseExtractor.safe_extraction
+    @helper_extraction_error
     def is_parametric(self) -> Optional[bool]:
         """Extracts whether the feature is parametric."""
         return self._obj.isParametric
 
     @property
-    @BaseExtractor.safe_extraction
+    @helper_extraction_error
     def parent_component(self) -> Optional[str]:
         """Extracts the ID of the parent component."""
         return self._obj.parentComponent.entityToken
 
     @property
-    @BaseExtractor.safe_extraction
+    @helper_extraction_error
     def linked_features(self) -> Optional[List[str]]:
         """Extracts the IDs of linked features."""
         return self.extract_collection_tokens('linkedFeatures', 'entityToken')
 
     @property
-    @BaseExtractor.safe_extraction
+    @helper_extraction_error
     def bodies(self) -> Optional[List[str]]:
         """Extracts the IDs of bodies modified or created by the feature."""
         return self.extract_collection_tokens('bodies', 'entityToken')
 
     @property
-    @BaseExtractor.safe_extraction
+    @helper_extraction_error
     def base_feature(self) -> Optional[str]:
         """Extracts the ID of the associated base feature, if any."""
         return self._obj.baseFeature.entityToken \
             if self._obj.baseFeature else None
 
     @property
-    @BaseExtractor.safe_extraction
+    @helper_extraction_error
     def health_state(self) -> Optional[str]:
         """Extracts the current health state of the feature."""
         return self._obj.healthState
 
     @property
-    @BaseExtractor.safe_extraction
+    @helper_extraction_error
     def error_or_warning_message(self) -> Optional[str]:
         """
         Extracts the error or warning message if the feature has health issues.
@@ -115,7 +116,7 @@ class FeatureExtractor(BaseExtractor):
             exception_msg: str = f'Failed to roll timeline after feature: {e}'
             self.logger.error(exception_msg)
 
-    @BaseExtractor.safe_extraction
+    @helper_extraction_error
     def extract_ids_with_timeline(
             self, attribute: str, id_attribute: str) -> Optional[List[str]]:
         """Extract IDs from an attribute with timeline rollback."""

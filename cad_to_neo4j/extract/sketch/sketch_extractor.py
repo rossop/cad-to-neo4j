@@ -12,8 +12,8 @@ from typing import Optional, Dict, List, Any
 import adsk.core
 import adsk.fusion
 
-from ..base_extractor import BaseExtractor
-from ...utils.general_utils import nested_getattr
+from ...utils.extraction_utils import nested_getattr
+from ...utils.extraction_utils import helper_extraction_error
 from .sketch_entity_extractor import SketchEntityExtractor
 
 __all__ = ['SketchExtractor']
@@ -62,7 +62,7 @@ class SketchExtractor(SketchEntityExtractor):
         return {**basic_info, **sketch_info}
 
     @property
-    @BaseExtractor.safe_extraction
+    @helper_extraction_error
     def timeline_index(self) -> Optional[int]:
         """Extracts the timeline index of the Sketch object.
 
@@ -73,7 +73,7 @@ class SketchExtractor(SketchEntityExtractor):
         return nested_getattr(self._obj, 'timelineObject.index', None)
 
     @property
-    @BaseExtractor.safe_extraction
+    @helper_extraction_error
     def reference_plane_entity_token(self) -> Optional[str]:
         """
         Extracts the entity token of the face or plane the sketch is built on.
@@ -92,7 +92,7 @@ class SketchExtractor(SketchEntityExtractor):
                 self._obj, 'referencePlane.entityToken', None)
 
     @property
-    @BaseExtractor.safe_extraction
+    @helper_extraction_error
     def transform(self) -> Optional[List[float]]:
         """Extracts the transform of the Sketch object.
 
@@ -122,7 +122,7 @@ class SketchExtractor(SketchEntityExtractor):
         return None
 
     @property
-    @BaseExtractor.safe_extraction
+    @helper_extraction_error
     def is_parametric(self) -> Optional[bool]:
         """Extracts the parametric status of the Sketch object.
 
@@ -132,7 +132,7 @@ class SketchExtractor(SketchEntityExtractor):
         return getattr(self._obj, 'isParametric', None)
 
     @property
-    @BaseExtractor.safe_extraction
+    @helper_extraction_error
     def is_visible(self) -> Optional[bool]:
         """Extracts the visibility status of the Sketch object.
 
@@ -142,7 +142,7 @@ class SketchExtractor(SketchEntityExtractor):
         return getattr(self._obj, 'isVisible', None)
 
     @property
-    @BaseExtractor.safe_extraction
+    @helper_extraction_error
     def are_dimensions_shown(self) -> Optional[bool]:
         """Extracts the dimensions shown status of the Sketch object.
 
@@ -152,7 +152,7 @@ class SketchExtractor(SketchEntityExtractor):
         return getattr(self._obj, 'areDimensionsShown', None)
 
     @property
-    @BaseExtractor.safe_extraction
+    @helper_extraction_error
     def are_profiles_shown(self) -> Optional[bool]:
         """Extracts the profiles shown status of the Sketch object.
 
@@ -162,7 +162,7 @@ class SketchExtractor(SketchEntityExtractor):
         return getattr(self._obj, 'areProfilesShown', None)
 
     @property
-    @BaseExtractor.safe_extraction
+    @helper_extraction_error
     def origin(self) -> Optional[List[float]]:
         """Extracts the origin of the Sketch object.
 
@@ -179,7 +179,7 @@ class SketchExtractor(SketchEntityExtractor):
         return None
 
     @property
-    @BaseExtractor.safe_extraction
+    @helper_extraction_error
     def x_direction(self) -> Optional[List[float]]:
         """Extracts the X direction of the Sketch object.
 
@@ -196,7 +196,7 @@ class SketchExtractor(SketchEntityExtractor):
         return None
 
     @property
-    @BaseExtractor.safe_extraction
+    @helper_extraction_error
     def y_direction(self) -> Optional[List[float]]:
         """Extracts the Y direction of the Sketch object.
 
@@ -213,7 +213,7 @@ class SketchExtractor(SketchEntityExtractor):
         return None
 
     @property
-    @BaseExtractor.safe_extraction
+    @helper_extraction_error
     def bounding_box(self) -> Optional[Dict[str, float]]:
         """Extracts the bounding box of the Sketch object.
 
@@ -231,7 +231,7 @@ class SketchExtractor(SketchEntityExtractor):
         return None
 
     @property
-    @BaseExtractor.safe_extraction
+    @helper_extraction_error
     def origin_point(self) -> Optional[str]:
         """Extracts the origin point of the Sketch object.
 
@@ -241,7 +241,7 @@ class SketchExtractor(SketchEntityExtractor):
         return nested_getattr(self._obj, 'originPoint.entityToken', None)
 
     @property
-    @BaseExtractor.safe_extraction
+    @helper_extraction_error
     def is_fully_constrained(self) -> Optional[bool]:
         """Extracts the fully constrained status of the Sketch object.
 
@@ -251,7 +251,7 @@ class SketchExtractor(SketchEntityExtractor):
         return getattr(self._obj, 'isFullyConstrained', None)
 
     @property
-    @BaseExtractor.safe_extraction
+    @helper_extraction_error
     def base_or_form_feature(self) -> Optional[str]:
         """Extracts the base or form feature of the Sketch object.
 
@@ -261,7 +261,7 @@ class SketchExtractor(SketchEntityExtractor):
         return nested_getattr(self._obj, 'baseOrFormFeature.entityToken', None)
 
     @property
-    @BaseExtractor.safe_extraction
+    @helper_extraction_error
     def health_state(self) -> Optional[str]:
         """Extracts the health state of the Sketch object.
 
@@ -271,7 +271,7 @@ class SketchExtractor(SketchEntityExtractor):
         return nested_getattr(self._obj, 'healthState', None)
 
     @property
-    @BaseExtractor.safe_extraction
+    @helper_extraction_error
     def error_or_warning_message(self) -> Optional[str]:
         """Extracts the error or warning message of the Sketch object.
 
@@ -281,7 +281,7 @@ class SketchExtractor(SketchEntityExtractor):
         return getattr(self._obj, 'errorOrWarningMessage', None)
 
     @property
-    @BaseExtractor.safe_extraction
+    @helper_extraction_error
     def parent_component(self) -> Optional[str]:
         """
         Returns the parent component.

@@ -14,7 +14,9 @@ import adsk.fusion
 
 from .feature_extractor import FeatureExtractor
 from ..base_extractor import BaseExtractor
-from ...utils.general_utils import nested_getattr
+from ...utils.extraction_utils import nested_getattr
+from ...utils.extraction_utils import helper_extraction_error
+
 
 __all__ = ['RevolveFeatureExtractor']
 
@@ -56,7 +58,7 @@ class RevolveFeatureExtractor(FeatureExtractor):
         return {**feature_info, **revolve_info}
 
     @property
-    @BaseExtractor.safe_extraction
+    @helper_extraction_error
     def profile_tokens(self):
         """Extracts the tokens of profiles used by the RevolveFeature.
 
@@ -69,7 +71,7 @@ class RevolveFeatureExtractor(FeatureExtractor):
         return [profiles.entityToken]
 
     @property
-    @BaseExtractor.safe_extraction
+    @helper_extraction_error
     def axis_token(self):
         """Extracts the token of the axis used by the RevolveFeature.
 
@@ -79,7 +81,7 @@ class RevolveFeatureExtractor(FeatureExtractor):
         return nested_getattr(self._obj, 'axis.entityToken', None)
 
     @property
-    @BaseExtractor.safe_extraction
+    @helper_extraction_error
     def is_solid(self) -> bool:
         """Extracts whether the revolve feature is a solid.
 
@@ -89,7 +91,7 @@ class RevolveFeatureExtractor(FeatureExtractor):
         return getattr(self._obj, 'isSolid', None)
 
     @property
-    @BaseExtractor.safe_extraction
+    @helper_extraction_error
     def operation(self) -> Optional[str]:
         """Extracts the type of operation performed by the revolve.
 
@@ -108,7 +110,7 @@ class RevolveFeatureExtractor(FeatureExtractor):
         return operation_mapping[operation_val] if operation_val else None
 
     @property
-    @BaseExtractor.safe_extraction
+    @helper_extraction_error
     def participant_bodies(self) -> Optional[List[str]]:
         """
         Extracts the list of bodies that will participate in the feature
@@ -152,14 +154,14 @@ class RevolveFeatureExtractor(FeatureExtractor):
         return None
 
     @property
-    @BaseExtractor.safe_extraction
+    @helper_extraction_error
     def extent_one(self) -> Optional[Dict[str, Any]]:
         """Extracts the extent one definition used by the feature."""
         extent_one_root = getattr(self._obj, 'extentOne', None)
         return self.extract_extent_info(extent_one_root, 'extentOne')
 
     @property
-    @BaseExtractor.safe_extraction
+    @helper_extraction_error
     def extent_two(self) -> Optional[Dict[str, Any]]:
         """Extracts the extent two definition used by the feature."""
         extent_two_root = getattr(self._obj, 'extentTwo', None)

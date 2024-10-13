@@ -15,7 +15,7 @@ import adsk.fusion
 import adsk.core
 
 from .feature_extractor import FeatureExtractor
-from ..base_extractor import BaseExtractor
+from ...utils.extraction_utils import helper_extraction_error
 
 __all__ = ['CircularPatternFeatureExtractor']
 
@@ -57,7 +57,7 @@ class CircularPatternFeatureExtractor(FeatureExtractor):
         return {**feature_info, **circular_pattern_info}
 
     @property
-    @BaseExtractor.safe_extraction
+    @helper_extraction_error
     def input_entities(self) -> Optional[List[str]]:
         """
         Extracts the input entities used in the circular pattern feature.
@@ -69,7 +69,7 @@ class CircularPatternFeatureExtractor(FeatureExtractor):
         return [entity.entityToken for entity in entities]
 
     @property
-    @BaseExtractor.safe_extraction
+    @helper_extraction_error
     def axis(self) -> Optional[str]:
         """
         Extracts the entity token for the axis used in the circular pattern.
@@ -80,7 +80,7 @@ class CircularPatternFeatureExtractor(FeatureExtractor):
         return self._obj.axis.entityToken
 
     @property
-    @BaseExtractor.safe_extraction
+    @helper_extraction_error
     def quantity(self) -> Optional[float]:
         """
         Extracts the quantity of elements in the circular pattern.
@@ -91,7 +91,7 @@ class CircularPatternFeatureExtractor(FeatureExtractor):
         return self._obj.quantity.value
 
     @property
-    @BaseExtractor.safe_extraction
+    @helper_extraction_error
     def total_angle(self) -> Optional[float]:
         """
         Extracts the total angle of the circular pattern.
@@ -102,7 +102,7 @@ class CircularPatternFeatureExtractor(FeatureExtractor):
         return self._obj.totalAngle.value
 
     @property
-    @BaseExtractor.safe_extraction
+    @helper_extraction_error
     def is_symmetric(self) -> Optional[bool]:
         """
         Extracts whether the circular pattern is symmetric.
@@ -113,7 +113,7 @@ class CircularPatternFeatureExtractor(FeatureExtractor):
         return self._obj.isSymmetric
 
     @property
-    @BaseExtractor.safe_extraction
+    @helper_extraction_error
     def pattern_compute_option(self) -> Optional[str]:
         """
         Extracts the pattern compute option for the circular pattern feature.
@@ -124,7 +124,7 @@ class CircularPatternFeatureExtractor(FeatureExtractor):
         return self._obj.patternComputeOption
 
     @property
-    @BaseExtractor.safe_extraction
+    @helper_extraction_error
     def suppressed_elements_ids(self) -> Optional[List[int]]:
         """
         Extracts the list of suppressed element IDs in the pattern.
@@ -135,7 +135,7 @@ class CircularPatternFeatureExtractor(FeatureExtractor):
         return self._obj.suppressedElementsIds
 
     @property
-    @BaseExtractor.safe_extraction
+    @helper_extraction_error
     def result_features(self) -> Optional[List[str]]:
         """
         Extracts the result features created by the circular pattern.

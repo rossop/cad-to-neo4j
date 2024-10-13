@@ -9,7 +9,7 @@ Classes:
 from typing import Optional, Dict, Any
 import adsk.fusion
 from ...base_extractor import BaseExtractor
-from ....utils.general_utils import nested_getattr
+from ....utils.extraction_utils import nested_getattr
 
 __all__ = ['SketchDimensionExtractor']
 

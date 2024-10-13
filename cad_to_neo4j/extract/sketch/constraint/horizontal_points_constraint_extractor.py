@@ -11,7 +11,7 @@ from typing import Optional, Dict, Any
 import traceback
 from adsk.fusion import HorizontalPointsConstraint
 from .geometric_constraint_extractor import GeometricConstraintExtractor
-from ....utils.general_utils import nested_getattr
+from ....utils.extraction_utils import nested_getattr
 
 class HorizontalPointsConstraintExtractor(GeometricConstraintExtractor):
     """Extractor for HorizontalPointsConstraint objects."""

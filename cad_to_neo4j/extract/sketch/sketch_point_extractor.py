@@ -11,8 +11,8 @@ from typing import Optional, Dict, List, Any
 import adsk.fusion
 
 from .sketch_entity_extractor import SketchEntityExtractor
-from ..base_extractor import BaseExtractor
-from ...utils.general_utils import nested_getattr
+from ...utils.extraction_utils import nested_getattr
+from ...utils.extraction_utils import helper_extraction_error
 
 __all__ = ['SketchPointExtractor']
 
@@ -39,13 +39,13 @@ class SketchPointExtractor(SketchEntityExtractor):
         return {**basic_info, **point_info}
 
     @property
-    @BaseExtractor.safe_extraction
+    @helper_extraction_error
     def coordinates(self) -> Optional[List[float]]:
         """Extract the coordinates of the sketch point."""
         return nested_getattr(self._obj, "geometry.asArray", None)
 
     @property
-    @BaseExtractor.safe_extraction
+    @helper_extraction_error
     def connected_entities(self) -> Optional[List[str]]:
         """Extract the entities connected to the sketch point."""
         connected_entities = getattr(self._obj, 'connectedEntities', [])

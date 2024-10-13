@@ -16,7 +16,8 @@ import inspect
 
 import adsk.core
 
-from ..utils.general_utils import nested_getattr, nested_hasattr
+from ..utils.extraction_utils import nested_getattr, nested_hasattr
+from ..utils.extraction_utils import helper_extraction_error
 from ..utils.logger_utils import logger_utility
 
 __all__ = ['BaseExtractor']
@@ -35,44 +36,6 @@ class BaseExtractor(object):
         self._type = None  # Initialise the type to None
         self.logger: logging.Logger = logger_utility.logger
 
-    @staticmethod
-    def safe_extraction(func: Callable) -> Callable:
-        """
-        A decorator to handle safe extraction of properties.
-        It catches AttributeError, RuntimeError, ValueError, logs them
-        using _log_extraction_error, and returns None in case of failure.
-        """
-        def wrapper(self, *args, **kwargs) -> Optional[Any]:
-            try:
-                # Try executing the original function
-                return func(self, *args, **kwargs)  # pass self to the function
-            except AttributeError as e:
-                # Log attribute errors (e.g., missing attributes)
-                attribute_error_msg = \
-                    f"AttributeError occurred in {func.__name__}: {e}"
-                self.logger.error(attribute_error_msg)
-                self.logger.error("Traceback: %s", traceback.format_exc())
-            except RuntimeError as e:
-                # Log runtime errors (e.g., issues during execution)
-                runtime_error_msg = \
-                    f"RuntimeError occurred in {func.__name__}: {e}"
-                self.logger.error(runtime_error_msg)
-                self.logger.error("Traceback: %s", traceback.format_exc())
-            except ValueError as e:
-                # Log value errors (e.g., unsupported types)
-                value_error_msg = \
-                    f"ValueError occurred in {func.__name__}: {e}"
-                self.logger.error(value_error_msg)
-                self.logger.error("Traceback: %s", traceback.format_exc())
-            except Exception as e:
-                # Catch-all for any other exceptions
-                unexp_error_msg = \
-                    f"Unexpected error occurred in {func.__name__}: {e}"
-                self.logger.error(unexp_error_msg)
-                self.logger.error("Traceback: %s", traceback.format_exc())
-            return None
-        return wrapper
-
     def extract_info(self) -> Dict[str, Optional[str]]:
         """Extracts basic information (name, type, id token) of the CAD object.
 
@@ -87,7 +50,7 @@ class BaseExtractor(object):
         }
 
     @property
-    @safe_extraction
+    @helper_extraction_error
     def name(self) -> Optional[str]:
         """Extracts the name of the CAD object.
 
@@ -112,7 +75,7 @@ class BaseExtractor(object):
             return ["Unknown"]
 
     @property
-    @safe_extraction
+    @helper_extraction_error
     def entity_token(self) -> Optional[str]:
         """Extracts the id token of the CAD object.
 
@@ -123,7 +86,7 @@ class BaseExtractor(object):
             return getattr(self._obj, 'entityToken', None)
 
     @property
-    @safe_extraction
+    @helper_extraction_error
     def timeline_index(self) -> Optional[int]:
         """Extracts the timeline index of the Sketch object.
 
@@ -133,7 +96,7 @@ class BaseExtractor(object):
         """
         return nested_getattr(self._obj, 'timelineObject.index', None)
 
-    @safe_extraction
+    @helper_extraction_error
     def _get_class_hierarchy(self) -> List[str]:
         """Gets the class hierarchy of the CAD object.
 
@@ -169,7 +132,7 @@ class BaseExtractor(object):
         parts = class_name.split('::')
         return parts[-1] if len(parts) > 1 else class_name
 
-    @safe_extraction
+    @helper_extraction_error
     def extract_collection_tokens(self, attribute, id_attr='entityToken'):
         """Extracts a list of IDs from a given attribute."""
         collection = getattr(self._obj, attribute, [])

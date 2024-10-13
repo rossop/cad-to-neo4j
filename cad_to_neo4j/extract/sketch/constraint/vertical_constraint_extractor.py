@@ -10,7 +10,7 @@ from typing import Optional, Dict, Any
 import traceback
 from adsk.fusion import VerticalConstraint
 from .geometric_constraint_extractor import GeometricConstraintExtractor
-from ....utils.general_utils import nested_getattr
+from ....utils.extraction_utils import nested_getattr
 
 class VerticalConstraintExtractor(GeometricConstraintExtractor):
     """Extractor for VerticalConstraint objects."""

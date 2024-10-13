@@ -14,7 +14,10 @@ import adsk.core
 
 from .feature_extractor import FeatureExtractor
 from ..base_extractor import BaseExtractor
-from ...utils.general_utils import nested_getattr
+from ...utils.extraction_utils import (
+    nested_getattr,
+    helper_extraction_error
+)
 
 __all__ = ['ExtrudeFeatureExtractor']
 
@@ -60,7 +63,7 @@ class ExtrudeFeatureExtractor(FeatureExtractor):
         return {**feature_info, **extrude_info}
 
     @property
-    @BaseExtractor.safe_extraction
+    @helper_extraction_error
     def profile_tokens(self):
         """Extracts the tokens of profiles used by the ExtrudeFeature.
 
@@ -74,31 +77,31 @@ class ExtrudeFeatureExtractor(FeatureExtractor):
         return [profiles.entityToken]
 
     @property
-    @BaseExtractor.safe_extraction
+    @helper_extraction_error
     def bodies(self) -> Optional[List[str]]:
         """Extracts the IDs of bodies created or modified by the feature."""
         return self.extract_collection_tokens('bodies', 'entityToken')
 
     @property
-    @BaseExtractor.safe_extraction
+    @helper_extraction_error
     def start_faces(self) -> Optional[List[str]]:
         """Extracts the IDs of start faces created by the feature."""
         return self.extract_collection_tokens('startFaces', 'entityToken')
 
     @property
-    @BaseExtractor.safe_extraction
+    @helper_extraction_error
     def end_faces(self) -> Optional[List[str]]:
         """Extracts the IDs of end faces created by the feature."""
         return self.extract_collection_tokens('endFaces', 'entityToken')
 
     @property
-    @BaseExtractor.safe_extraction
+    @helper_extraction_error
     def side_faces(self) -> Optional[List[str]]:
         """Extracts the IDs of side faces created by the feature."""
         return self.extract_collection_tokens('sideFaces', 'entityToken')
 
     @property
-    @BaseExtractor.safe_extraction
+    @helper_extraction_error
     def start_extent(self) -> Dict[str, Any]:
         """Extracts the start extent definition used by the feature."""
         start_extent_info = {}
@@ -140,7 +143,7 @@ class ExtrudeFeatureExtractor(FeatureExtractor):
         return start_extent_info
 
     @property
-    @BaseExtractor.safe_extraction
+    @helper_extraction_error
     def extent_type(self) -> Optional[str]:
         """Extracts the direction of the extrusion."""
         one_side_feature_extent_type: int = 0
@@ -207,21 +210,21 @@ class ExtrudeFeatureExtractor(FeatureExtractor):
         return None
 
     @property
-    @BaseExtractor.safe_extraction
+    @helper_extraction_error
     def extent_one(self) -> Optional[Dict[str, Any]]:
         """Extracts the extent one definition used by the feature."""
         extent_one_root = getattr(self._obj, 'extentOne', None)
         return self.extract_extent_info(extent_one_root, 'extentOne')
 
     @property
-    @BaseExtractor.safe_extraction
+    @helper_extraction_error
     def extent_two(self) -> Optional[Dict[str, Any]]:
         """Extracts the extent two definition used by the feature."""
         extent_two_root = getattr(self._obj, 'extentTwo', None)
         return self.extract_extent_info(extent_two_root, 'extentTwo')
 
     @property
-    @BaseExtractor.safe_extraction
+    @helper_extraction_error
     def operation(self) -> Optional[str]:
         """Extracts the type of operation performed by the extrusion."""
         operation_mapping = {
@@ -236,7 +239,7 @@ class ExtrudeFeatureExtractor(FeatureExtractor):
         return operation_mapping[operation_val] if operation_val else None
 
     @property
-    @BaseExtractor.safe_extraction
+    @helper_extraction_error
     def participant_bodies(self) -> Optional[List[str]]:
         """Extracts the list of bodies that will participate in the feature
         when the operation is a cut or intersection."""
@@ -247,7 +250,7 @@ class ExtrudeFeatureExtractor(FeatureExtractor):
         return ids
 
     @property
-    @BaseExtractor.safe_extraction
+    @helper_extraction_error
     def taper_angle_one_token(self) -> Optional[str]:
         """
         Extracts the entity token for the parameter controlling the taper angle
@@ -259,7 +262,7 @@ class ExtrudeFeatureExtractor(FeatureExtractor):
         return None
 
     @property
-    @BaseExtractor.safe_extraction
+    @helper_extraction_error
     def taper_angle_two_token(self) -> Optional[str]:
         """
         Extracts the entity token for the parameter controlling the taper angle

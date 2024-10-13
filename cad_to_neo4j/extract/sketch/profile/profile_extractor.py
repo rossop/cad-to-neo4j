@@ -13,7 +13,7 @@ import traceback
 
 from .profile_loop_extractor import ProfileLoopExtractor
 from ...base_extractor import BaseExtractor
-from ....utils.general_utils import nested_getattr
+from ....utils.extraction_utils import nested_getattr
 
 __all__ = ['ProfileExtractor']
 
