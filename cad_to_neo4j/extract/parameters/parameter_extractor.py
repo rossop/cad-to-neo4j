@@ -13,8 +13,7 @@ import adsk.core
 import adsk.fusion
 
 from ..base_extractor import BaseExtractor
-
-import traceback
+from ...utils.extraction_utils import helper_extraction_error
 
 
 class ParameterExtractor(BaseExtractor):
@@ -44,11 +43,14 @@ class ParameterExtractor(BaseExtractor):
             'expression': self._obj.expression,
             'unit': self._obj.unit,
             'isFavorite': self._obj.isFavorite,
-            'isDeletable': self._obj.isDeletable
+            'isDeletable': self._obj.isDeletable,
+            'dependencyParameters': self.dependency_parameters,
+            'dependentParameters': self.dependent_parameters,
         }
         return {**base_info, **parameter_info}
 
     @property
+    @helper_extraction_error
     def dependent_parameters(self) -> List[str]:
         """
         Returns a list of parameters that are dependent on this parameter.
@@ -56,17 +58,11 @@ class ParameterExtractor(BaseExtractor):
         Returns:
             list: A list of dependent parameters.
         """
-        try:
-            return [param.name for param in self._obj.dependentParameters]
-        except (AttributeError, RuntimeError) as e:
-            error_msg: str = (
-                f"Error extracting dependent parameters: {e}\n"
-                f"{traceback.format_exc()}"
-                )
-            self.logger.error(error_msg)
-            return []
+        # return [param.name for param in self._obj.dependentParameters]
+        return self.extract_collection_tokens('dependentParameters')
 
     @property
+    @helper_extraction_error
     def dependency_parameters(self) -> List[str]:
         """
         Returns a list of parameters that this parameter is dependent on.
@@ -74,12 +70,5 @@ class ParameterExtractor(BaseExtractor):
         Returns:
             list: A list of dependency parameters.
         """
-        try:
-            return [param.name for param in self._obj.dependencyParameters]
-        except (AttributeError, RuntimeError) as e:
-            error_msg: str = (
-                f"Error extracting dependent parameters: {e}\n"
-                f"{traceback.format_exc()}"
-                )
-            self.logger.error(error_msg)
-            return []
+        # return [param.name for param in self._obj.dependencyParameters]
+        return self.extract_collection_tokens('dependencyParameters')
