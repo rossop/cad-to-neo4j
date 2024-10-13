@@ -1,8 +1,8 @@
 """
 BRep Shell Extractor Module
 
-This module provides an extractor class for extracting information from 
-BRepShell objects, including their parent lump, parent body, and other 
+This module provides an extractor class for extracting information from
+BRepShell objects, including their parent lump, parent body, and other
 properties.
 
 Classes:
@@ -10,28 +10,33 @@ Classes:
 """
 from typing import Optional, Dict, List, Any
 import adsk.core
-import adsk.fusion # TODO standardise this import for 
+import adsk.fusion # TODO standardise this import for
 from .brep_entity_extractor import BRepEntityExtractor
 
 __all__ = ['BRepShellExtractor']
+
 
 class BRepShellExtractor(BRepEntityExtractor):
     """
     Extractor for BRepShell objects.
 
-    This class provides methods to extract various properties from a BRepShell object.
+    This class provides methods to extract various properties from a BRepShell
+    object.
 
     Attributes:
-        shell (adsk.fusion.BRepShell): The BRep shell object to extract data from.
+        shell (adsk.fusion.BRepShell): The BRep shell object to extract data
+        from.
     """
 
-    def __init__(self, obj: adsk.fusion.BRepShell):
+    def __init__(self,
+                 obj: adsk.fusion.BRepShell,
+                 design_environment_data: Dict[str, Any]):
         """Initializes the BRepShellExtractor with a BRepShell object.
 
         Args:
             obj: The BRep shell object to extract information from.
         """
-        super().__init__(obj)
+        super().__init__(obj, design_environment_data=design_environment_data)
 
     def extract_info(self) -> Dict[str, Any]:
         """Extract all information from the BRepShell element.
@@ -106,7 +111,7 @@ class BRepShellExtractor(BRepEntityExtractor):
         except Exception as e:
             self.logger.error(f"Error extracting isVoid: {e}")
             return None
-        
+
     @property
     def wire(self) -> Optional[str]:
         """

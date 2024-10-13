@@ -13,7 +13,7 @@ import adsk.core
 import adsk.fusion
 
 from .feature_extractor import FeatureExtractor
-from ..base_extractor import BaseExtractor
+
 from ...utils.extraction_utils import nested_getattr
 from ...utils.extraction_utils import helper_extraction_error
 

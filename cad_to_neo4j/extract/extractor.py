@@ -32,6 +32,7 @@ import adsk.core
 import adsk.fusion
 
 from .base_extractor import BaseExtractor
+from .brep.brep_entity_extractor import BRepEntityExtractor
 from .extractors import EXTRACTORS, ENTITY_MAP
 
 
@@ -48,16 +49,17 @@ class ExtractorOrchestrator(object):
         logger (logging.Logger, optional): The logger object for logging
             messages and errors.
     """
-    # TODO Refactor methods
     def __init__(self,
                  design: adsk.fusion.Design,
                  logger: logging.Logger = None
                  ):
-        self.design = design  # TODO  add type hinting
+        self.design: adsk.fusion.Design = design
         self.logger = logger or logging.getLogger(__name__)
         self.nodes: Dict[str, Dict[str, Any]] = {}
         self.processed_relationships: set = set()
         self.timeline_index: str = 0
+
+        self.design_environment_data: Dict[str, Any] = {}
 
         self.new_faces: Set[str]
         self.new_edges: Set[str]
@@ -84,7 +86,11 @@ class ExtractorOrchestrator(object):
                 element.objectType,
                 BaseExtractor
                 )
-            return extractor_class(element)
+            # Only pass the design if the extractor is BRepEntityExtractor
+            if issubclass(extractor_class, BRepEntityExtractor):
+                return extractor_class(element, self.design_environment_data)
+            else:
+                return extractor_class(element)
         except Exception as e:  # TODO add specific exceptions
             self._log_extraction_error("get_extractor", e)
             raise
@@ -141,22 +147,33 @@ class ExtractorOrchestrator(object):
             return None
 
     def add_or_update(self, stored_dict: Dict, other_dict: Dict):
-        """Update the existing nodes with new information
+        """Update the existing nodes with new information.
 
         Args:
-            stored_dict (Dict): Extracted dictionaries with node data
-            other_dict (Dict): Dictionaries with new node data
+            stored_dict (Dict): Extracted dictionaries with node data.
+            other_dict (Dict): Dictionaries with new node data.
         """
         for key, value in other_dict.items():
             if key not in stored_dict:
+                # Directly assign if key doesn't exist
                 stored_dict[key] = value
             else:
-                if stored_dict[key] != value:
-                    # Combining the values into a List
-                    if isinstance(stored_dict[key], list):
-                        stored_dict[key] = stored_dict[key].append(value)
+                if isinstance(stored_dict[key], list):
+                    if isinstance(value, list):
+                        # Both are lists: Extend the stored list with new list
+                        stored_dict[key].extend(value)
                     else:
-                        stored_dict[key] = [stored_dict[key], value]
+                        # Append single value to existing list
+                        stored_dict[key].append(value)
+                else:
+                    if isinstance(value, list):
+                        # stored_dict[key] is a single value, value is a list
+                        # Create a list with stored value + new list values
+                        stored_dict[key] = [stored_dict[key]] + value
+                    else:
+                        if stored_dict[key] != value:
+                            # Convert to a list with both stored and new value
+                            stored_dict[key] = [stored_dict[key], value]
 
     def extract_nested_data(self, element: adsk.core.Base):
         """
@@ -370,15 +387,18 @@ class ExtractorOrchestrator(object):
         self.logger.info(logger_msg)
 
         self.extract_data(entity)
+        self.extract_brep_entities(comp)
 
-        self._get_current_brep_entities(comp)
-        self.new_faces = self.current_faces - self.previous_faces
-        self.new_edges = self.current_edges - self.previous_edges
-        self.new_vertices = self.current_vertices - self.previous_vertices
+        # # Tremporaly using the full extraction as we are keeping track of
+        # # index as a property
+        # self._get_current_brep_entities(comp)
+        # self.new_faces = self.current_faces - self.previous_faces
+        # self.new_edges = self.current_edges - self.previous_edges
+        # self.new_vertices = self.current_vertices - self.previous_vertices
 
-        self._process_new_entities(self.new_faces, 'face', comp)
-        self._process_new_entities(self.new_edges, 'edge', comp)
-        self._process_new_entities(self.new_vertices, 'vertex', comp)
+        # self._process_new_entities(self.new_faces, 'face', comp)
+        # self._process_new_entities(self.new_edges, 'edge', comp)
+        # self._process_new_entities(self.new_vertices, 'vertex', comp)
 
     def _extract_sketch(self, sketch_entity: adsk.fusion.Sketch):
         """
@@ -626,6 +646,8 @@ class ExtractorOrchestrator(object):
             entity: adsk.core.Base = timeline_object.entity
             self.timeline_index = index
 
+            self.update_design_environment()
+
             # Roll to current timeline
             self.logger.info(f'Rolling to timeline index {index}')
             timeline_object.rollTo(True)
@@ -712,3 +734,11 @@ class ExtractorOrchestrator(object):
                     f"to component with ID: {component_id}"
                 )
                 self.logger.info()
+
+    def update_design_environment(self):
+        """Update the design environment data (like timelinePosition)"""
+        if self.design is not None:
+            self.design_environment_data['timelinePosition'] \
+                = self.timeline_index
+        else:
+            self.design_environment_data['timelinePosition'] = None

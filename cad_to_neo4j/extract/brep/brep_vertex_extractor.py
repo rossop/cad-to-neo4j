@@ -1,23 +1,28 @@
-from adsk.fusion import BRepVertex
 from typing import Optional, Any, Dict
+import adsk.fusion
 from .brep_entity_extractor import BRepEntityExtractor
 
 __all__ = ['BRepVertexExtractor']
+
 
 class BRepVertexExtractor(BRepEntityExtractor):
     """
     Extractor for BRepVertex data.
     """
-    def __init__(self, obj: BRepVertex):
+    def __init__(self,
+                 obj: adsk.fusion.BRepVertex,
+                 design_environment_data: Dict[str, Any]):
+
         """
         Initialize the BRepVertexExtractor with a BRepVertex object.
 
         Args:
-            obj (adsk.fusion.BRepVertex): The BRepVertex object to extract data from.
+            obj (adsk.fusion.BRepVertex): The BRepVertex object to extract
+            data from.
         """
-        super().__init__(obj)
+        super().__init__(obj, design_environment_data=design_environment_data)
 
-    def extract_info(self) -> Dict[str,Any]:
+    def extract_info(self) -> Dict[str, Any]:
         """
         Extract information from the BRepVertex object.
 

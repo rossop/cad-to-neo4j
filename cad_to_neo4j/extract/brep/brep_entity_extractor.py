@@ -1,40 +1,50 @@
 """
 BRep Element Extractor Module
 
-This module provides an extractor base class for extracting information from 
+This module provides an extractor base class for extracting information from
 BRep elements such as lumps, shells, faces, edges and vertices.
 
 Classes:
     - BRepElementExtractor: Base extractor for BRep elements.
 """
 from typing import Optional, Dict, List, Any
+
 import adsk.core
-import adsk.fusion # TODO standardise this import for 
+import adsk.fusion
+
 from ..base_extractor import BaseExtractor
 from ...utils.extraction_utils import nested_getattr
+from ...utils.extraction_utils import helper_extraction_error
 
 
 __all__ = ['BRepEntityExtractor']
 
+
 class BRepEntityExtractor(BaseExtractor):
     """
     Base extractor for BRep elements.
-    
-    This class provides common methods to extract various properties from BRep elements.
-    
+
+    This class provides common methods to extract various properties from BRep
+    elements.
+
     Attributes:
-        element (adsk.fusion.BRepElement): The BRep element object to extract data from.
+        element (adsk.fusion.BRepElement): The BRep element object to extract
+        data from.
     """
 
-    def __init__(self, obj: adsk.fusion.Base):
+    def __init__(self,
+                 obj: adsk.fusion.Base,
+                 design_environment_data: Dict[str, Any]):
         """Initializes the BRepElementExtractor with a BRep element object.
 
         Args:
             obj: The BRep element object to extract information from.
+            design (adsk.fusion.Design): The Fusion 360 design object.
         """
         super().__init__(obj)
+        self._design_environment_data = design_environment_data
 
-    def extract_info(self):
+    def extract_info(self) -> Dict[str, Any]:
         """Extracts shared infromation across BRepEntities.
 
         Returns:
@@ -45,19 +55,22 @@ class BRepEntityExtractor(BaseExtractor):
             'body': self.body,
             'area': self.area,
             'volume': self.volume,
-            'meshManager': self.meshManager,
-            'assemblyContext': self.assemblyContext,
-            'nativeObject': self.nativeObject,
+            'meshManager': self.mesh_manager,
+            'assemblyContext': self.assembly_context,
+            'nativeObject': self.native_object,
         }
 
-        bounding_box_info = self.boundingBox
+        bounding_box_info = self.bounding_box
         if bounding_box_info is not None:
             brep_entity_info.update(bounding_box_info)
 
+        if self._design_environment_data is not None:
+            brep_entity_info.update(self._design_environment_data)
+
         return {**base_info, **brep_entity_info}
-        
 
     @property
+    @helper_extraction_error
     def body(self) -> Optional[str]:
         """
         Returns the parent body of the element.
@@ -65,34 +78,32 @@ class BRepEntityExtractor(BaseExtractor):
         Returns:
             Optional[str]: Entity token of the parent body.
         """
-        try:
-            body = getattr(self._obj, 'body', None)
-            return getattr(body, 'entityToken', None)
-        except Exception as e:
-            self.logger.error(f"Error extracting body: {e}")
-            return None
+        return nested_getattr(self._obj, 'body.entityToken', None)
 
     @property
-    def boundingBox(self) -> Optional[Dict[str, List[float]]]:
+    @helper_extraction_error
+    def bounding_box(self) -> Optional[Dict[str, List[float]]]:
         """
         Returns the bounding box of this element.
 
         Returns:
-            Optional[Dict[str, List[float]]]: Dictionary with min and max points of the bounding box.
+            Optional[Dict[str, List[float]]]: Dictionary with min and max p
+            oints of the bounding box.
         """
-        try:
-            bbox = getattr(self._obj, 'boundingBox', None)
-            if bbox:
-                return {
-                    'min_point': [bbox.minPoint.x, bbox.minPoint.y, bbox.minPoint.z],
-                    'max_point': [bbox.maxPoint.x, bbox.maxPoint.y, bbox.maxPoint.z]
-                }
-            return None
-        except Exception as e:
-            self.logger.error(f"Error extracting bounding box: {e}")
-            return None
+        bbox = getattr(self._obj, 'boundingBox', None)
+        if bbox:
+            return {
+                'min_point': [
+                    bbox.minPoint.x, bbox.minPoint.y, bbox.minPoint.z
+                    ],
+                'max_point': [
+                    bbox.maxPoint.x, bbox.maxPoint.y, bbox.maxPoint.z
+                    ],
+            }
+        return None
 
     @property
+    @helper_extraction_error
     def area(self) -> Optional[float]:
         """
         Returns the area in cm^2.
@@ -100,13 +111,10 @@ class BRepEntityExtractor(BaseExtractor):
         Returns:
             Optional[float]: Area of the element.
         """
-        try:
-            return getattr(self._obj, 'area', None)
-        except Exception as e:
-            self.logger.error(f"Error extracting area: {e}")
-            return None
+        return getattr(self._obj, 'area', None)
 
     @property
+    @helper_extraction_error
     def volume(self) -> Optional[float]:
         """
         Returns the volume in cm^3. Returns 0 if the element is not solid.
@@ -114,53 +122,38 @@ class BRepEntityExtractor(BaseExtractor):
         Returns:
             Optional[float]: Volume of the element.
         """
-        try:
-            return getattr(self._obj, 'volume', None)
-        except Exception as e:
-            self.logger.error(f"Error extracting volume: {e}")
-            return None
+        return getattr(self._obj, 'volume', None)
 
     @property
-    def meshManager(self) -> Optional[str]:
+    @helper_extraction_error
+    def mesh_manager(self) -> Optional[str]:
         """
         Returns the mesh manager object for this element.
 
         Returns:
             Optional[str]: Entity token of the mesh manager.
         """
-        try:
-            mesh_manager = getattr(self._obj, 'meshManager', None)
-            return getattr(mesh_manager, 'entityToken', None)
-        except Exception as e:
-            self.logger.error(f"Error extracting meshManager: {e}")
-            return None
+        return nested_getattr(self._obj, 'meshManager.entityToken', None)
 
     @property
-    def assemblyContext(self) -> Optional[str]:
+    @helper_extraction_error
+    def assembly_context(self) -> Optional[str]:
         """
-        Returns the assembly occurrence (i.e. the occurrence) of this object in an assembly.
+        Returns the assembly occurrence (i.e. the occurrence) of this object
+        in an assembly.
 
         Returns:
             Optional[str]: Entity token of the assembly context.
         """
-        try:
-            assemblyContext = getattr(self._obj, 'assemblyContext', None)
-            return getattr(assemblyContext, 'entityToken', None)
-        except Exception as e:
-            self.logger.error(f"Error extracting assemblyContext: {e}")
-            return None
+        return nested_getattr(self._obj, 'assemblyContext.entityToken', None)
 
     @property
-    def nativeObject(self) -> Optional[str]:
+    @helper_extraction_error
+    def native_object(self) -> Optional[str]:
         """
         The NativeObject is the object outside the context of an assembly.
 
         Returns:
             Optional[str]: Entity token of the native object.
         """
-        try:
-            nativeObject = getattr(self._obj, 'nativeObject', None)
-            return getattr(nativeObject, 'entityToken', None)
-        except Exception as e:
-            self.logger.error(f"Error extracting nativeObject: {e}")
-            return None
+        return nested_getattr(self._obj, 'nativeObject.entityToken', None)
