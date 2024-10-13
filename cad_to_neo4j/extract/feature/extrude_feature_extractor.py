@@ -176,7 +176,7 @@ class ExtrudeFeatureExtractor(FeatureExtractor):
         if extent_root is not None:
             extent_info = {
                 f'{prefix}Type': type(extent_root).__name__,
-                f'{prefix}TaperAngle': nested_getattr(
+                f'{prefix}TaperAngleValue': nested_getattr(
                     extent_root, 'taperAngle.value', None),
                 f'{prefix}TaperAngleToken': nested_getattr(
                     extent_root, 'taperAngle.entityToken', None),
@@ -186,7 +186,7 @@ class ExtrudeFeatureExtractor(FeatureExtractor):
 
             # Handle DistanceExtentDefinition
             if isinstance(extent_root, adsk.fusion.DistanceExtentDefinition):
-                extent_info[f'{prefix}Distance'] = \
+                extent_info[f'{prefix}DistanceValue'] = \
                     nested_getattr(extent_root, 'distance.value', None)
                 extent_info[f'{prefix}DistanceToken'] = \
                     nested_getattr(extent_root, 'distance.entityToken', None)
@@ -194,11 +194,11 @@ class ExtrudeFeatureExtractor(FeatureExtractor):
             # Handle ThroughAllExtentDefinition
             elif isinstance(
                     extent_root, adsk.fusion.ThroughAllExtentDefinition):
-                extent_info[f'{prefix}Distance'] = 'Through All'
+                extent_info[f'{prefix}DistanceValue'] = 'Through All'
 
             # Handle ToEntityExtentDefinition
             elif isinstance(extent_root, adsk.fusion.ToEntityExtentDefinition):
-                extent_info[f'{prefix}Offset'] = \
+                extent_info[f'{prefix}OffsetValue'] = \
                     nested_getattr(extent_root, 'distance.value', None)
                 extent_info[f'{prefix}OffsetToken'] = \
                     nested_getattr(extent_root, 'distance.entityToken', None)

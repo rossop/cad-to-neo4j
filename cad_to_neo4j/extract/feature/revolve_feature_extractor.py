@@ -138,15 +138,19 @@ class RevolveFeatureExtractor(FeatureExtractor):
             extent_info = {
                 f'{prefix}Type': type(extent_root).__name__,
                 f'{prefix}Angle': nested_getattr(
-                    extent_root, 'angle.value', None),
+                    extent_root, 'angle.valueValue', None),
+                f'{prefix}AngleToken': nested_getattr(
+                    extent_root, 'angle.entityToken', None),
                 f'{prefix}IsSymmetric': nested_getattr(
                     extent_root, 'isSymmetric', None)
             }
             if isinstance(extent_root, adsk.fusion.DistanceExtentDefinition):
-                extent_info[f'{prefix}Distance'] = \
+                extent_info[f'{prefix}DistanceValue'] = \
                     nested_getattr(extent_root, 'distance.value', None)
+                extent_info[f'{prefix}DistanceToken'] = \
+                    nested_getattr(extent_root, 'distance.entityToken', None)
             elif isinstance(extent_root, adsk.fusion.ToEntityExtentDefinition):
-                extent_info[f'{prefix}ObjectToken'] =\
+                extent_info[f'{prefix}EntityToken'] =\
                     nested_getattr(extent_root, 'entity.entityToken', None)
 
             return extent_info

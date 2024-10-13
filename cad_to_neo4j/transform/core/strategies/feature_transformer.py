@@ -93,44 +93,62 @@ class FeatureTransformer(BaseTransformer):
         """
         queries = [
             """
-            MATCH (f)
-            WHERE f.extentOne IS NOT NULL OR f.extentTwo IS NOT NULL
-            OPTIONAL MATCH (e1 {entityToken: f.extentOne_object_id})
-            OPTIONAL MATCH (e2 {entityToken: f.extentTwo_object_id})
-
-            FOREACH (ignore IN CASE WHEN f.extentOne_object_id IS NOT NULL
-                THEN [1] ELSE [] END |
-                MERGE (f)-[:HAS_extentOne]->(e1)
+            // Query 1: Linking Untyped Faces
+            MATCH (f:Feature)
+            WHERE f.face IS NOT NULL
+            UNWIND f.face AS faceToken
+            OPTIONAL MATCH (unt:Face {entityToken: faceToken})
+            FOREACH (ignore IN CASE WHEN unt IS NOT NULL THEN [1] ELSE [] END |
+                MERGE (f)-[rel:HAS_FACE]->(unt)
+                ON CREATE SET rel.type = NULL
             )
-            FOREACH (ignore IN CASE WHEN f.extentTwo_object_id IS NOT NULL
-                THEN [1] ELSE [] END |
-                MERGE (f)-[:HAS_extentTwo]->(e2)
-            )
-
-            WITH f
-            OPTIONAL MATCH (sf {entityToken: f.startFaces})
-            OPTIONAL MATCH (ef {entityToken: f.endFaces})
-            OPTIONAL MATCH (sif {entityToken: f.sideFaces})
-
-            FOREACH (ignore IN CASE WHEN f.startFaces IS NOT NULL
-                THEN [1] ELSE [] END |
-                MERGE (f)-[:HAS_START_FACE]->(sf)
-            )
-            FOREACH (ignore IN CASE WHEN f.endFaces IS NOT NULL
-                THEN [1] ELSE [] END |
-                MERGE (f)-[:HAS_END_FACE]->(ef)
-            )
-            FOREACH (ignore IN CASE WHEN f.sideFaces IS NOT NULL
-                THEN [1] ELSE [] END |
-                MERGE (f)-[:HAS_SIDE_FACE]->(sif)
-            )
-
             RETURN f.entityToken AS feature_id,
-                f.extentOne_object_id AS extentOne_id,
-                f.extentTwo_object_id AS extentTwo_id,
-                f.startFaces AS startFaces,
-                f.endFaces AS endFaces,
-                f.sideFaces AS sideFaces
+                collect(faceToken) AS untyped_faces_linked
+            """,
+            """
+            // Query 2: Linking Start Faces
+            MATCH (f:Feature)
+            WHERE f.startFaces IS NOT NULL
+            UNWIND f.startFaces AS startFaceToken
+            OPTIONAL MATCH (sf:Face {entityToken: startFaceToken})
+            FOREACH (ignore IN CASE WHEN sf IS NOT NULL THEN [1] ELSE [] END |
+                MERGE (f)-[rel:HAS_FACE]->(sf)
+                // Overwrite if relationship already exists
+                ON MATCH SET rel.type = 'start'
+                ON CREATE SET rel.type = 'start'
+            )
+            RETURN f.entityToken AS feature_id,
+                collect(startFaceToken) AS start_faces_linked
+            """,
+            """
+            // Query 3: Linking End Faces
+            MATCH (f:Feature)
+            WHERE f.endFaces IS NOT NULL
+            UNWIND f.endFaces AS endFaceToken
+            OPTIONAL MATCH (ef:Face {entityToken: endFaceToken})
+            FOREACH (ignore IN CASE WHEN ef IS NOT NULL THEN [1] ELSE [] END |
+                MERGE (f)-[rel:HAS_FACE]->(ef)
+                // Overwrite if relationship already exists
+                ON MATCH SET rel.type = 'end'
+                ON CREATE SET rel.type = 'end'
+            )
+            RETURN f.entityToken AS feature_id,
+                collect(endFaceToken) AS end_faces_linked
+            """,
+            """
+            // Query 4: Linking Side Faces
+            MATCH (f:Feature)
+            WHERE f.sideFaces IS NOT NULL
+            UNWIND f.sideFaces AS sideFaceToken
+            OPTIONAL MATCH (sif:Face {entityToken: sideFaceToken})
+            FOREACH (ignore IN CASE WHEN sif IS NOT NULL THEN [1] ELSE [] END |
+                MERGE (f)-[rel:HAS_FACE]->(sif)
+                // Overwrite if relationship already exists
+                ON MATCH SET rel.type = 'side'
+                ON CREATE SET rel.type = 'side'
+            )
+            RETURN f.entityToken AS feature_id,
+                collect(sideFaceToken) AS side_faces_linked
             """,
         ]
         results = []
@@ -153,17 +171,19 @@ class FeatureTransformer(BaseTransformer):
         queries = [
             """
             MATCH (f:Feature)
-            WHERE f.taperAngleOne IS NOT NULL
-            MATCH (p:ModelParameter {entityToken: f.taperAngleOne})
-            MERGE (f)-[:USES_PARAMETER]->(p)
-            RETURN f.entityToken AS feature_id, p.entityToken AS parameter_id
+            WHERE f.extentOneTaperAngleToken IS NOT NULL
+            OPTIONAL MATCH (p {entityToken: f.extentOneTaperAngleToken})
+            MERGE (f)-[:USES_TAPER_ANGLE]->(p)
+            RETURN f.entityToken AS feature_id,
+                p.entityToken AS taper_angle_one_id
             """,
             """
             MATCH (f:Feature)
-            WHERE f.taperAngleTwo IS NOT NULL
-            MATCH (p:ModelParameter {entityToken: f.taperAngleTwo})
-            MERGE (f)-[:USES_PARAMETER]->(p)
-            RETURN f.entityToken AS feature_id, p.entityToken AS parameter_id
+            WHERE f.extentTwoTaperAngleToken IS NOT NULL
+            OPTIONAL MATCH (p {entityToken: f.extentTwoTaperAngleToken})
+            MERGE (f)-[:USES_TAPER_ANGLE_TWO]->(p)
+            RETURN f.entityToken AS feature_id,
+                p.entityToken AS taper_angle_two_id
             """
         ]
         results = []
@@ -179,6 +199,7 @@ class FeatureTransformer(BaseTransformer):
         """
         queries = [
             """
+            // Query 1: Linking Features
             MATCH (f:Feature)
             WHERE f.linkedFeatures IS NOT NULL
             UNWIND f.linkedFeatures AS linkedFeature
@@ -186,14 +207,60 @@ class FeatureTransformer(BaseTransformer):
             MERGE (f)-[:LINKED_TO]->(lf)
             RETURN f.entityToken AS feature_id,
                 collect(lf.entityToken) AS linked_features
+
             """,
             """
+            // Query 2: Linking Extent One (Entity-Based)
             MATCH (f:Feature)
-            WHERE f.taperAngleOne IS NOT NULL
-            MATCH (p:ModelParameter {entityToken: f.taperAngleOne})
-            MERGE (f)-[:USES_TAPER_ANGLE_ONE]->(p)
-            RETURN f.entityToken AS feature_id, p.entityToken AS parameter_id
+            WHERE f.extentOneOffsetToken IS NOT NULL
+                AND f.extentOneEntityToken IS NOT NULL
+            OPTIONAL MATCH (e {entityToken: f.extentOneEntityToken})
+            MERGE (f)-[rel:HAS_EXTENT {
+                    type: 'ENTITY', order: 'extentOne'}]->(e)
+            RETURN f.entityToken AS feature_id,
+                e.entityToken AS extent_one_entity_id
+
+            """,
             """
+            // Query 3: Linking Extent Two (Entity-Based)
+            MATCH (f:Feature)
+            WHERE f.extentTwoOffsetToken IS NOT NULL
+                AND f.extentTwoEntityToken IS NOT NULL
+            OPTIONAL MATCH (e {entityToken: f.extentTwoEntityToken})
+            MERGE (f)-[rel:HAS_EXTENT {
+                type: 'ENTITY', order: 'extentTwo'}]->(e)
+            RETURN f.entityToken AS feature_id,
+                e.entityToken AS extent_two_entity_id
+            """,
+            # """
+            # MATCH (f:Feature)
+            # WHERE f.extentTwoOffsetToken IS NOT NULL
+            # AND f.extentTwoEntityToken IS NOT NULL
+            # OPTIONAL MATCH (e {entityToken: f.extentTwoEntityToken})
+            # MERGE (f)-[:HAS_EXTENT]->(e)
+            # RETURN f.entityToken AS feature_id,
+            #     e.entityToken AS extent_two_entity_id
+            # """,
+            """
+            // Query 4: Linking Distance One
+            MATCH (f:Feature)
+            WHERE f.extentOneDistanceToken IS NOT NULL
+            OPTIONAL MATCH (p {entityToken: f.extentOneDistanceToken})
+            MERGE (f)-[rel:HAS_EXTENT {
+                type: 'DISTANCE', order: 'distanceOne'}]->(p)
+            RETURN f.entityToken AS feature_id,
+                p.entityToken AS distance_one_id
+            """,
+            """
+            // Query 5: Linking Distance Two
+            MATCH (f:Feature)
+            WHERE f.extentTwoDistanceToken IS NOT NULL
+            OPTIONAL MATCH (p {entityToken: f.extentTwoDistanceToken})
+            MERGE (f)-[rel:HAS_EXTENT {
+                type: 'DISTANCE', order: 'distanceTwo'}]->(p)
+            RETURN f.entityToken AS feature_id,
+                p.entityToken AS distance_two_id
+            """,
         ]
         results = []
         self.logger.info('Linking features and taper angles')
