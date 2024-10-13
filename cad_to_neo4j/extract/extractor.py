@@ -158,22 +158,34 @@ class ExtractorOrchestrator(object):
                 # Directly assign if key doesn't exist
                 stored_dict[key] = value
             else:
-                if isinstance(stored_dict[key], list):
-                    if isinstance(value, list):
-                        # Both are lists: Extend the stored list with new list
-                        stored_dict[key].extend(value)
+                if key in ["timelinePosition",
+                           "tangentiallyConnectedFaces"
+                           "faces",
+                           "edges",
+                           ]:
+                    if isinstance(stored_dict[key], list):
+                        if isinstance(value, list):
+                            # Both are lists: Extend the stored list with new
+                            # list
+                            stored_dict[key].extend(value)
+                        else:
+                            # Append single value to existing list
+                            stored_dict[key].append(value)
                     else:
-                        # Append single value to existing list
-                        stored_dict[key].append(value)
+                        if isinstance(value, list):
+                            # stored_dict[key] is a single value, value is a
+                            # list Create a list with stored value + new list
+                            # values
+                            stored_dict[key] = [stored_dict[key]] + value
+                        else:
+                            if stored_dict[key] != value:
+                                # Convert to a list with both stored and new
+                                # value
+                                stored_dict[key] = [stored_dict[key], value]
                 else:
-                    if isinstance(value, list):
-                        # stored_dict[key] is a single value, value is a list
-                        # Create a list with stored value + new list values
-                        stored_dict[key] = [stored_dict[key]] + value
-                    else:
-                        if stored_dict[key] != value:
-                            # Convert to a list with both stored and new value
-                            stored_dict[key] = [stored_dict[key], value]
+                    # For all other keys, replace the old value with the new
+                    # one
+                    stored_dict[key] = value
 
     def extract_nested_data(self, element: adsk.core.Base):
         """
@@ -739,6 +751,6 @@ class ExtractorOrchestrator(object):
         """Update the design environment data (like timelinePosition)"""
         if self.design is not None:
             self.design_environment_data['timelinePosition'] \
-                = self.timeline_index
+                = int(self.timeline_index)
         else:
             self.design_environment_data['timelinePosition'] = None
