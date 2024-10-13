@@ -9,6 +9,7 @@ Classes:
 
 import logging
 
+
 class BaseTransformer:
     """
     BaseTransformer
@@ -17,17 +18,19 @@ class BaseTransformer:
 
     Attributes:
         logger (logging.Logger): The logger for logging messages and errors.
-    
+
     Methods:
         __init__(logger): Initialises the transformer with an optional logger.
-        transform(execute_query): The transform method to be overridden by subclasses.
+        transform(execute_query): The transform method to be overridden by
+        subclasses.
     """
     def __init__(self, logger: logging.Logger = None):
         """
         Initialises the BaseTransformer with an optional logger.
 
         Args:
-            logger (logging.Logger, optional): The logger for logging messages and errors. Defaults to None.
+            logger (logging.Logger, optional): The logger for logging messages
+            and errors. Defaults to None.
         """
         self.logger = logger if logger else logging.getLogger(__name__)
 

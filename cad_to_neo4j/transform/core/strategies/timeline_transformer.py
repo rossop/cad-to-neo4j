@@ -8,6 +8,8 @@ Classes:
 """
 
 from ..base_transformer import BaseTransformer
+from ....utils.cypher_utils import helper_cypher_error
+
 
 class TimelineTransformer(BaseTransformer):
     """
@@ -16,7 +18,8 @@ class TimelineTransformer(BaseTransformer):
     A class to handle timeline-based transformations.
 
     Methods:
-        transform(execute_query): Runs all timeline-related transformation methods.
+        transform(execute_query): Runs all timeline-related transformation
+            methods.
     """
     def transform(self, execute_query):
         """
@@ -29,9 +32,11 @@ class TimelineTransformer(BaseTransformer):
             dict: The result values from the query execution.
         """
         results = {}
-        results['create_timeline_relationships'] = self.create_timeline_relationships(execute_query)
+        results['create_timeline_relationships'] = \
+            self.create_timeline_relationships(execute_query)
         return results
 
+    @helper_cypher_error
     def create_timeline_relationships(self, execute_query):
         """
         Creates relationships between nodes based on their timeline index.

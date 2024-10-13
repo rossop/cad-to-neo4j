@@ -6,8 +6,9 @@ This module provides the transformation logic for sketch relationships.
 Classes:
     - SketchTransformer: A class to handle sketch-based transformations.
 """
-import traceback
 from ..base_transformer import BaseTransformer
+from ....utils.cypher_utils import helper_cypher_error
+
 
 class SketchTransformer(BaseTransformer):
     """
@@ -16,7 +17,8 @@ class SketchTransformer(BaseTransformer):
     A class to handle sketch-based transformations.
 
     Methods:
-        transform(execute_query): Runs all sketch-related transformation methods.
+        transform(execute_query): Runs all sketch-related transformation
+            methods.
     """
     def transform(self, execute_query):
         """
@@ -29,13 +31,19 @@ class SketchTransformer(BaseTransformer):
             dict: The result values from the query execution.
         """
         results = {}
-        results['create_sketch_relationships'] = self.create_sketch_relationships(execute_query)
-        results['create_sketch_axis_and_origin_for_all_sketches'] = self.create_sketch_axis_and_origin_for_all_sketches(execute_query)
-        results['create_sketch_dimensions_relationships'] = self.create_sketch_dimensions_relationships(execute_query)
-        results['create_sketch_geometric_constraints'] = self.create_sketch_geometric_constraints(execute_query)
-        results['link_sketch_dimensions_to_parameters'] = self.link_sketch_dimensions_to_parameters(execute_query)
+        results['create_sketch_relationships'] = \
+            self.create_sketch_relationships(execute_query)
+        results['create_sketch_axis_and_origin_for_all_sketches'] = \
+            self.create_sketch_axis_and_origin_for_all_sketches(execute_query)
+        results['create_sketch_dimensions_relationships'] = \
+            self.create_sketch_dimensions_relationships(execute_query)
+        results['create_sketch_geometric_constraints'] = \
+            self.create_sketch_geometric_constraints(execute_query)
+        results['link_sketch_dimensions_to_parameters'] = \
+            self.link_sketch_dimensions_to_parameters(execute_query)
         return results
 
+    @helper_cypher_error
     def create_sketch_relationships(self, execute_query):
         """
         Creates relationships between sketch entities.
@@ -56,7 +64,8 @@ class SketchTransformer(BaseTransformer):
                 OR 'Profile' IN labels(se))
                 AND se.parentSketch IS NOT NULL
 
-            // Match existing Sketch node where entityToken matches parentSketch of SketchEntity
+            // Match existing Sketch node where entityToken matches
+            // parentSketch of SketchEntity
             MATCH (s:Sketch {entityToken: se.parentSketch})
 
             // Create the relationship from Sketch to SketchEntity
@@ -90,7 +99,8 @@ class SketchTransformer(BaseTransformer):
             WHERE sc.startPoint IS NOT NULL AND sc.endPoint IS NOT NULL
 
             // Ensure that the startPoint and endPoint nodes exist
-            WITH sc, sc.startPoint AS startPointToken, sc.endPoint AS endPointToken
+            WITH sc, sc.startPoint AS startPointToken,
+                sc.endPoint AS endPointToken
             MATCH (sp1 {entityToken: startPointToken})
             MATCH (sp2 {entityToken: endPointToken})
 
@@ -120,18 +130,18 @@ class SketchTransformer(BaseTransformer):
         results = []
         self.logger.info('Creating sketch relationships')
         for query in queries:
-            try:
-                results.extend(execute_query(query))
-            except Exception as e:
-                self.logger.error(f'Exception executing query: {query}\n{e}\n{traceback.format_exc()}')
+            results.extend(execute_query(query))
         return results
 
+    @helper_cypher_error
     def create_sketch_dimensions_relationships(self, execute_query):
         """
-        Creates 'DIMENSIONED' relationships between sketch entities and their corresponding dimensions.
+        Creates 'DIMENSIONED' relationships between sketch entities and their
+        corresponding dimensions.
 
-        This function connects any node with a sketchDimensions property to all the SketchDimension nodes
-        that share the same entityToken as the ones in the list under the sketchDimensions property.
+        This function connects any node with a sketchDimensions property to
+        all the SketchDimension nodes that share the same entityToken as the
+        ones in the list under the sketchDimensions property.
 
         Args:
             execute_query (function): Function to execute a Cypher query.
@@ -142,8 +152,9 @@ class SketchTransformer(BaseTransformer):
         cypher_queries = [
             """
             MATCH (d)
-            WHERE ('SketchDimension' IN labels(d) OR 'SketchLinearDimension' IN labels(d)) 
-                AND d.entityOne IS NOT NULL 
+            WHERE ('SketchDimension' IN labels(d)
+                    OR 'SketchLinearDimension' IN labels(d))
+                AND d.entityOne IS NOT NULL
                 AND d.entityTwo IS NOT NULL
             MATCH (a {entityToken: d.entityOne})
             MATCH (b {entityToken: d.entityTwo})
@@ -153,30 +164,31 @@ class SketchTransformer(BaseTransformer):
             """,
             """
             MATCH (d)
-            WHERE (d:SketchAngularDimension) 
-                AND d.lineOne IS NOT NULL 
+            WHERE (d:SketchAngularDimension)
+                AND d.lineOne IS NOT NULL
                 AND d.lineTwo IS NOT NULL
             MATCH (a {entityToken: d.lineOne})
             MATCH (b {entityToken: d.lineTwo})
             MERGE (a)-[:DIMENSIONED]->(d)
             MERGE (d)-[:DIMENSIONED]->(b)
             REMOVE d.lineOne, d.lineTwo
-            """,   
+            """,
             """
             MATCH (d)
-            WHERE (d:SketchConcentricCircleDimension) 
-                AND d.circleOne IS NOT NULL 
+            WHERE (d:SketchConcentricCircleDimension)
+                AND d.circleOne IS NOT NULL
                 AND d.circleTwo IS NOT NULL
             MATCH (a {entityToken: d.circleOne})
             MATCH (b {entityToken: d.circleTwo})
             MERGE (a)-[:DIMENSIONED]->(d)
             MERGE (d)-[:DIMENSIONED]->(b)
             REMOVE d.circleOne, d.circleTwo
-            """,   
+            """,
             """
             MATCH (d)
-            WHERE ('SketchDiameterDimension' IN labels(d) OR 'SketchRadialDimension' IN labels(d))
-                AND d.entity IS NOT NULL 
+            WHERE ('SketchDiameterDimension' IN labels(d)
+                OR 'SketchRadialDimension' IN labels(d))
+                AND d.entity IS NOT NULL
             MATCH (a {entityToken: d.entity})
             MERGE (a)-[:DIMENSIONED]->(d)
             MERGE (d)-[:DIMENSIONED]->(a)
@@ -184,60 +196,60 @@ class SketchTransformer(BaseTransformer):
             """,
             """
             MATCH (d)
-            WHERE (d:SketchDistanceBetweenLineAndPlanarSurfaceDimension) 
-                AND d.line IS NOT NULL 
+            WHERE (d:SketchDistanceBetweenLineAndPlanarSurfaceDimension)
+                AND d.line IS NOT NULL
                 AND d.planarSurface IS NOT NULL
             MATCH (a {entityToken: d.line})
             MATCH (b {entityToken: d.planarSurface})
             MERGE (a)-[:DIMENSIONED]->(d)
             MERGE (d)-[:DIMENSIONED]->(b)
             REMOVE d.line, d.planarSurface
-            """,   
+            """,
             """
             MATCH (d)
-            WHERE (d:SketchDistanceBetweenPointAndSurfaceDimension) 
-                AND d.point IS NOT NULL 
+            WHERE (d:SketchDistanceBetweenPointAndSurfaceDimension)
+                AND d.point IS NOT NULL
                 AND d.surface IS NOT NULL
             MATCH (a {entityToken: d.point})
             MATCH (b {entityToken: d.surface})
             MERGE (a)-[:DIMENSIONED]->(d)
             MERGE (d)-[:DIMENSIONED]->(b)
             REMOVE d.point, d.surface
-            """,   
+            """,
             """
             MATCH (d)
-            WHERE (d:SketchLinearDiameterDimension) 
-                AND d.line IS NOT NULL 
+            WHERE (d:SketchLinearDiameterDimension)
+                AND d.line IS NOT NULL
                 AND d.entityTwo IS NOT NULL
             MATCH (a {entityToken: d.line})
             MATCH (b {entityToken: d.entityTwo})
             MERGE (a)-[:DIMENSIONED]->(d)
             MERGE (d)-[:DIMENSIONED]->(b)
             REMOVE d.line, d.entityTwo
-            """,   
+            """,
             """
             MATCH (d)
-            WHERE (d:SketchOffsetCurvesDimension) 
-                AND d.offsetConstraint IS NOT NULL 
+            WHERE (d:SketchOffsetCurvesDimension)
+                AND d.offsetConstraint IS NOT NULL
             MATCH (c {entityToken: d.offsetConstraint})
             MERGE (c)-[:DIMENSIONED]->(d)
             MERGE (d)-[:DIMENSIONED]->(c)
             REMOVE d.offsetConstraint
-            """,   
+            """,
             """
             MATCH (d)
-            WHERE (d:SketchOffsetCurvesDimension) 
-                AND d.offsetConstraint IS NOT NULL 
+            WHERE (d:SketchOffsetCurvesDimension)
+                AND d.offsetConstraint IS NOT NULL
             MATCH (c {entityToken: d.offsetConstraint})
             MERGE (c)-[:DIMENSIONED]->(d)
             MERGE (d)-[:DIMENSIONED]->(c)
             REMOVE d.offsetConstraint
-            """,   
+            """,
             """
             MATCH (d)
-            WHERE (d:SketchOffsetDimension) 
-                AND d.line IS NOT NULL 
-                AND d.entityTwo IS NOT NULL 
+            WHERE (d:SketchOffsetDimension)
+                AND d.line IS NOT NULL
+                AND d.entityTwo IS NOT NULL
             MATCH (a {entityToken: d.line})
             MATCH (c {entityToken: d.entityTwo})
             MERGE (a)-[:DIMENSIONED]->(d)
@@ -246,9 +258,11 @@ class SketchTransformer(BaseTransformer):
             """,
             #  Redundancy check for Circle entities dimensions
             """
-            // Query to create DIMENSIONED relationships using the dimensions property of SketchCircle
+            // Query to create DIMENSIONED relationships using the dimensions
+            // property of SketchCircle
 
-            // Unwind dimensions and create DIMENSIONED relationships from dimension to circle
+            // Unwind dimensions and create DIMENSIONED relationships from
+            // dimension to circle
             MATCH (circle:SketchCircle)
             UNWIND circle.dimensions AS dimension_id
             MATCH (dim:SketchDimension {entityToken: dimension_id})
@@ -257,7 +271,8 @@ class SketchTransformer(BaseTransformer):
             RETURN circle, dim;
             """,
             """
-            // Unwind dimensions and create DIMENSIONED relationships from circle to dimension
+            // Unwind dimensions and create DIMENSIONED relationships from
+            // circle to dimension
             MATCH (circle:SketchCircle)
             UNWIND circle.dimensions AS dimension_id
             MATCH (dim:SketchDimension {entityToken: dimension_id})
@@ -267,19 +282,22 @@ class SketchTransformer(BaseTransformer):
             RETURN circle, dim;
             """
         ]
-        
+
         results = []
-        self.logger.info('Creating relationships between sketch entities and their dimensions')
+        info_msg: str = (
+            'Creating relationships between sketch entities'
+            'and their dimensions'
+            )
+        self.logger.info(info_msg)
         for query in cypher_queries:
-            try:
-                results.extend(execute_query(query))
-            except Exception as e:
-                    self.logger.error(f'Exception executing query: {query}\n{e}\n{traceback.format_exc()}')
+            results.extend(execute_query(query))
         return results
 
+    @helper_cypher_error
     def create_sketch_geometric_constraints(self, execute_query):
         """
-        Creates relationships between entities and their geometric constraints based on various properties.
+        Creates relationships between entities and their geometric constraints
+        based on various properties.
 
         Args:
             execute_query (function): Function to execute a Cypher query.
@@ -287,11 +305,13 @@ class SketchTransformer(BaseTransformer):
         Returns:
             dict: A dictionary containing the results of all transformations.
         """
-        queries = [ 
+        queries = [
             # Creates relationships for CircularPatternConstraint entities.
             """
             MATCH (c:CircularPatternConstraint)
-            WHERE c.entities IS NOT NULL AND c.createdEntities IS NOT NULL AND c.centerPoint IS NOT NULL
+            WHERE c.entities IS NOT NULL
+                AND c.createdEntities IS NOT NULL
+                AND c.centerPoint IS NOT NULL
             UNWIND c.entities AS entity_token
             MATCH (se {entityToken: entity_token}) // Source Entities
             WITH c, se
@@ -306,7 +326,7 @@ class SketchTransformer(BaseTransformer):
             RETURN c, se, te, ce
             """,
             # Creates relationships for VerticalConstraint entities with yAxis.
-            """   
+            """
             MATCH (vc:VerticalConstraint)
             WHERE vc.line IS NOT NULL
             UNWIND vc.line AS entity_token
@@ -319,7 +339,7 @@ class SketchTransformer(BaseTransformer):
             REMOVE vc.line
             RETURN vc, se, sa
             """,
-            # Creates relationships for HorizontalConstraint entities with xAxis.
+            # Create relationships for HorizontalConstraint entities with xAxis
             """
             MATCH (hc:HorizontalConstraint)
             WHERE hc.line IS NOT NULL
@@ -333,7 +353,8 @@ class SketchTransformer(BaseTransformer):
             // REMOVE hc.line
             RETURN hc, se, sa
             """,
-            # Creates relationships for PerpendicularConstraint entities linking lineOne and lineTwo.
+            # Creates relationships for PerpendicularConstraint entities
+            # linking lineOne and lineTwo.
             """
             MATCH (pc:PerpendicularConstraint)
             WHERE pc.lineOne IS NOT NULL AND pc.lineTwo IS NOT NULL
@@ -344,7 +365,8 @@ class SketchTransformer(BaseTransformer):
             REMOVE pc.lineOne, pc.lineTwo
             RETURN pc, source, target
             """,
-            # Creates relationships for CoincidentConstraint entities linking point and entity.
+            # Creates relationships for CoincidentConstraint entities linking
+            # point and entity.
             """
             MATCH (cc:CoincidentConstraint)
             WHERE cc.point IS NOT NULL AND cc.entity IS NOT NULL
@@ -355,7 +377,8 @@ class SketchTransformer(BaseTransformer):
             REMOVE cc.point, cc.entity
             RETURN cc, source, target
             """,
-            # Creates relationships for CollinearConstraint entities linking lineOne and lineTwo.
+            # Creates relationships for CollinearConstraint entities linking
+            # lineOne and lineTwo.
             """
             MATCH (cc:CollinearConstraint)
             WHERE cc.lineOne IS NOT NULL AND cc.lineTwo IS NOT NULL
@@ -366,7 +389,8 @@ class SketchTransformer(BaseTransformer):
             REMOVE cc.lineOne, cc.lineTwo
             RETURN cc, source, target
             """,
-            # Creates relationships for EqualConstraint entities linking curveOne and curveTwo.
+            # Creates relationships for EqualConstraint entities linking
+            # curveOne and curveTwo.
             """
             MATCH (ec:EqualConstraint)
             WHERE ec.curveOne IS NOT NULL AND ec.curveTwo IS NOT NULL
@@ -377,7 +401,8 @@ class SketchTransformer(BaseTransformer):
             REMOVE ec.curveOne, ec.curveTwo
             RETURN ec, source, target
             """,
-            # Creates relationships for ParallelConstraint entities linking lineOne and lineTwo.
+            # Creates relationships for ParallelConstraint entities linking
+            # lineOne and lineTwo.
             """
             MATCH (pc:ParallelConstraint)
             WHERE pc.lineOne IS NOT NULL AND pc.lineTwo IS NOT NULL
@@ -388,20 +413,25 @@ class SketchTransformer(BaseTransformer):
             REMOVE pc.lineOne, pc.lineTwo
             RETURN pc, source, target
             """,
-            # reates relationships for SymmetryConstraint entities linking entityOne, entityTwo, and symmetry_line.
+            # reates relationships for SymmetryConstraint entities linking
+            # entityOne, entityTwo, and symmetry_line.
             """
             MATCH (sc:SymmetryConstraint)
-            WHERE sc.entityOne IS NOT NULL AND sc.entityTwo IS NOT NULL AND sc.symmetry_line IS NOT NULL
+            WHERE sc.entityOne IS NOT NULL
+                AND sc.entityTwo IS NOT NULL
+                AND sc.symmetry_line IS NOT NULL
             MATCH (source {entityToken: sc.entityOne}) // Source Entity
             MATCH (target {entityToken: sc.entityTwo}) // Target Entity
-            MATCH (symmetry_line {entityToken: sc.symmetry_line}) // Symmetry Line
+            // Symmetry Line
+            MATCH (symmetry_line {entityToken: sc.symmetry_line})
             MERGE (source)-[:CONSTRAINED]->(sc)
             MERGE (sc)-[:CONSTRAINED]->(target)
             MERGE (symmetry_line)-[:CONSTRAINED]->(sc)
             REMOVE sc.entityOne, sc.entityTwo, sc.symmetry_line
             RETURN sc, source, target, symmetry_line
             """,
-            # Creates relationships for TangentConstraint entities linking curveOne and curveTwo.
+            # Creates relationships for TangentConstraint entities linking
+            # curveOne and curveTwo.
             """
             MATCH (tc:TangentConstraint)
             WHERE tc.curveOne IS NOT NULL AND tc.curveTwo IS NOT NULL
@@ -413,20 +443,19 @@ class SketchTransformer(BaseTransformer):
             RETURN tc, source, target
             """,
         ]
-        
+
         results = []
         self.logger.info('Creating geometric constraints')
         for query in queries:
-            try:
-                results.extend(execute_query(query))
-            except Exception as e:
-                self.logger.error(f'Exception executing query: {query}\n{e}\n{traceback.format_exc()}')
+            results.extend(execute_query(query))
         return results
 
+    @helper_cypher_error
     def create_sketch_axis_and_origin_for_all_sketches(self, execute_query):
         """
-        Matches all existing Sketch nodes, extracts axis and origin information,
-        and creates SketchAxis and SketchOrigin nodes with relationships.
+        Matches all existing Sketch nodes, extracts axis and origin
+        information, and creates SketchAxis and SketchOrigin nodes with
+        relationships.
 
         Args:
             execute_query (function): Function to execute a Cypher query.
@@ -434,16 +463,27 @@ class SketchTransformer(BaseTransformer):
         Returns:
             None
         """
-        self.logger.info("Creating sketch axis and origin nodes for all sketches")
+        self.logger.info(
+            "Creating sketch axis and origin nodes for all sketches")
         query = """
             MATCH (sketch:Sketch)
-            WITH sketch, sketch.origin AS origin_position, sketch.x_direction AS x_axis_vector, sketch.y_direction AS y_axis_vector, sketch.origin_point AS origin_entityToken
+            WITH sketch,
+                sketch.origin AS origin_position,
+                sketch.x_direction AS x_axis_vector,
+                sketch.y_direction AS y_axis_vector,
+                sketch.origin_point AS origin_entityToken
             MERGE (origin:SketchEntity {entityToken: origin_entityToken})
             ON CREATE SET origin.position = origin_position
             ON MATCH SET origin :SketchOrigin
             SET origin :SketchEntity
-            MERGE (x_axis:SketchAxis:SketchEntity {name: 'x', vector: x_axis_vector})
-            MERGE (y_axis:SketchAxis:SketchEntity {name: 'y', vector: y_axis_vector})
+            MERGE (x_axis:SketchAxis:SketchEntity {
+                name: 'x',
+                vector: x_axis_vector
+                })
+            MERGE (y_axis:SketchAxis:SketchEntity {
+                name: 'y',
+                vector: y_axis_vector
+                })
             MERGE (x_axis)-[:STARTS_WITH]->(origin)
             MERGE (y_axis)-[:STARTS_WITH]->(origin)
             MERGE (y_axis)-[:PERPENDICULAR_TO]->(x_axis)
@@ -451,17 +491,18 @@ class SketchTransformer(BaseTransformer):
             MERGE (sketch)-[:CONTAINS]->(y_axis)
             MERGE (sketch)-[:CONTAINS]->(origin)
             """
-        try:
-            execute_query(query)
-        except Exception as e:
-            self.logger.error(f"Error creating sketch axis and origin nodes for all sketches: {e}")
+        results = execute_query(query)
+        return results
 
+    @helper_cypher_error
     def link_sketch_dimensions_to_parameters(self, execute_query):
         """
-        Creates relationships between SketchDimensions and Parameters in the Neo4j database.
+        Creates relationships between SketchDimensions and Parameters in the
+        Neo4j database.
 
-        This method finds SketchDimension nodes that have an associatedModelParameter
-        and links them to the corresponding Parameter node based on their entityToken.
+        This method finds SketchDimension nodes that have an
+        associatedModelParameter and links them to the corresponding Parameter
+        node based on their entityToken.
 
         Args:
             execute_query (function): Function to execute a Cypher query.
@@ -479,11 +520,9 @@ class SketchTransformer(BaseTransformer):
 
         results = []
 
-        try:
-            self.logger.info('Linking SketchDimensions to Parameters')
-            results = execute_query(query)
-            self.logger.info(f'Linked {len(results)} SketchDimensions to Parameters')
-        except Exception as e:
-            self.logger.error(f'Exception executing query: {query}\n{e}\n{traceback.format_exc()}')
-
+        self.logger.info('Linking SketchDimensions to Parameters')
+        results = execute_query(query)
+        info_msg: str = \
+            f'Linked {len(results)} SketchDimensions to Parameters'
+        self.logger.info(info_msg)
         return results

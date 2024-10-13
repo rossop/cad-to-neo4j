@@ -7,8 +7,8 @@ Classes:
     - FeatureTransformer: A class to handle feature-based transformations.
 """
 
-import traceback
 from ..base_transformer import BaseTransformer
+from ....utils.cypher_utils import helper_cypher_error
 
 
 class FeatureTransformer(BaseTransformer):
@@ -49,6 +49,7 @@ class FeatureTransformer(BaseTransformer):
             self.link_feature_to_linked_features_and_parameters(execute_query)
         return results
 
+    @helper_cypher_error
     def create_profile_relationships(self, execute_query):
         """
         Creates 'USES_PROFILE' relationships between feature and profiles based
@@ -76,16 +77,10 @@ class FeatureTransformer(BaseTransformer):
         results = []
         self.logger.info('Creating profile/feature relationships')
         for query in queries:
-            try:
-                results.extend(execute_query(query))
-            except Exception as e:
-                exception_msg: str = (
-                    f'Exception executing query: {query}\n'
-                    f'{e}\n{traceback.format_exc()}'
-                    )
-                self.logger.error(exception_msg)
+            results.extend(execute_query(query))
         return results
 
+    @helper_cypher_error
     def create_feature_to_extents_and_faces_relationships(self, execute_query):
         """
         Links features to their extents and faces based on various properties.
@@ -143,16 +138,10 @@ class FeatureTransformer(BaseTransformer):
             'Creating relationships between features, extents and faces'
         self.logger.info(tranformation_msg)
         for query in queries:
-            try:
-                results.extend(execute_query(query))
-            except Exception as e:
-                general_exception_msg: str = (
-                    f'Exception executing query: {query}\n'
-                    f'{e}\n{traceback.format_exc()}'
-                    )
-                self.logger.error(general_exception_msg)
+            results.extend(execute_query(query))
         return results
 
+    @helper_cypher_error
     def link_taper_angles_to_parameters(self, execute_query):
         """
         Links the taper angles of extrude features to their corresponding model
@@ -180,16 +169,10 @@ class FeatureTransformer(BaseTransformer):
         results = []
         self.logger.info('Linking taper angles to parameters')
         for query in queries:
-            try:
-                results.extend(execute_query(query))
-            except Exception as e:
-                general_Exception_msg: str = (
-                    f'Exception executing query: {query}\n'
-                    f'{e}\n{traceback.format_exc()}'
-                )
-                self.logger.error(general_Exception_msg)
+            results.extend(execute_query(query))
         return results
 
+    @helper_cypher_error
     def link_feature_to_linked_features_and_parameters(self, execute_query):
         """
         Links features to linked features and taper angles to model parameters.
@@ -201,7 +184,8 @@ class FeatureTransformer(BaseTransformer):
             UNWIND f.linkedFeatures AS linkedFeature
             MATCH (lf {entityToken: linkedFeature})
             MERGE (f)-[:LINKED_TO]->(lf)
-            RETURN f.entityToken AS feature_id, collect(lf.entityToken) AS linked_features
+            RETURN f.entityToken AS feature_id,
+                collect(lf.entityToken) AS linked_features
             """,
             """
             MATCH (f:Feature)
@@ -214,12 +198,5 @@ class FeatureTransformer(BaseTransformer):
         results = []
         self.logger.info('Linking features and taper angles')
         for query in queries:
-            try:
-                results.extend(execute_query(query))
-            except Exception as e:
-                general_Exception_msg: str = (
-                    f'Exception executing query: {query}\n'
-                    f'{e}\n{traceback.format_exc()}'
-                )
-                self.logger.error(general_Exception_msg)
+            results.extend(execute_query(query))
         return results

@@ -93,10 +93,16 @@ def helper_extraction_error(func):
 
     Returns:
         function: The wrapped function with enhanced error handling.
+
+    Example:
+        @helper_extraction_error
+        def some_extraction_method(self, data):
+            # Extraction logic here
     """
     @wraps(func)
     def wrapper(*args, **kwargs):
-        instance = args[0]  # Assumes the first argument is the class instance
+        # Assumes the first argument is the class instance
+        instance = args[0]
         logger = instance.logger
         extractor_name = instance.__class__.__name__  # Name of the extractor
         method_name = func.__name__  # Name of the function being wrapped
