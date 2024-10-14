@@ -14,24 +14,25 @@ Classes:
 
 Functions:
     - get_extractor: Returns the appropriate extractor for the given
-      element.
+        element.
     - extract_data: Extracts data from the given element using the
-      appropriate extractor.
+        appropriate extractor.
 
 Usage:
     orchestrator = ExtractOrchestrator(design)
-    timeline_nodes, timeline_relationships = orchestrator.extract_timeline_based_data()
+    timeline_nodes, timeline_relationships = orchestrator.
+                                extract_timeline_based_data()
 """
 import logging
-from typing import Optional, Tuple, Any, List, Dict, Set
+from typing import Optional, Tuple, Any, List, Dict, Set, Union
+
+import traceback
 
 import adsk.core
 import adsk.fusion
 
-from adsk.fusion import Design, Component,  Feature, Sketch, BRepBody
-import traceback
-
 from .base_extractor import BaseExtractor
+from .brep.brep_entity_extractor import BRepEntityExtractor
 from .extractors import EXTRACTORS, ENTITY_MAP
 
 
@@ -48,16 +49,17 @@ class ExtractorOrchestrator(object):
         logger (logging.Logger, optional): The logger object for logging
             messages and errors.
     """
-    # TODO Refactor methods
     def __init__(self,
                  design: adsk.fusion.Design,
                  logger: logging.Logger = None
                  ):
-        self.design = design  # TODO  add type hinting
+        self.design: adsk.fusion.Design = design
         self.logger = logger or logging.getLogger(__name__)
         self.nodes: Dict[str, Dict[str, Any]] = {}
         self.processed_relationships: set = set()
         self.timeline_index: str = 0
+
+        self.design_environment_data: Dict[str, Any] = {}
 
         self.new_faces: Set[str]
         self.new_edges: Set[str]
@@ -84,13 +86,13 @@ class ExtractorOrchestrator(object):
                 element.objectType,
                 BaseExtractor
                 )
-            return extractor_class(element)
+            # Only pass the design if the extractor is BRepEntityExtractor
+            if issubclass(extractor_class, BRepEntityExtractor):
+                return extractor_class(element, self.design_environment_data)
+            else:
+                return extractor_class(element)
         except Exception as e:  # TODO add specific exceptions
-            exception_msg: str = (
-                "Failed to get extractor for element "
-                f"{element.objectType}: {str(e)}"
-            )
-            self.logger.error(exception_msg)
+            self._log_extraction_error("get_extractor", e)
             raise
 
     def log_element_properties(self, element: adsk.core.Base):
@@ -141,32 +143,51 @@ class ExtractorOrchestrator(object):
             return extracted_info
 
         except Exception as e:  # TODO add specific exceptions
-            general_exception_msg: str = f"""
-                              Error in extract_data: {str(e)}\n
-                              Failed:\n{traceback.format_exc()}
-                            """
-            self.logger.error(general_exception_msg)
+            self._log_extraction_error("extract_data", e)
             return None
 
     def add_or_update(self, stored_dict: Dict, other_dict: Dict):
-        """Update the existing nodes with new information
+        """Update the existing nodes with new information.
 
         Args:
-            stored_dict (Dict): Extracted dictionaries with node data
-            other_dict (Dict): Dictionaries with new node data
+            stored_dict (Dict): Extracted dictionaries with node data.
+            other_dict (Dict): Dictionaries with new node data.
         """
         for key, value in other_dict.items():
             if key not in stored_dict:
+                # Directly assign if key doesn't exist
                 stored_dict[key] = value
             else:
-                if stored_dict[key] != value:
-                    # Combining the values into a List
+                if key in ["timelinePosition",
+                           "tangentiallyConnectedFaces"
+                           "faces",
+                           "edges",
+                           ]:
                     if isinstance(stored_dict[key], list):
-                        stored_dict[key] = stored_dict[key].append(value)
+                        if isinstance(value, list):
+                            # Both are lists: Extend the stored list with new
+                            # list
+                            stored_dict[key].extend(value)
+                        else:
+                            # Append single value to existing list
+                            stored_dict[key].append(value)
                     else:
-                        stored_dict[key] = [stored_dict[key], value]
+                        if isinstance(value, list):
+                            # stored_dict[key] is a single value, value is a
+                            # list Create a list with stored value + new list
+                            # values
+                            stored_dict[key] = [stored_dict[key]] + value
+                        else:
+                            if stored_dict[key] != value:
+                                # Convert to a list with both stored and new
+                                # value
+                                stored_dict[key] = [stored_dict[key], value]
+                else:
+                    # For all other keys, replace the old value with the new
+                    # one
+                    stored_dict[key] = value
 
-    def extract_nested_data(self, element: adsk.core.Base):  # TODO add type hinting
+    def extract_nested_data(self, element: adsk.core.Base):
         """
         Extracts nested data from the given element using the appropriate
         extractor and stores it.
@@ -223,13 +244,13 @@ class ExtractorOrchestrator(object):
             if check_dict_values(data):
                 for key, val in data.items():
                     if isinstance(val, list):
-                        for i in range(len(val)):
-                            item = val[i]
+                        for index, item in enumerate(val):
                             if isinstance(item, dict):
                                 flattened_data += flatten(item)
-                                val[i] = None  # Remove nested dictionary
+                                val[index] = None  # Remove nested dictionary
                         # Set the list to None if all its elements are None
-                        data[key] = None if all(item is None for item in val) else val
+                        data[key] = None if all(
+                            item is None for item in val) else val
                 # Append modified data once nested dicts have been removed
                 flattened_data.append(data)
             else:
@@ -239,8 +260,8 @@ class ExtractorOrchestrator(object):
 
         flattened_data = []
         try:
-            Extractor = self.get_extractor(element)
-            extracted_info = Extractor.extract_info()
+            extractor = self.get_extractor(element)
+            extracted_info = extractor.extract_info()
             if extracted_info:
                 flattened_data = flatten(extracted_info)
 
@@ -252,10 +273,8 @@ class ExtractorOrchestrator(object):
                     self.add_or_update(self.nodes[entity_id], data)
 
         except Exception as e:  # TODO add specific exceptions
-            self.logger.error(f"""
-                              Error in extract_data: {str(e)}\n
-                              Failed:\n{traceback.format_exc()}
-                            """)
+            self._log_extraction_error("flatten", e)
+
             flattened_data = {}
 
     def update_nodes(self, flattened_data):
@@ -274,12 +293,12 @@ class ExtractorOrchestrator(object):
             else:
                 self.add_or_update(self.nodes[entity_id], data)
 
-    def extract_sketch_entities(self, sketch: Sketch) -> None:
+    def extract_sketch_entities(self, sketch: adsk.fusion.Sketch) -> None:
         """
         Helper function to extract entities from a sketch and link them.
 
         Args:
-            sketch (Sketch): The sketch to extract entities from.
+            sketch (adsk.fusion.Sketch): The sketch to extract entities from.
         """
         try:
             for profile in sketch.profiles:
@@ -297,11 +316,7 @@ class ExtractorOrchestrator(object):
             for constraint in sketch.geometricConstraints:
                 self.extract_data(constraint)
         except Exception as e:  # TODO add specific exceptions
-            general_exception_msg: str = f"""
-                Error in extract_sketch_entities: {str(e)}\n
-                {traceback.format_exc()}
-                """
-            self.logger.error(general_exception_msg)
+            self._log_extraction_error("extract_sketch_entities", e)
 
     def _get_current_brep_entities(self, comp: adsk.fusion.Component) -> None:
         """
@@ -330,18 +345,15 @@ class ExtractorOrchestrator(object):
                                      for vertex in body.vertices
                                      }
         except Exception as e:  # TODO add specific exceptions
-            general_exception_msg: str = f"""
-                Error in extract_sketch_entities: {str(e)}\n
-                {traceback.format_exc()}
-                """
-            self.logger.error(general_exception_msg)
+            self._log_extraction_error("_get_current_brep_entities", e)
 
     def _process_new_entities(self,
                               new_entities: Set[str],
                               entity_type: str,
                               comp: adsk.fusion.Component) -> None:
         """
-        Process new BRep entities (faces, edges, vertices) and add them to the extraction nodes and relationships.
+        Process new BRep entities (faces, edges, vertices) and add them to the
+        extraction nodes and relationships.
 
         Args:
             new_entities (Set[str]): Set of new entity tokens.
@@ -365,12 +377,14 @@ class ExtractorOrchestrator(object):
             if entity:
                 self.extract_data(entity)
 
-    def _extract_feature(self, entity, comp: adsk.fusion.Component):
+    def _extract_feature(self,
+                         entity: adsk.fusion.Feature,
+                         comp: adsk.fusion.Component):
         """
         Extract data from a feature entity and process its BRep entities.
 
         Args:
-            entity (Feature): The Fusion 360 feature entity.
+            entity (adsk.fusion.Feature): The Fusion 360 feature entity.
             comp (adsk.fusion.Component): The Fusion 360 component.
             index (int): The timeline index.
             component_id (str): The ID of the component.
@@ -378,17 +392,25 @@ class ExtractorOrchestrator(object):
             self.previous_edges (Set[str]): Set of previous edge tokens.
             self.previous_vertices (Set[str]): Set of previous vertex tokens.
         """
-        self.logger.info(f'Extracting feature at timeline index {self.timeline_index}: {entity.name}')
-        self.extract_data(entity)
-        if True:
-            self._get_current_brep_entities(comp)
-            self.new_faces = self.current_faces - self.previous_faces
-            self.new_edges = self.current_edges - self.previous_edges
-            self.new_vertices = self.current_vertices - self.previous_vertices
+        logger_msg: str = (
+                    f'Extracting feature at timeline index '
+                    f'{self.timeline_index}: {entity.name}'
+                    )
+        self.logger.info(logger_msg)
 
-            self._process_new_entities(self.new_faces, 'face', comp)
-            self._process_new_entities(self.new_edges, 'edge', comp)
-            self._process_new_entities(self.new_vertices, 'vertex', comp)
+        self.extract_data(entity)
+        self.extract_brep_entities(comp)
+
+        # # Tremporaly using the full extraction as we are keeping track of
+        # # index as a property
+        # self._get_current_brep_entities(comp)
+        # self.new_faces = self.current_faces - self.previous_faces
+        # self.new_edges = self.current_edges - self.previous_edges
+        # self.new_vertices = self.current_vertices - self.previous_vertices
+
+        # self._process_new_entities(self.new_faces, 'face', comp)
+        # self._process_new_entities(self.new_edges, 'edge', comp)
+        # self._process_new_entities(self.new_vertices, 'vertex', comp)
 
     def _extract_sketch(self, sketch_entity: adsk.fusion.Sketch):
         """
@@ -397,7 +419,11 @@ class ExtractorOrchestrator(object):
         Args:
             sketchEntity (adsk.fusion.Sketch): The Fusion 360 sketch entity.
         """
-        self.logger.info(f'Extracting sketch at timeline index {self.timeline_index}: {sketch_entity.name}')
+        logger_msg: str = (
+            f'Extracting sketch at timeline index {self.timeline_index}:'
+            f'{sketch_entity.name}'
+            )
+        self.logger.info(logger_msg)
         self.extract_data(sketch_entity)
         self.extract_sketch_entities(sketch_entity)
 
@@ -498,55 +524,111 @@ class ExtractorOrchestrator(object):
             self._extract_faces(feature, 'endFaces', self.nodes)
             self._extract_faces(feature, 'sideFaces', self.nodes)
 
-    def _extract_faces(self, feature, face_attr, nodes):
+    def _extract_faces(self,
+                       feature: adsk.fusion.Feature,
+                       face_attr: str,
+                       nodes: Dict):
         """
         Extract and update the face entities for a given feature and face
         attribute.
 
         Args:
-            feature (Feature): The Fusion 360 feature object from which to
-            extract faces. face_attr (str): The attribute name of the faces to
-            be extracted (e.g., 'startFaces', 'endFaces', 'sideFaces'). nodes
-            (dict): The dictionary to be updated with the face entities.
+            feature (adsk.fusion.Feature): The Fusion 360 feature object from
+                which to extract faces.
+            face_attr (str): The attribute name of the faces to be extracted
+                (e.g., 'startFaces', 'endFaces', 'sideFaces').
+            nodes (dict): The dictionary to be updated with the face entities.
 
         This method retrieves the face entities associated with the given
         feature and face attribute, performs a union operation with any
         existing faces in the `nodes` dictionary, and updates the `nodes`
         dictionary with the result.
         """
-        entityToken: str = getattr(feature, 'entityToken', None)
-        if entityToken is not None:
+        entity_token: str = getattr(feature, 'entityToken', None)
+        if entity_token is not None:
             faces: List[str] = [
                      getattr(face, 'entityToken', None)
                      for face in getattr(feature, face_attr, [])
                      ]
-            if entityToken in nodes and face_attr in nodes[entityToken]:
-                existing_faces = nodes[entityToken][face_attr]
+            if entity_token in nodes and face_attr in nodes[entity_token]:
+                existing_faces = nodes[entity_token][face_attr]
                 faces_union = list(set(existing_faces) | set(faces))
             else:
                 faces_union = faces
-            nodes[entityToken][face_attr] = faces_union
+            nodes[entity_token][face_attr] = faces_union
 
-    def _extract_all_components(self, design: adsk.fusion.Design) -> None:
+    def _extract_all_components(self) -> None:
         """
         Extracts all components from the given design.
-
-        Args:
-            design (adsk.fusion.Design): The Fusion 360 design object.
         """
         try:
-            all_components = design.allComponents
+            all_components = self.design.allComponents
             for component in all_components:
                 self.extract_data(component)
                 self._extract_origin_construction_geometry(component)
         except Exception as e:  # TODO: Add specific exceptions if required
-            general_exception_msg: str = f"""
-                Error in _extract_all_components: {str(e)}\n
-                {traceback.format_exc()}
-            """
-            self.logger.error(general_exception_msg)
+            self._log_extraction_error("_extract_all_components", e)
 
-    def extract_timeline_based_data(self) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
+    def _extract_all_parameters(self) -> None:
+        """
+        Extracts all parameters from the given design, including their parent
+        component information and adds it to self.nodes.
+        """
+        try:
+            all_parameters = self.design.allParameters
+            for parameter in all_parameters:
+                if isinstance(parameter, adsk.fusion.ModelParameter):
+                    # Extract the parent component and entity token
+                    parent_component = parameter.component
+                    parameter_entity_token = parameter.entityToken
+
+                    if parent_component:
+                        # Ensure the parameter node exists and add parent
+                        # component
+                        self._ensure_node_exists(parameter_entity_token)
+                        self.nodes[parameter_entity_token]['parentComponent'] \
+                            = parent_component.entityToken
+
+                # Extract the data for each parameter
+                self.extract_data(parameter)
+
+        except Exception as e:  # TODO: Add specific exceptions if required
+            self._log_extraction_error("_extract_all_parameters", e)
+
+    def _ensure_node_exists(self, entity_token: str) -> None:
+        """
+        Ensures that the node with the given entity token exists in the
+        self.nodes dictionary. If it doesn't exist, an empty dictionary is
+        initialized.
+
+        Args:
+            entity_token (str): The entity token for which to ensure node
+                existence.
+        """
+        if entity_token not in self.nodes:
+            self.nodes[entity_token] = {}
+
+    def _log_extraction_error(self,
+                              method_name: str,
+                              error: Exception) -> None:
+        """
+        Logs detailed extraction errors including the method name where the
+        exception occurred.
+
+        Args:
+            method_name (str): The name of the method where the error occurred.
+            error (Exception): The caught exception.
+        """
+        error_msg: str = (
+            f"Error in {method_name}: {str(error)}\n"
+            f"{traceback.format_exc()}"
+        )
+        self.logger.error(error_msg)
+
+    def extract_timeline_based_data(
+        self
+        ) -> Tuple[List[Dict[str, Any]],
+                   List[Dict[str, Any]]]:
         """
         Extract data based on the timeline order.
 
@@ -564,35 +646,39 @@ class ExtractorOrchestrator(object):
         self.current_edges = set()
         self.current_vertices = set()
 
-        self._extract_all_components(self.design)
+        self._extract_all_components()
+        self._extract_all_parameters()
 
-        # Map to hold component ID -> { 'index': timeline_index, 'rootToken': root_component_token }
+        # Map to hold component ID -> { 'index': timeline_index,
+        #                               'rootToken': root_component_token }
         timeline_to_component_map: Dict[str, Dict[str, Union[int, str]]] = {}
 
-
         for index in range(timeline.count):
-            timelineObject = timeline.item(index)
-            entity: adsk.core.Base = timelineObject.entity
+            timeline_object = timeline.item(index)
+            entity: adsk.core.Base = timeline_object.entity
             self.timeline_index = index
+
+            self.update_design_environment()
 
             # Roll to current timeline
             self.logger.info(f'Rolling to timeline index {index}')
-            timelineObject.rollTo(True)
+            timeline_object.rollTo(True)
 
             # Ensure the collections are updated after rolling the timeline
             self._get_current_brep_entities(comp)
 
             if entity:
 
-                if isinstance(entity, Feature):
+                if isinstance(entity, adsk.fusion.Feature):
                     self._extract_feature(entity, comp)
-                elif isinstance(entity, Sketch):
+                elif isinstance(entity, adsk.fusion.Sketch):
                     self._extract_sketch(entity)
                 elif isinstance(entity, adsk.fusion.Occurrence):
                     # Get the associated component ID and add it to the map
                     component_id = entity.nativeObject.component.id
                     root_component_token = comp.entityToken
-                    # Map the component ID to its timeline index and root component token
+                    # Map the component ID to its timeline index and
+                    # root component token
                     timeline_to_component_map[component_id] = {
                         'index': index,
                         'rootToken': root_component_token
@@ -608,7 +694,7 @@ class ExtractorOrchestrator(object):
                 self.previous_edges = self.current_edges.copy()
                 self.previous_vertices = self.current_vertices.copy()
 
-        self.process_components_with_timeline(timeline_to_component_map)
+        self.process_timeline_components(timeline_to_component_map)
 
         all_components = self.design.allComponents
         for component in all_components:
@@ -616,15 +702,20 @@ class ExtractorOrchestrator(object):
             self._extract_feature_face_relationship(component)
 
         return list(self.nodes.values())
-    def process_components_with_timeline(self, timeline_to_component_map: Dict[str, int]) -> None:
+
+    def process_timeline_components(self,
+                                    timeline_to_component_map: Dict[str, int]
+                                    ) -> None:
         """
-        Processes components to extract the entityToken and checks if the component's ID
-        exists in the timeline_to_component_map. If the component's ID is found, it adds
-        the timeline index to the component data, and entityToken of rootcomponent.
+        Processes components to extract the entityToken and checks if the
+        component's ID exists in the timeline_to_component_map. If the
+        component's ID is found, it adds the timeline index to the component
+        data, and entityToken of rootcomponent.
 
         Args:
             design (adsk.fusion.Design): The Fusion 360 design object.
-            timeline_to_component_map (Dict[str, int]): A map of component IDs to their timeline indices.
+            timeline_to_component_map (Dict[str, int]): A map of component IDs
+                to their timeline indices.
         """
         all_components = self.design.allComponents
         for component in all_components:
@@ -633,18 +724,33 @@ class ExtractorOrchestrator(object):
             component_id = component.id
 
             # Log entityToken and component_id for debugging
-            self.logger.info(f"Processing component with ID: {component_id}, EntityToken: {entity_token}")
+            logger_msg: str = (
+                f"Processing component with ID: {component_id},"
+                f"EntityToken: {entity_token}")
+            self.logger.info(logger_msg)
 
-            # Check if the component's ID exists in the timeline_to_component_map
             if component_id in timeline_to_component_map:
                 # If found, get the timeline index from the map
                 timeline_data = timeline_to_component_map[component_id]
                 timeline_index = timeline_data['index']
                 root_component_token = timeline_data['rootToken']
 
-                # Add a new field 'timelineIndex' with the timeline index to the component's node data
+                # Add a new field 'timelineIndex' with the timeline
+                # index to the component's node data
                 self.nodes[entity_token]['timelineIndex'] = timeline_index
-                self.nodes[entity_token]['rootComponentToken'] = root_component_token
+                self.nodes[entity_token]['rootComponentToken'] = \
+                    root_component_token
 
-                # Log the association of the timelineIndex for debugging
-                self.logger.info(f"Assigned timeline index {timeline_index} to component with ID: {component_id}")
+                logger_msg: str = (
+                    f"Assigned timeline index {timeline_index}"
+                    f"to component with ID: {component_id}"
+                )
+                self.logger.info()
+
+    def update_design_environment(self):
+        """Update the design environment data (like timelinePosition)"""
+        if self.design is not None:
+            self.design_environment_data['timelinePosition'] \
+                = int(self.timeline_index)
+        else:
+            self.design_environment_data['timelinePosition'] = None

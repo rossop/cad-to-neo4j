@@ -6,10 +6,10 @@ This module defines the mapping of CAD element types to their respective extract
 """
 
 from .sketch import (
-    SketchExtractor, 
-    SketchPointExtractor, 
-    SketchCurveExtractor, 
-    SketchLineExtractor, 
+    SketchExtractor,
+    SketchPointExtractor,
+    SketchCurveExtractor,
+    SketchLineExtractor,
     ProfileExtractor,
     SketchCircleExtractor,
     SketchArcExtractor,
@@ -17,7 +17,7 @@ from .sketch import (
     SketchEllipticalArcExtractor,
     SketchFittedSplineExtractor,
     SketchFixedSplineExtractor,
-) 
+)
 from .sketch.dimension import (
     SketchDimensionExtractor,
     SketchAngularDimensionExtractor,
@@ -35,12 +35,12 @@ from .sketch.dimension import (
     SketchTangentDistanceDimensionExtractor
 )
 from .sketch.constraint import (
-    GeometricConstraintExtractor, 
-    VerticalConstraintExtractor, 
-    HorizontalConstraintExtractor, 
-    MidPointConstraintExtractor, 
-    PerpendicularConstraintExtractor, 
-    CoincidentConstraintExtractor, 
+    GeometricConstraintExtractor,
+    VerticalConstraintExtractor,
+    HorizontalConstraintExtractor,
+    MidPointConstraintExtractor,
+    PerpendicularConstraintExtractor,
+    CoincidentConstraintExtractor,
     OffsetConstraintExtractor,
     CoincidentToSurfaceConstraintExtractor,
     CollinearConstraintExtractor,
@@ -56,26 +56,36 @@ from .sketch.constraint import (
 )
 from .feature import (
     FeatureExtractor,
-    ExtrudeFeatureExtractor, 
-    RevolveFeatureExtractor, 
+    ExtrudeFeatureExtractor,
+    RevolveFeatureExtractor,
     HoleFeatureExtractor,
     FilletFeatureExtractor,
     ChamferFeatureExtractor,
     BoxFeatureExtractor,
+    RectangularPatternFeatureExtractor,
+    PathPatternFeatureExtractor,
+    CircularPatternFeatureExtractor,
 )
 from .construction_geometry import ConstructionPlaneExtractor, ConstructionAxisExtractor, ConstructionPointExtractor
 from .brep import (
     BRepEntityExtractor,
-    BRepBodyExtractor, 
-    BRepFaceExtractor, 
+    BRepBodyExtractor,
+    BRepFaceExtractor,
     BRepEdgeExtractor,
     BRepVertexExtractor,
 )
 from .component_extractor import ComponentExtractor
 
+from .parameters import (
+    ParameterExtractor,
+    ModelParameterExtractor
+)
+
 __all__ = ['EXTRACTORS', 'ENTITY_MAP']
 
 EXTRACTORS = {
+    'adsk::fusion::Parameter': ParameterExtractor,
+    'adsk::fusion::ModelParameter': ModelParameterExtractor,
     'adsk::fusion::Component': ComponentExtractor,
     'adsk::fusion::Sketch': SketchExtractor,
     'adsk::fusion::SketchPoint': SketchPointExtractor,
@@ -102,31 +112,34 @@ EXTRACTORS = {
     'adsk::fusion::SketchRadialDimension': SketchRadialDimensionExtractor,
     'adsk::fusion::SketchTangentDistanceDimension': SketchTangentDistanceDimensionExtractor,
     'adsk::fusion::Profile': ProfileExtractor,
-    'adsk::fusion::ExtrudeFeature': ExtrudeFeatureExtractor, 
-    'adsk::fusion::RevolveFeature': RevolveFeatureExtractor, 
-    'adsk::fusion::HoleFeature': HoleFeatureExtractor, 
-    'adsk::fusion::FilletFeature': FilletFeatureExtractor, 
-    'adsk::fusion::ChamferFeature': ChamferFeatureExtractor, 
-    'adsk::fusion::BoxFeature': BoxFeatureExtractor, 
-    'adsk::fusion::BRepBody': BRepBodyExtractor, 
-    'adsk::fusion::BRepShell': BRepEntityExtractor, # TODO change to ShellExtractor
-    'adsk::fusion::BRepLump': BRepEntityExtractor, # TODO change to LumpExtractor
+    'adsk::fusion::ExtrudeFeature': ExtrudeFeatureExtractor,
+    'adsk::fusion::RevolveFeature': RevolveFeatureExtractor,
+    'adsk::fusion::HoleFeature': HoleFeatureExtractor,
+    'adsk::fusion::FilletFeature': FilletFeatureExtractor,
+    'adsk::fusion::ChamferFeature': ChamferFeatureExtractor,
+    'adsk::fusion::BoxFeature': BoxFeatureExtractor,
+    'adsk::fusion::RectangularPatternFeature': RectangularPatternFeatureExtractor,
+    'adsk::fusion::CircularPatternFeature': CircularPatternFeatureExtractor,
+    'adsk::fusion::PathPatternFeature': PathPatternFeatureExtractor,
+    'adsk::fusion::BRepBody': BRepBodyExtractor,
+    'adsk::fusion::BRepShell': BRepEntityExtractor,  # TODO change to ShellExtractor
+    'adsk::fusion::BRepLump': BRepEntityExtractor,  # TODO change to LumpExtractor
     'adsk::fusion::BRepFace': BRepFaceExtractor,
     'adsk::fusion::BRepEdge': BRepEdgeExtractor,
     'adsk::fusion::BRepVertex': BRepVertexExtractor,
     'adsk::fusion::ConstructionPlane': ConstructionPlaneExtractor,
     'adsk::fusion::ConstructionAxis': ConstructionAxisExtractor,
     'adsk::fusion::ConstructionPoint': ConstructionPointExtractor,
-    'adsk::fusion::GeometricConstraint' : GeometricConstraintExtractor,
-    'adsk::fusion::VerticalConstraint' : VerticalConstraintExtractor,
-    'adsk::fusion::HorizontalConstraint' : HorizontalConstraintExtractor,
-    'adsk::fusion::MidPointConstraint' : MidPointConstraintExtractor,
-    'adsk::fusion::PerpendicularConstraint' : PerpendicularConstraintExtractor,
-    'adsk::fusion::ParallelConstraint' : ParallelConstraintExtractor,
-    'adsk::fusion::SymmetryConstraint' : SymmetryConstraintExtractor,
-    'adsk::fusion::TangentConstraint' : TangentConstraintExtractor,
-    'adsk::fusion::CoincidentConstraint' : CoincidentConstraintExtractor,
-    'adsk::fusion::OffsetConstraint' : OffsetConstraintExtractor,
+    'adsk::fusion::GeometricConstraint': GeometricConstraintExtractor,
+    'adsk::fusion::VerticalConstraint': VerticalConstraintExtractor,
+    'adsk::fusion::HorizontalConstraint': HorizontalConstraintExtractor,
+    'adsk::fusion::MidPointConstraint': MidPointConstraintExtractor,
+    'adsk::fusion::PerpendicularConstraint': PerpendicularConstraintExtractor,
+    'adsk::fusion::ParallelConstraint': ParallelConstraintExtractor,
+    'adsk::fusion::SymmetryConstraint': SymmetryConstraintExtractor,
+    'adsk::fusion::TangentConstraint': TangentConstraintExtractor,
+    'adsk::fusion::CoincidentConstraint': CoincidentConstraintExtractor,
+    'adsk::fusion::OffsetConstraint': OffsetConstraintExtractor,
     'adsk::fusion::LineOnPlanarSurfaceConstraint': LineOnPlanarSurfaceConstraintExtractor,
     'adsk::fusion::LineParallelToPlanarSurfaceConstraint': LineParallelToPlanarSurfaceConstraintExtractor,
     'adsk::fusion::CircularPatternConstraint': CircularPatternConstraintExtractor,
@@ -142,5 +155,5 @@ ENTITY_MAP = {
     'lump': ('lumps', BRepEntityExtractor), # TODO change to LumpExtractor
     'face': ('faces', BRepFaceExtractor),
     'edge': ('edges', BRepEdgeExtractor),
-    'vertex': ('vertices', BRepVertexExtractor), 
+    'vertex': ('vertices', BRepVertexExtractor),
 }

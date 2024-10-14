@@ -10,7 +10,7 @@ from typing import Optional, List, Dict
 import adsk.fusion
 import traceback
 from .base_edge_set_extractor import BaseEdgeSetExtractor
-from ....utils.general_utils import nested_getattr
+from ....utils.extraction_utils import nested_getattr
 
 __all__ = ['ConstantRadiusFilletEdgeSetExtractor']
 

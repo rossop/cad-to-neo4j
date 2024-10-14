@@ -12,7 +12,7 @@ import adsk.core
 from adsk.fusion import ConstructionAxis, ConstructionAxisDefinition, ConstructionAxisByLineDefinition, ConstructionAxisCircularFaceDefinition, ConstructionAxisEdgeDefinition, ConstructionAxisNormalToFaceAtPointDefinition, ConstructionAxisPerpendicularAtPointDefinition, ConstructionAxisTwoPlaneDefinition, ConstructionAxisTwoPointDefinition
 from ..base_extractor import BaseExtractor
 import traceback
-from ...utils.general_utils import nested_getattr
+from ...utils.extraction_utils import nested_getattr
 
 __all__ = ['ConstructionAxisExtractor']
 

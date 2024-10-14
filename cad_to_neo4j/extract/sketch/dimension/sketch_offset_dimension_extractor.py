@@ -10,7 +10,7 @@ Classes:
 from typing import Optional, Dict, Any
 from adsk.fusion import SketchOffsetDimension
 from .sketch_dimension_extractor import SketchDimensionExtractor
-from ....utils.general_utils import nested_getattr
+from ....utils.extraction_utils import nested_getattr
 
 __all__ = ['SketchOffsetDimensionExtractor']
 

@@ -11,7 +11,7 @@ from typing import Optional, Dict, Any, List
 from adsk.core import NurbsCurve3D
 from adsk.fusion import SketchFittedSpline
 from .sketch_entity_extractor import SketchEntityExtractor
-from ...utils.general_utils import nested_getattr
+from ...utils.extraction_utils import nested_getattr
 
 __all__ = ['SketchFittedSplineExtractor']
 

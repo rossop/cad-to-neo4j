@@ -9,7 +9,7 @@ Classes:
 from typing import Optional, Dict, Any
 import traceback
 from .geometric_constraint_extractor import GeometricConstraintExtractor
-from ....utils.general_utils import nested_getattr
+from ....utils.extraction_utils import nested_getattr
 class MidPointConstraintExtractor(GeometricConstraintExtractor):
     """Extractor for MidPointConstraint objects."""
 

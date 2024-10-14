@@ -17,7 +17,7 @@ from typing import Dict, Any
 from adsk.fusion import ProfileCurve
 from ...base_extractor import BaseExtractor
 
-from ....utils.general_utils import nested_getattr
+from ....utils.extraction_utils import nested_getattr
 
 class ProfileCurveExtractor(BaseExtractor):
     """

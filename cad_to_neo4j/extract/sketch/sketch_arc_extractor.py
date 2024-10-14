@@ -9,7 +9,7 @@ Classes:
 from typing import Optional, Dict, Any
 from adsk.fusion import SketchArc
 from .sketch_curve_extractor import SketchCurveExtractor
-from ...utils.general_utils import nested_getattr
+from ...utils.extraction_utils import nested_getattr
 
 __all__ = ['SketchArcExtractor']
 

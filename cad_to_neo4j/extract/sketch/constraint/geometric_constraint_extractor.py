@@ -11,7 +11,7 @@ from adsk.core import Attributes
 from adsk.fusion import GeometricConstraint, Sketch, Occurrence
 from ...base_extractor import BaseExtractor
 import traceback
-from ....utils.general_utils import nested_getattr
+from ....utils.extraction_utils import nested_getattr
 
 __all__ = ['GeometricConstraintExtractor']
 
