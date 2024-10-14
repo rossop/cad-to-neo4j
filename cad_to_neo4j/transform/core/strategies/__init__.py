@@ -36,6 +36,7 @@ from .profile_transformer import ProfileTransformer
 from .sketch_transformer import SketchTransformer
 from .timeline_transformer import TimelineTransformer
 from .parameter_transformer import ParameterTransformer
+from .brep_change_transformer import BRepChangeTransformer
 
 __all__ = [
         'BRepTransformer',
@@ -46,4 +47,5 @@ __all__ = [
         'SketchTransformer',
         'TimelineTransformer',
         'ParameterTransformer',
+        'BRepChangeTransformer'
         ]

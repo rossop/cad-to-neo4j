@@ -22,7 +22,8 @@ from .core.strategies import (
     ProfileTransformer,
     SketchTransformer,
     TimelineTransformer,
-    ParameterTransformer
+    ParameterTransformer,
+    BRepChangeTransformer,
     )
 
 __all__ = ['Neo4jTransformerOrchestrator']
@@ -78,6 +79,7 @@ class Neo4jTransformerOrchestrator(Neo4jTransactionManager):
             TimelineTransformer(self.logger),
             SketchTransformer(self.logger),
             ParameterTransformer(self.logger),
+            BRepChangeTransformer(self.logger),
         ]
 
     @helper_cypher_error
