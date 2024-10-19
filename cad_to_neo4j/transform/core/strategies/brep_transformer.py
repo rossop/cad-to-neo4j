@@ -34,6 +34,8 @@ class BRepTransformer(BaseTransformer):
             self.create_brep_relationships(execute_query)
         results['create_brep_face_relationships'] =\
             self.create_brep_face_relationships(execute_query)
+        results['create_brep_adjacencies'] =\
+            self.create_brep_adjacencies(execute_query)
         return results
 
     @helper_cypher_error
@@ -66,7 +68,7 @@ class BRepTransformer(BaseTransformer):
             WHERE e.faces IS NOT NULL
             UNWIND e.faces AS face_entityToken
             MATCH (f:BRepFace {entityToken: face_entityToken})
-            MERGE (f)-[:CONTAINS]->(e)
+            MERGE (f)-[:INCIDENT]->(e)
             RETURN e, f
             """,
             # Query to connect BRepFace nodes to BRepEdge nodes based on the
@@ -77,11 +79,10 @@ class BRepTransformer(BaseTransformer):
             WHERE f.edges IS NOT NULL
             UNWIND f.edges AS edge_entityToken
             MATCH (e:BRepEdge {entityToken: edge_entityToken})
-            MERGE (f)-[:CONTAINS]->(e)
+            MERGE (f)-[:INCIDENT]->(e)
             RETURN e, f
             """,
-            # Query to create STARTS_WITH and ENDS_WITH relationships
-            # for BRepEdge
+            # Query to create INCIDENT relationship for BRepEdge
             """
             // Match existing BRepEdge nodes with startVertex and endVertex
             // properties
@@ -91,12 +92,12 @@ class BRepTransformer(BaseTransformer):
                 e.endVertex AS end_vertex_id
             // Match the startVertex node
             MATCH (sv:BRepVertex {entityToken: start_vertex_id})
-            MERGE (e)-[:STARTS_WITH]->(sv)
+            MERGE (e)-[:INCIDENT]->(sv)
             // Use WITH to separate the MATCH for endVertex
             WITH e, start_vertex_id, end_vertex_id
             // Match the endVertex node
             MATCH (ev:BRepVertex {entityToken: end_vertex_id})
-            MERGE (e)-[:ENDS_WITH]->(ev)
+            MERGE (e)-[:INCIDENT]->(ev)
             RETURN e
             """,
         ]
@@ -114,7 +115,7 @@ class BRepTransformer(BaseTransformer):
         This method creates 'BOUNDED_BY' relationships between BRepEdge nodes
         and their start and end vertices.
         The 'BOUNDED_BY' relationship will have a type property indicating
-        whether it is a 'START_WITH' or 'ENDS_WITH' relationship.
+        whether it is a 'INCIDENT' or 'INCIDENT' relationship.
 
         Args:
             execute_query (function): Function to execute a Cypher query.
@@ -167,24 +168,33 @@ class BRepTransformer(BaseTransformer):
             # Query to create ADJACENT relationships between faces sharing the
             # same edge
             """
-            MATCH (e:`BRepEdge`)<-[:CONTAINS]-(f1:`BRepFace`),
-                  (e)<-[:CONTAINS]-(f2:`BRepFace`)
+            MATCH (e:`BRepEdge`)<-[:INCIDENT]-(f1:`BRepFace`),
+                  (e)<-[:INCIDENT]-(f2:`BRepFace`)
             WHERE id(f1) <> id(f2)
             MERGE (f1)-[:ADJACENT]->(f2)
-            MERGE (f2)-[:ADJACENT]->(f1)
+            // MERGE (f2)-[:ADJACENT]->(f1)
             RETURN f1.entityToken AS face1_id, f2.entityToken AS face2_id
             """,
             # Query to create ADJACENT relationships between edges sharing the
-            # ssame vertex
+            # same vertex
             """
-            MATCH (v:`BRepVertex`)<-[:CONTAINS]-(e1:`BRepEdge`),
-                  (v)<-[:CONTAINS]-(e2:`BRepEdge`)
+            MATCH (f:BRepFace)-[:INCIDENT]->(e1:BRepEdge),
+                  (f)-[:INCIDENT]->(e2:BRepEdge)
             WHERE id(e1) <> id(e2)
             MERGE (e1)-[:ADJACENT]->(e2)
-            MERGE (e2)-[:ADJACENT]->(e1)
-            RETURN e1.entityToken AS edge1_id,
-                collect(e2.entityToken) AS adjacent_edge_ids
-            """
+            RETURN e1.entityToken AS edge1_id, e2.entityToken AS adjacent_edge
+            """,
+            # Query to create ADJACENT relationships between edges sharing the
+            # same vertex
+            # """
+            # MATCH (v:`BRepVertex`)<-[:INCIDENT]-(e1:`BRepEdge`),
+            #       (v)<-[:INCIDENT]-(e2:`BRepEdge`)
+            # WHERE id(e1) <> id(e2)
+            # MERGE (e1)-[:ADJACENT]->(e2)
+            # // MERGE (e2)-[:ADJACENT]->(e1)
+            # RETURN e1.entityToken AS edge1_id,
+            #     collect(e2.entityToken) AS adjacent_edge_ids
+            # """
         ]
 
         results = []
