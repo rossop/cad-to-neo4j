@@ -514,7 +514,7 @@ class SketchTransformer(BaseTransformer):
         MATCH (d:SketchDimension), (p:Parameter)
         WHERE d.associatedModelParameter IS NOT NULL
         AND d.associatedModelParameter = p.entityToken
-        MERGE (d)-[:DRIVEN_BY]->(p)
+        MERGE (p)-[:DRIVES]->(d)
         RETURN d, p
         """
 

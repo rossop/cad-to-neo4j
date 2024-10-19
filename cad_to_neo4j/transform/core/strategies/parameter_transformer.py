@@ -39,8 +39,7 @@ enabling easy querying of parameter dependencies and relationships.
 
 Relationships:
 --------------
-- `HAS_DEPENDENT`: Created between a parameter and its dependent parameters.
-- `DEPENDENT_ON`: Created between a parameter and the parameters it depends on.
+- `DRIVES`: Created between a parameter and its dependent parameters.
 """
 
 from ..base_transformer import BaseTransformer
@@ -95,20 +94,20 @@ class ParameterTransformer(BaseTransformer):
             WHERE p.dependentParameters IS NOT NULL
             UNWIND p.dependentParameters AS dependent_param_token
             MATCH (dp:Parameter {entityToken: dependent_param_token})
-            MERGE (p)-[:HAS_DEPENDENT]->(dp)
+            MERGE (p)-[:DRIVES]->(dp)
             RETURN p.entityToken AS param_id,
                 collect(dp.entityToken) AS dependent_params
             """,
             # Link dependency parameters
-            """
-            MATCH (p:Parameter)
-            WHERE p.dependencyParameters IS NOT NULL
-            UNWIND p.dependencyParameters AS dependency_param_token
-            MATCH (dp:Parameter {entityToken: dependency_param_token})
-            MERGE (p)-[:DEPENDENT_ON]->(dp)
-            RETURN p.entityToken AS param_id,
-                collect(dp.entityToken) AS dependency_params
-            """
+            # """
+            # MATCH (p:Parameter)
+            # WHERE p.dependencyParameters IS NOT NULL
+            # UNWIND p.dependencyParameters AS dependency_param_token
+            # MATCH (dp:Parameter {entityToken: dependency_param_token})
+            # MERGE (p)-[:DEPENDENT_ON]->(dp)
+            # RETURN p.entityToken AS param_id,
+            #     collect(dp.entityToken) AS dependency_params
+            # """
         ]
         results = []
         self.logger.info('Linking parameters to dependents and dependencies')
