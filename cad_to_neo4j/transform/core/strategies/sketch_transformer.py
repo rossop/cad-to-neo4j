@@ -114,7 +114,7 @@ class SketchTransformer(BaseTransformer):
             MATCH (circle)
             WHERE circle.centerPoint IS NOT NULL
             MATCH (center {entityToken: circle.centerPoint})
-            MERGE (circle)-[:CENTERED_ON]->(center)
+            MERGE (circle)-[:USES {type: 'center'}]->(center)
             REMOVE circle.centerPoint
             RETURN circle, center
             """,

@@ -144,14 +144,14 @@ class ComponentTransformer(BaseTransformer):
             MATCH (p:Parameter)
             WHERE p.parentComponent IS NOT NULL
             MATCH (c:Component {entityToken: p.parentComponent})
-            MERGE (c)-[:HAS_PARAMETER]->(p)
+            MERGE (c)-[:CONTAINS]->(p)
             RETURN c, p
             """,
             """
             MATCH (p:Parameter)
             WHERE p.createdBy IS NOT NULL
             MATCH (e {entityToken: p.createdBy})
-            MERGE (e)-[:HAS_PARAMETER]->(p)
+            MERGE (e)-[:USES]->(p)
             RETURN e, p
             """
         ]
