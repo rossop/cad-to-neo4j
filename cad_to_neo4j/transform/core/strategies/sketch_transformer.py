@@ -84,8 +84,8 @@ class SketchTransformer(BaseTransformer):
             WHERE sc.startPoint IS NOT NULL AND sc.endPoint IS NOT NULL
             MATCH (sp1 {entityToken: sc.startPoint})
             MATCH (sp2 {entityToken: sc.endPoint})
-            MERGE (sc)-[:STARTS_AT]->(sp1)
-            MERGE (sc)-[:ENDS_AT]->(sp2)
+            MERGE (sc)-[:INCIDENT]->(sp1)
+            MERGE (sc)-[:INCIDENT]->(sp2)
             """,
             r"""
             MATCH (s:`Sketch`)-[:CONTAINS]->(p:`Profile`)
@@ -105,8 +105,8 @@ class SketchTransformer(BaseTransformer):
             MATCH (sp2 {entityToken: endPointToken})
 
             // Create relationships
-            MERGE (sc)-[:STARTS_AT]->(sp1)
-            MERGE (sc)-[:ENDS_AT]->(sp2)
+            MERGE (sc)-[:INCIDENT]->(sp1)
+            MERGE (sc)-[:INCIDENT]->(sp2)
 
             RETURN sc, sp1, sp2
             """,
@@ -114,7 +114,7 @@ class SketchTransformer(BaseTransformer):
             MATCH (circle)
             WHERE circle.centerPoint IS NOT NULL
             MATCH (center {entityToken: circle.centerPoint})
-            MERGE (circle)-[:CENTERED_ON]->(center)
+            MERGE (circle)-[:USES {type: 'center'}]->(center)
             REMOVE circle.centerPoint
             RETURN circle, center
             """,
@@ -484,8 +484,8 @@ class SketchTransformer(BaseTransformer):
                 name: 'y',
                 vector: y_axis_vector
                 })
-            MERGE (x_axis)-[:STARTS_WITH]->(origin)
-            MERGE (y_axis)-[:STARTS_WITH]->(origin)
+            MERGE (x_axis)-[:INCIDENT]->(origin)
+            MERGE (y_axis)-[:INCIDENT]->(origin)
             MERGE (y_axis)-[:PERPENDICULAR_TO]->(x_axis)
             MERGE (sketch)-[:CONTAINS]->(x_axis)
             MERGE (sketch)-[:CONTAINS]->(y_axis)
@@ -514,7 +514,7 @@ class SketchTransformer(BaseTransformer):
         MATCH (d:SketchDimension), (p:Parameter)
         WHERE d.associatedModelParameter IS NOT NULL
         AND d.associatedModelParameter = p.entityToken
-        MERGE (d)-[:DRIVEN_BY]->(p)
+        MERGE (p)-[:DRIVES]->(d)
         RETURN d, p
         """
 

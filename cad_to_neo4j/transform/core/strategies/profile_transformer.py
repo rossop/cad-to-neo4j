@@ -102,7 +102,7 @@ class ProfileTransformer(BaseTransformer):
             WHERE sc.sketchEntity IS NOT NULL
             MATCH (se)
             WHERE se.entityToken = sc.sketchEntity
-            MERGE (sc)-[:DEFINED_BY]->(se)
+            MERGE (sc)-[:USES]->(se)
             RETURN sc, se
         """
         return execute_query(query)
